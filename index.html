@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3a2414">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Loota">
+<meta name="description" content="Fantasy-Kartenspiel gegen Bots: Monster besiegen, Beute machen, Stufe 10 erreichen.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="app-icons/icon-192.png">
+<link rel="apple-touch-icon" href="app-icons/apple-touch-icon.png">
+<title>Loota</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ Startbildschirm ============ -->
+  <section id="scr-title" class="screen" aria-label="Startbildschirm">
+    <canvas id="motes" aria-hidden="true"></canvas>
+    <div class="sign" role="img" aria-label="Loota">
+      <span class="sign-small">Fantasy-Kartenspiel</span>
+      <span class="sign-big">Loota</span>
+    </div>
+    <div class="emblem" aria-hidden="true"><img src="art/logo-emblem.webp" alt=""></div>
+    <nav class="menu" aria-label="Hauptmenü">
+      <button class="btn primary" type="button" data-go="continue" id="btn-continue" hidden>Weiterspielen<small id="continue-info"></small></button>
+      <button class="btn" type="button" data-go="setup">Neues Spiel</button>
+      <div class="menu-row">
+        <button class="btn" type="button" data-go="rules">Regeln</button>
+        <button class="btn" type="button" data-go="cards">Karten</button>
+      </div>
+      <div class="menu-row">
+        <button class="btn" type="button" data-go="quiz">Quiz</button>
+        <button class="btn" type="button" data-go="settings">Optionen</button>
+      </div>
+      <button class="btn ghost" type="button" id="btn-install" hidden>Als App installieren</button>
+    </nav>
+    <p class="fine">Monster besiegen · Beute machen · Stufe 10 erreichen</p>
+  </section>
+
+  <!-- ============ Neues Spiel ============ -->
+  <section id="scr-setup" class="screen" aria-label="Neues Spiel" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Neues Spiel</h2></header>
+    <div class="content">
+      <div class="panel">
+        <h3 class="lbl">Mitspieler</h3>
+        <div class="seg big" data-set="bots">
+          <button type="button" data-v="2"><span class="pts"><img src="icons/portrait-berta.png" alt=""><img src="icons/portrait-kalle.png" alt=""></span>2 Bots</button>
+          <button type="button" data-v="3"><span class="pts"><img src="icons/portrait-berta.png" alt=""><img src="icons/portrait-kalle.png" alt=""><img src="icons/portrait-uschi.png" alt=""></span>3 Bots</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Schwierigkeit</h3>
+        <div class="seg" data-set="diff">
+          <button type="button" data-v="gemuetlich">Gemütlich</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="gnadenlos">Gnadenlos</button>
+        </div>
+        <p class="hint" id="diff-hint"></p>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Tempo der Bots</h3>
+        <div class="seg" data-set="speed">
+          <button type="button" data-v="langsam">Langsam</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="schnell">Schnell</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Lernhilfen</h3>
+        <div class="trow"><span>Zug-Empfehlung<small>Schlägt dir bei jeder Entscheidung einen Zug vor.</small></span><button class="switch" type="button" role="switch" data-toggle="advice" aria-label="Zug-Empfehlung"></button></div>
+        <div class="trow"><span>Tipps und Regeln<small>Erklärt in den Notizen, welche Regel gerade greift.</small></span><button class="switch" type="button" role="switch" data-toggle="coach" aria-label="Tipps und Regeln"></button></div>
+      </div>
+    </div>
+    <div class="footbtn"><button class="btn primary" type="button" data-go="start">Los geht’s!</button></div>
+  </section>
+
+  <!-- ============ Spiel ============ -->
+  <section id="scr-game" class="screen" aria-label="Spiel" hidden>
+    <header class="topbar">
+      <button class="iconbtn" type="button" data-go="pause" aria-label="Menü"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+      <div class="tb-mid"><div class="tb-title" id="tb-title"></div><div class="phasedots" id="phasedots"></div></div>
+      <button class="iconbtn" type="button" data-go="log" aria-label="Spielleiter-Notizen"><svg viewBox="0 0 24 24"><path d="M7 3h9l3 3v15H7z M10 9h6 M10 13h6 M10 17h4" /></svg><span class="badge" id="log-badge" hidden></span></button>
+      <button class="iconbtn" type="button" data-go="sound" aria-label="Ton an oder aus" id="btn-sound"></button>
+    </header>
+    <div class="opps" id="opps"></div>
+    <div class="table" id="table"></div>
+    <div class="act" id="act" aria-live="polite"></div>
+    <div class="mebar" id="mebar"></div>
+    <div class="hand" id="hand" aria-label="Deine Hand"></div>
+  </section>
+
+  <!-- ============ Einstellungen ============ -->
+  <section id="scr-settings" class="screen" aria-label="Einstellungen" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Optionen</h2></header>
+    <div class="content">
+      <div class="panel">
+        <h3 class="lbl">Klang</h3>
+        <div class="trow"><span>Musik</span><button class="switch" type="button" role="switch" data-toggle="music" aria-label="Musik"></button></div>
+        <label class="slider"><span>Lautstärke Musik</span><input type="range" min="0" max="1" step="0.05" data-range="mvol" aria-label="Lautstärke Musik"></label>
+        <div class="trow"><span>Soundeffekte</span><button class="switch" type="button" role="switch" data-toggle="sfx" aria-label="Soundeffekte"></button></div>
+        <label class="slider"><span>Lautstärke Effekte</span><input type="range" min="0" max="1" step="0.05" data-range="svol" aria-label="Lautstärke Effekte"></label>
+        <div class="trow" id="row-vibrate"><span>Vibration</span><button class="switch" type="button" role="switch" data-toggle="vibrate" aria-label="Vibration"></button></div>
+        <p class="hint">Am iPhone schaltet der Lautlos-Schalter auch die Musik der App stumm.</p>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Spiel</h3>
+        <div class="trow"><span>Tempo der Bots</span></div>
+        <div class="seg" data-set="speed">
+          <button type="button" data-v="langsam">Langsam</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="schnell">Schnell</button>
+        </div>
+        <div class="trow"><span>Zug-Empfehlung</span><button class="switch" type="button" role="switch" data-toggle="advice" aria-label="Zug-Empfehlung"></button></div>
+        <div class="trow"><span>Tipps und Regeln</span><button class="switch" type="button" role="switch" data-toggle="coach" aria-label="Tipps und Regeln"></button></div>
+        <div class="trow"><span>Handkarten der Bots zeigen<small>Zum Lernen, wie die Bots denken.</small></span><button class="switch" type="button" role="switch" data-toggle="open" aria-label="Handkarten der Bots zeigen"></button></div>
+        <div class="trow"><span>Effekte reduzieren<small>Weniger Bewegung und Animationen.</small></span><button class="switch" type="button" role="switch" data-toggle="reduce" aria-label="Effekte reduzieren"></button></div>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Spielstand</h3>
+        <p class="hint" id="save-info">Kein gespeichertes Spiel.</p>
+        <button class="btn small danger" type="button" data-go="delsave">Spielstand löschen</button>
+      </div>
+      <div class="panel about">
+        <h3 class="lbl">Über die App</h3>
+        <p>Loota <span id="app-version"></span>. Ein Hobbyprojekt: Alle Karten, Texte, Grafiken und Klänge sind eigens für dieses Spiel entstanden.</p>
+        <p id="install-hint" class="hint"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Regeln ============ -->
+  <section id="scr-rules" class="screen" aria-label="Spielregeln" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Spielregeln</h2></header>
+    <div class="content rules">
+<details class="rule panel" open><summary>Das Ziel</summary><div class="rule-body"><p>Wer zuerst <b>Stufe 10</b> erreicht, gewinnt. Die letzte Stufe gibt es nur für einen <b>Sieg über ein Monster</b>, nicht durch Verkaufen oder Stufenkarten.</p>
+      <p>Alle starten auf Stufe 1 als Mensch ohne Klasse, mit <b>4 Türkarten und 4 Schatzkarten</b>. Rassen, Klassen und Gegenstände darfst du sofort auslegen.</p></div></details>
+<details class="rule panel"><summary>Dein Zug</summary><div class="rule-body"><ol class="phase-list">
+        <li><div><b>Tür aufstoßen.</b> Oberste Türkarte offen aufdecken. Monster: sofort Kampf. Fluch: trifft dich sofort. Alles andere: auf die Hand oder direkt spielen.</div></li>
+        <li><div><b>Monster herausfordern.</b> Kein Monster hinter der Tür? Du darfst ein Monster von deiner Hand bekämpfen.</div></li>
+        <li><div><b>Raum durchsuchen.</b> Wenn du nicht gekämpft hast: 1 Türkarte verdeckt auf die Hand.</div></li>
+        <li><div><b>Almosen.</b> Mehr als 5 Handkarten (Zwerg: 6)? Den Überschuss bekommt, wer die niedrigste Stufe hat. Bist du selbst (mit) am niedrigsten, legst du ihn ab.</div></li>
+      </ol></div></details>
+<details class="rule panel"><summary>Kampf</summary><div class="rule-body"><ul>
+        <li><b>Kampfstärke</b> = Stufe + Boni deiner Gegenstände + Einmal-Effekte.</li>
+        <li>Höher als das Monster: Sieg. <b>Gleichstand ist eine Niederlage</b>, außer für Krieger.</li>
+        <li>Sieg: meist 1 Stufe (große Monster 2) und so viele Schätze, wie auf der Karte stehen. Allein ziehst du sie verdeckt, mit Helfer offen.</li>
+        <li><b>Hilfe:</b> Genau 1 Mitspieler darf helfen, meist gegen Schätze. Seine Kampfstärke zählt dazu. Aufsteigen tust nur du, außer dein Helfer ist Elf.</li>
+        <li><b>Eingreifen:</b> Alle anderen dürfen mitmischen: Monsterverstärker, Einmal-Gegenstände für das Monster, einen Ungebetenen Gast mit einem Monster von der Hand, Flüche.</li>
+      </ul></div></details>
+<details class="rule panel"><summary>Weglaufen</summary><div class="rule-body"><ul>
+        <li>Verloren? Jeder Beteiligte würfelt <b>pro Monster</b> einen W6. <b>Ab 5</b> entkommst du.</li>
+        <li>Elfen bekommen +1, manche Gegenstände und Monster ändern den Wurf.</li>
+        <li>Misslingt die Flucht, trifft dich, was auf der Monsterkarte <b>bei Niederlage</b> steht.</li>
+        <li>Steht auf dem Monster „verfolgt niemanden bis Stufe X“, entkommst du bis zu dieser Stufe automatisch.</li>
+      </ul></div></details>
+<details class="rule panel"><summary>Ausrüstung</summary><div class="rule-body"><ul>
+        <li>Gleichzeitig nutzbar: 1 Kopfbedeckung, 1 Rüstung, 1 Schuhwerk und 2 Hände (zwei Einhand- oder ein Zweihand-Gegenstand). Gegenstände ohne Slot: beliebig viele.</li>
+        <li><b>Große Gegenstände:</b> nur einer, Zwerge dürfen beliebig viele tragen.</li>
+        <li>Was du gerade nicht nutzen kannst, kommt in den <b>Rucksack</b>. Dort bringt es keinen Bonus.</li>
+        <li>Anlegen und Tauschen nur im eigenen Zug und nicht im Kampf. <b>Einmal einsetzbare</b> Gegenstände (Tränke &amp; Co.) gehen jederzeit im Kampf, direkt von der Hand.</li>
+      </ul></div></details>
+<details class="rule panel"><summary>Verkaufen</summary><div class="rule-body"><ul>
+        <li>Gegenstände im Wert von zusammen <b>1.000 Goldstücken = 1 Stufe</b>. Wechselgeld gibt es nicht.</li>
+        <li>Nur im eigenen Zug, nicht im Kampf, und nie für die Siegstufe 10.</li>
+      </ul></div></details>
+<details class="rule panel"><summary>Flüche</summary><div class="rule-body"><ul>
+        <li>Beim Aufstoßen der Tür aufgedeckt: Der Fluch trifft <b>dich</b>.</li>
+        <li>Verdeckt gezogen (Raum durchsuchen, Schätze): Er kommt auf deine Hand. Du darfst ihn <b>jederzeit auf irgendwen</b> spielen.</li>
+        <li>Verlangt der Fluch etwas, das das Opfer nicht hat, passiert nichts.</li>
+      </ul></div></details>
+<details class="rule panel"><summary>Tod</summary><div class="rule-body"><p>Du behältst Stufe, Rasse und Klasse. Alles andere ist weg: Die anderen teilen sich deine Gegenstände, die höchste Stufe zuerst, der Rest wird abgelegt. Zu Beginn deines nächsten Zuges ziehst du neu 4 Tür- und 4 Schatzkarten.</p></div></details>
+<details class="rule panel"><summary>Rassen und Klassen</summary><div class="rule-body"><p class="muted small">Höchstens 1 Rasse und 1 Klasse, jederzeit ablegbar. Ohne Rassenkarte bist du Mensch.</p>
+      <div class="tbl-wrap">
+      <table class="rtab">
+        <thead><tr><th>Karte</th><th>Was sie kann</th></tr></thead>
+        <tbody>
+          <tr><td><b>Elf</b></td><td>+1 beim Weglaufen. Steigt auf, wenn er jemandem beim Sieg hilft.</td></tr>
+          <tr><td><b>Zwerg</b></td><td>Beliebig viele Große Gegenstände, 6 Handkarten.</td></tr>
+          <tr><td><b>Halbling</b></td><td>Einen Gegenstand pro Zug zum doppelten Preis verkaufen. Nach einem misslungenen Fluchtwurf 1 Karte abwerfen und neu würfeln.</td></tr>
+          <tr><td><b>Krieger</b></td><td>Gewinnt bei Gleichstand. Im Kampf bis zu 3 Karten abwerfen, je +1.</td></tr>
+          <tr><td><b>Zauberer</b></td><td>Nach einem misslungenen Fluchtwurf bis zu 3 Karten abwerfen, je +1 auf den Wurf.</td></tr>
+          <tr><td><b>Dieb</b></td><td>Anderen im Kampf in den Rücken fallen: 1 Karte abwerfen, −2 für den Kämpfer.</td></tr>
+          <tr><td><b>Priester</b></td><td>Gegen Untote je abgeworfener Karte +3, höchstens 3 Karten.</td></tr>
+        </tbody>
+      </table>
+      </div></div></details>
+<details class="rule panel"><summary>Tipps</summary><div class="rule-body"><ul>
+        <li>Rüste alles aus, bevor du die Tür aufstößt.</li>
+        <li>Fordere nur Monster heraus, die du mit Puffer schlägst. Die anderen greifen ein.</li>
+        <li>Hebe Monsterverstärker und Tränke für den Moment auf, in dem jemand kurz vor Stufe 10 steht.</li>
+        <li>Lege vor den Almosen Gegenstände aus, sonst verschenkst du sie.</li>
+        <li>Wer vorne liegt, wird von allen gebremst. Biete Beute an, wenn du Hilfe brauchst.</li>
+      </ul></div></details>
+    </div>
+  </section>
+
+  <!-- ============ Karten ============ -->
+  <section id="scr-cards" class="screen" aria-label="Kartenübersicht" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Alle Karten</h2></header>
+    <div class="chips" id="card-filter"></div>
+    <div class="content"><div class="cgrid" id="card-grid"></div></div>
+  </section>
+
+  <!-- ============ Quiz ============ -->
+  <section id="scr-quiz" class="screen" aria-label="Regel-Quiz" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Regel-Quiz</h2></header>
+    <div class="content" id="quiz"></div>
+  </section>
+</div>
+
+<div id="sheetwrap" aria-hidden="true"><div class="backdrop" data-sheetclose></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="diceov" class="diceov" hidden><img id="dice-img" src="icons/wuerfel-1.png" alt=""><div class="cap" id="dice-cap"></div></div>
+<canvas id="fxcanvas" aria-hidden="true"></canvas>
+<div id="tapstart" class="tapstart" hidden>
+  <img class="tap-emblem" src="art/logo-emblem.webp" alt="">
+  <div class="sign"><span class="sign-small">Fantasy-Kartenspiel</span><span class="sign-big">Loota</span></div>
+  <p>Tippen, um die Taverne zu betreten</p>
+</div>
+
+<script src="js/engine.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
