@@ -7,6 +7,7 @@ const K_STORY = 'loota.story';
 // Freischaltbare Optik. Rahmenfarben und Porträts übernimmt der Charakter-Bildschirm.
 const COSMETICS = {
   title: {
+    neuling: 'Neuling',
     stammgast: 'Stammgast',
     brueckenbezwinger: 'Brückenbezwinger',
     montagsheld: 'Montagsheld',
@@ -42,7 +43,20 @@ const WORLDS = [{
   outro: 'Der Drache trollt sich, das Städtchen atmet auf. Am Stammtisch ist plötzlich ein Stuhl für dich frei. Da ruft Hilde aus der Küche: „Das Bier ist alle! Und aus dem Keller kommen komische Geräusche …“',
   landmarks: [['Taverne', 50, 22], ['Garten', 80, 92], ['Hafen', 88, 312], ['Autobahnbrücke', 5, 548], ['Rathaus', 5, 604], ['Flohmarkt', 95, 604], ['Drachenhöhle', 95, 862]],
   stations: [
-    {id: 'w1s1', face: 'icons/portrait-hilde.png', ax: 72.9, ay: 19.6, no: '1', x: 50, y: 90, type: 'puzzle', name: 'Ärger im Beet', place: 'Garten',
+    {id: 'w1s0', face: 'icons/portrait-hilde.png', ax: 80, ay: 7, no: '0', type: 'tutorial', name: 'Hildes Probespiel', place: 'Taverne',
+      text: 'Bevor du dich mit dem Stammtisch anlegst, winkt dich Hilde an einen freien Tisch: „Komm, ich zeig dir erst mal, wie das hier läuft. Berta spielt mit, die ist heute ganz friedlich.“',
+      goal: 'Eine kurze Übungspartie gegen Berta bis Stufe 4. Hilde erklärt dir dabei jeden Schritt.',
+      scn: {tut: true, target: 4, bots: ['Berta'], diff: 'gemuetlich',
+        start: {lvl: 1, hand: ['Rostiges Schwert', 'Trank der Tapferkeit', 'Wütender Gartenzwerg'], deal: false},
+        botStart: {Berta: {lvl: 1, eq: ['Riesenhammer', 'Hörnerhelm'], deal: false}},
+        botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'im Probespiel ganz friedlich'}},
+        perks: {freeHelp: 'Berta', always: true, why: 'Für dich doch immer!'},
+        // Reihenfolge der Züge: du, Berta (Tür + Raum durchsuchen), du, …
+        deck: {door: ['Schleimige Socke', 'Krieger', 'Halbling', 'Elf', 'Zauberer', 'Priester', 'Pechsträhne', 'Windböe', 'Krieger', 'Halbling', 'Pilzkönig', 'Zauberer', 'Priester', 'Troll unter der Autobahnbrücke'],
+          tr: ['Topfhelm mit Delle', 'Schnelle Latschen', 'Lederschürze', 'Gusseiserne Bratpfanne', 'Glücksumhang', 'Flasche Drachenschnaps', 'Protzige Goldkette']}},
+      winText: 'Hilde klatscht in die Hände: „Na also! Jetzt kennst du die Grundlagen. Ab hier sage ich nichts mehr, das schaffst du allein. Alles Weitere steht in den Regeln.“',
+      reward: 'title:neuling'},
+    {id: 'w1s1', req: ['w1s0'], face: 'icons/portrait-hilde.png', ax: 72.9, ay: 19.6, no: '1', x: 50, y: 90, type: 'puzzle', name: 'Ärger im Beet', place: 'Garten',
       text: 'Hildes Gartenzwerg ist schon wieder stinksauer und bewacht das Kräuterbeet mit dem Rechen. „Ich brauche Petersilie“, seufzt Hilde. „Und zwar heute.“',
       goal: 'Besiege den stinksauren Wütenden Gartenzwerg (Kampfstärke 6). Du hast Stufe 2, eine Bratpfanne und drei Karten auf der Hand.',
       scn: {fight: {mons: ['Wütender Gartenzwerg'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Gusseiserne Bratpfanne'], hand: ['Winzig', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
@@ -100,26 +114,26 @@ const WORLDS = [{
 }, {
   id: 'w2', n: 2, name: 'Der Tavernenkeller', face: 'icons/portrait-hilde.png', deck: 'keller', table: 'keller', theme: 'keller', map: 'art/karte-welt2.webp', mapRatio: 768 / 1376,
   // solange Welt 1 offen ist: im Nebel zu erahnen (Punkte in Prozent der oberen 55 % des Bildes)
-  fog: {show: 0.55, teaser: [[50, 25.5], [74, 29.1], [86, 60]], hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.'},
+  fog: {show: 0.55, teaser: [[49.9, 30.5], [17.5, 43.1], [36.7, 69.3]], hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.'},
   intro: 'Das Bier ist alle, und aus dem Keller kommen seltsame Geräusche. Hilde drückt dir eine Laterne in die Hand: „Unten hat sich Rattenkönig Rüdiger zum Herrscher ausgerufen. Seitdem spielen alle da unten nach seinen Regeln. Hol mir mein Bier zurück!“ Am Stammtisch wetten Berta, Kalle und Uschi schon, ob du überhaupt wiederkommst.',
   outro: 'Rüdiger rückt seinen Kronkorken gerade und gibt sich geschlagen. Hilde bekommt ihr Bier, der Stammtisch zahlt die Wettschulden. Hinter dem Thron entdeckst du einen schmalen Tunnel. Es riecht nach Moos und Pilzen …',
   unlocks: ['das Keller-Deck', 'die Tischfläche „Kellergewölbe“', 'die Kellermusik'],
   starReward: {n: 18, id: 'frame:goldkronkorken'},
   finalTitle: 'Rüdiger ist besiegt!',
   stations: [
-    {id: 'w2s1', face: 'art/monster-staubmaus-bande.webp', ax: 50, ay: 14, no: '1', type: 'puzzle', name: 'Die Kellertreppe', place: 'Kellertreppe', req: ['w1s8'],
+    {id: 'w2s1', face: 'art/monster-staubmaus-bande.webp', ax: 49.9, ay: 16.8, no: '1', type: 'puzzle', name: 'Die Kellertreppe', place: 'Kellertreppe', req: ['w1s8'],
       text: 'Unten an der Kellertreppe raschelt es. Auf der letzten Stufe hockt eine Staubmaus-Bande, zu dritt und stinksauer, weil du ihnen mit der Laterne ins Gesicht leuchtest.',
       goal: 'Besiege die stinksaure Staubmaus-Bande (Kampfstärke 6). Du hast Stufe 2, eine Kellerlaterne und drei Karten auf der Hand.',
       scn: {fight: {mons: ['Staubmaus-Bande'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Kellerlaterne'], hand: ['Mausefalle', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
       extras: [{t: 'Mit nur einer Karte gewinnen', ok: st => st.played <= 1}, {t: 'Den Riesenböller behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Riesenböller')}],
       reward: 'title:kellerkind'},
-    {id: 'w2s2', luck: 0.35, face: 'icons/portrait-rosi.png', ax: 74, ay: 16, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
+    {id: 'w2s2', luck: 0.35, face: 'icons/portrait-rosi.png', ax: 17.5, ay: 23.7, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
       text: 'Zwischen den Fässern sitzt Ratte Rosi, Rüdigers vorlaute Nichte, und mischt Karten mit dem Schwanz. „Du willst zu meinem Onkel? Erst gegen mich. Und glaub ja nicht, dass ich dir jemals helfe.“',
       goal: '1 gegen 1 gegen Ratte Rosi, mit dem Keller-Deck: Erreiche Stufe 5 vor ihr.',
       scn: {target: 5, bots: ['Rosi'], diff: 'gemuetlich'},
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}],
       reward: 'frame:rattengrau'},
-    {id: 'w2s3', face: 'icons/portrait-fridolin.png', ax: 86, ay: 33, no: '3', type: 'event', name: 'Das sprechende Fass', place: 'Fasslager', req: ['w2s2'],
+    {id: 'w2s3', face: 'icons/portrait-fridolin.png', ax: 36.7, ay: 38.1, via: {w2s2: [[15.5, 31], [22, 37.5]]}, no: '3', type: 'event', name: 'Das sprechende Fass', place: 'Fasslager', req: ['w2s2'],
       text: 'Ein dickes Bierfass räuspert sich: „Fass Fridolin, sehr erfreut. Du willst in den Vorratsraum? Da spielen Rosi und ich heute Karten. Ich mach dir ein Angebot, unter Kellerleuten.“',
       goal: 'Nimm eines von Fridolins Angeboten an. Es wirkt sich auf die nächste Station aus.',
       choices: [
@@ -127,34 +141,34 @@ const WORLDS = [{
         {v: 'help', l: 'Fridolins Hilfe annehmen', d: 'Fridolin hilft dir in Station 4 einmal, ohne Schätze zu verlangen.'},
         {v: 'coins', l: 'Die 30 Münzen nehmen', d: 'Du bekommst 30 Münzen.', coins: 30}
       ]},
-    {id: 'w2s4', luck: 0.25, face: 'icons/portrait-fridolin.png', ax: 54, ay: 36, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
+    {id: 'w2s4', luck: 0.25, face: 'icons/portrait-fridolin.png', ax: 80.8, ay: 37.9, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
       text: 'Zwischen Kartoffelsäcken und Schatztruhen haben Rosi und Fridolin einen Tisch aus Kisten gebaut. „Wer zuerst Stufe 6 hat, kriegt die Truhe“, quiekt Rosi. Fridolin gluckert zustimmend.',
       goal: 'Gegen Rosi und Fridolin: Erreiche als Erster Stufe 6.',
       scn: story => ({target: 6, bots: ['Rosi', 'Fridolin'], diff: 'gemuetlich',
         start: story.choice.w2s3 === 'shield' ? {eq: ['Fassdeckel-Schild']} : undefined,
         perks: story.choice.w2s3 === 'help' ? {freeHelp: 'Fridolin', why: 'Abgemacht ist abgemacht. Einmal umsonst!'} : undefined}),
       extras: [{t: 'Nie Hilfe annehmen', ok: st => !st.help}, {t: 'Höchstens 1 Fluch abbekommen', ok: st => st.curses <= 1}]},
-    {id: 'w2s5', face: 'icons/portrait-gustav.png', ax: 35, ay: 52, no: '5', type: 'puzzle', name: 'Gustavs Geisterstunde', place: 'Weinkeller', req: ['w2s4'],
+    {id: 'w2s5', face: 'icons/portrait-gustav.png', ax: 81.8, ay: 57.5, no: '5', type: 'puzzle', name: 'Gustavs Geisterstunde', place: 'Weinkeller', req: ['w2s4'],
       text: 'Im Weinkeller schlägt eine Uhr, die es gar nicht gibt. Gespenst Gustav, seit 300 Jahren gelangweilt, hat zwei Untote zum Spielen eingeladen und den Korkgeist schon mal stinksauer gemacht. „Endlich Unterhaltung“, gähnt er.',
       goal: 'Besiege Korkgeist und Steuerprüfer-Gespenst zusammen (Kampfstärke 13, beide untot). Du bist Priester auf Stufe 4 mit dem Fassdeckel-Schild: Kampfstärke 8 gegen Untote.',
       scn: {fight: {mons: ['Korkgeist', 'Steuerprüfer-Gespenst'], enh: ['Stinksauer']}, start: {lvl: 4, cls: 'Priester', eq: ['Fassdeckel-Schild'], hand: ['Knoblauchzopf', 'Trank der Tapferkeit', 'Winzig', 'Gummihuhn mit Quietsch', 'Ahnenforschung'], deal: false}, bots: []},
       extras: [{t: 'Den Knoblauchzopf behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Knoblauchzopf')}, {t: 'Keine Karten abwerfen', ok: st => !st.discarded}],
       reward: 'title:geisterjaeger'},
-    {id: 'w2s6a', luck: 0.1, face: 'icons/portrait-gustav.png', ax: 62, ay: 52, no: '6a', type: 'duel', name: 'Weinkeller', place: 'Weinkeller', hard: true, req: ['w2s5'],
+    {id: 'w2s6a', luck: 0.1, face: 'icons/portrait-gustav.png', ax: 49.6, ay: 57.1, no: '6a', type: 'duel', name: 'Weinkeller', place: 'Weinkeller', hard: true, req: ['w2s5'],
       text: 'Tiefer im Weinkeller ist es kalt, und die Flaschen flüstern. Rosi und Gustav spielen hier ihre Lieblingsvariante, mit doppelt so vielen Flüchen. „Ich liebe Flüche“, kichert Rosi.',
       goal: 'Gegen Rosi und Gustav, mit doppelt so vielen Flüchen im Deck: Erreiche Stufe 7. Hier gibt es doppelte Münzen.',
       scn: {target: 7, bots: ['Rosi', 'Gustav'], variant: 'fluchchaos', diff: 'normal'}, coinMul: 2,
       extras: [{t: 'In weniger als 15 Runden', ok: (st, S) => S.turn < 15}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
-    {id: 'w2s6b', luck: 0.3, face: 'icons/portrait-fridolin.png', ax: 45, ay: 74, no: '6b', type: 'duel', name: 'Kartoffelkeller', place: 'Kartoffelkeller', easy: true, req: ['w2s5'],
+    {id: 'w2s6b', luck: 0.3, face: 'icons/portrait-fridolin.png', ax: 48.3, ay: 75.7, via: {w2s5: [[84, 66], [83, 77], [74, 80.5], [58, 80]]}, no: '6b', type: 'duel', name: 'Kartoffelkeller', place: 'Kartoffelkeller', easy: true, req: ['w2s5'],
       text: 'Im Kartoffelkeller riecht es nach Erde. Fridolin hat sich gemütlich zwischen die Säcke gerollt: „Eine ruhige Runde, nur wir zwei? Ich helfe dir sogar, gegen eine kleine Gebühr.“',
       goal: 'Gegen Fridolin: Erreiche Stufe 6.',
       scn: {target: 6, bots: ['Fridolin'], diff: 'gemuetlich'},
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
-    {id: 'w2s7', ax: 80, ay: 80, no: '7', type: 'shop', name: 'Rast beim Kellermeister', place: 'Kellermeister', reqAny: ['w2s6a', 'w2s6b'],
+    {id: 'w2s7', ax: 19.4, ay: 82.3, via: {w2s6a: [[24, 58.5], [16, 64], [16, 75]]}, no: '7', type: 'shop', name: 'Rast beim Kellermeister', place: 'Kellermeister', reqAny: ['w2s6a', 'w2s6b'],
       text: 'Kurz vor dem Thronsaal hat der alte Kellermeister seinen Stand: Kerzenstummel, Korken und allerlei Krimskrams. „Für ein paar Münzen ist alles zu haben. Rüdiger zahlt ja nie.“',
       goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Rüdiger.',
       shop: [{id: 'title:fassfluesterer', price: 30}, {id: 'frame:kerzenwachs', price: 40}, {id: 'portrait:rosi', price: 60}], onward: 'Weiter zu Rüdiger'},
-    {id: 'w2s8', luck: 0.25, face: 'art/monster-rattenkoenig-ruediger.webp', ax: 50, ay: 92, no: '8', type: 'boss', name: 'Rüdigers Thronsaal', place: 'Thronsaal', req: ['w2s7'],
+    {id: 'w2s8', luck: 0.25, face: 'art/monster-rattenkoenig-ruediger.webp', ax: 49.2, ay: 90.4, no: '8', type: 'boss', name: 'Rüdigers Thronsaal', place: 'Thronsaal', req: ['w2s7'],
       text: 'Auf einem Thron aus Pfandkisten sitzt Rattenkönig Rüdiger, den Kronkorken schief auf dem Kopf. Rosi, Fridolin und Gustav sitzen schon am Tisch. „Wer mich besiegt, kriegt das Bier“, piepst Rüdiger. „Aber das schafft eh keiner.“',
       goal: 'Gegen Rosi, Fridolin und Gustav. Rüdiger steckt in der unteren Hälfte des Türstapels und ist nach dem Festmahl etwas träge: Stufe 13 statt 14. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
       scn: {target: 10, bots: ['Rosi', 'Fridolin', 'Gustav'], boss: 'Rattenkönig Rüdiger', bossLvl: 13, diff: 'normal'},
@@ -191,6 +205,7 @@ const allStations = () => WORLDS.flatMap(w => w.stations.map(st => Object.assign
 function stationById(id) { return allStations().find(st => st.id === id); }
 function worldById(id) { return WORLDS.find(w => w.id === id); }
 function stationUnlocked(st) {
+  if (STORY.done[st.id]) return true;   // einmal geschafft, bleibt offen (auch wenn später eine Station davor dazukommt)
   if (st.req && !st.req.every(r => STORY.done[r])) return false;
   if (st.reqAny && !st.reqAny.some(r => STORY.done[r])) return false;
   return true;

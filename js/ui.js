@@ -412,6 +412,7 @@ function doRender() {
   if (S) { try { UI.adv = UI.advice ? advise() : null; } catch (e) { console.error(e); UI.adv = null; } } else UI.adv = null;
   watch();
   if (CUR === 'game' && S) { $('#scr-game').classList.toggle('fighting', !!S.combat); renderTop(); renderOpps(); renderTable(); renderAct(); renderMe(); renderHand(); }
+  tutUpdate();
   syncSel();
   if (SHEETS.length) renderSheet(false);
   renderDice();
@@ -567,7 +568,7 @@ function dockButtons(q, ctx) {
   const items = [];
   const mons = ctx === 'trouble' ? q.opts.map((o, i) => [o, i]).filter(([o]) => /^m\d+$/.test(String(o.v))) : [];
   q.opts.forEach((o, i) => { if (!mons.some(([, j]) => j === i)) items.push({type: 'opt', i, o}); });
-  if (mons.length) items.unshift({type: 'pick', o: {l: 'Herausfordern', kind: ''}, rec: UI.adv && mons.some(([o]) => o.v === UI.adv.opt)});
+  if (mons.length) items.unshift({type: 'pick', o: {l: 'Herausfordern', kind: '', dis: mons.every(([o]) => o.dis)}, rec: UI.adv && mons.some(([o]) => o.v === UI.adv.opt)});
   // Primäraktion zuerst, „Abbrechen“ zuletzt
   items.sort((x, y) => (x.o.kind === 'primary' ? -1 : 0) - (y.o.kind === 'primary' ? -1 : 0) || (x.o.kind === 'ghost' ? 1 : 0) - (y.o.kind === 'ghost' ? 1 : 0));
   const cancel = items.filter(it => it.o.kind === 'ghost');
@@ -584,7 +585,7 @@ function renderAct() {
     cls += ' your';
     html = `<div class="cap"><span class="ct">${w && w.human ? 'Du hast gewonnen!' : w ? esc(w.name) + ' gewinnt.' : 'Nicht geschafft.'}</span></div><div class="dbtns"><button type="button" class="btn primary" data-go="again">Nochmal</button><button type="button" class="btn" data-go="${story ? 'storymap' : 'menu'}">${story ? 'Zur Karte' : 'Hauptmenü'}</button></div>`;
   } else if (UI.prompt) {
-    const q = UI.prompt.get(), ctx = UI.prompt.ctx, data = UI.prompt.data; UI.opts = q.opts;
+    const q = UI.prompt.get(), ctx = UI.prompt.ctx, data = UI.prompt.data; tutGate(q, ctx); UI.opts = q.opts;
     cls += ' your';
     const hasInfo = !!(q.text || (UI.coach && q.hint && q.hint.length) || UI.adv);
     const tip = UI.adv ? '<span class="tipchip">Tipp</span>' : '';
@@ -934,7 +935,7 @@ function renderQuiz() {
 /* ================= Storymodus: Karte, Stationen, Ergebnis ================= */
 let STORY_RUN = null; // {st, done} während eine Station läuft
 const LOCK_PATH = '<rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />';
-const ST_TYPES = {puzzle: 'Rätselkampf', duel: 'Herausforderung', event: 'Ereignis', shop: 'Händler', boss: 'Boss'};
+const ST_TYPES = {tutorial: 'Probespiel', puzzle: 'Rätselkampf', duel: 'Herausforderung', event: 'Ereignis', shop: 'Händler', boss: 'Boss'};
 const ST_ICON = {
   puzzle: '<path d="M14.5 4H20v5.5L9.5 20 4 14.5z M7.5 13.5l3 3 M4 20l2.5-2.5" />',
   duel: '<rect x="3.5" y="5" width="10" height="14" rx="2" /><path d="M15 6.5l5 1.3-3.2 12.2-3.3-.9" />',
@@ -945,7 +946,7 @@ const ST_ICON = {
 const starSvg = on => `<img class="star${on ? ' on' : ''}" src="icons/stern-${on ? 'voll' : 'leer'}.png" alt="" aria-hidden="true">`;
 // Medaillen der Stationen: Musely-Symbole, solange eins fehlt das gezeichnete
 const ST_IMG = {puzzle: 'icons/st-puzzle.png', duel: 'icons/st-duel.png', event: 'icons/st-event.png', shop: 'icons/st-shop.png', boss: 'icons/st-boss.png', lock: 'icons/st-lock.png'};
-const medalIcon = t => ST_IMG[t] ? `<img class="mi" src="${ST_IMG[t]}" alt="">` : `<svg viewBox="0 0 24 24">${ST_ICON[t] || LOCK_PATH}</svg>`;
+const medalIcon = t => t === 'tutorial' ? '<img class="mi face" src="icons/portrait-hilde.png" alt="">' : ST_IMG[t] ? `<img class="mi" src="${ST_IMG[t]}" alt="">` : `<svg viewBox="0 0 24 24">${ST_ICON[t] || LOCK_PATH}</svg>`;
 const coinImg = '<img src="icons/muenze-voll.png" alt="">';
 function renderStory() {
   const open = openWorlds(), cw = open[open.length - 1];
@@ -963,11 +964,24 @@ function renderStory() {
     if (sc && sc.__scrolledTo !== next.id) { sc.__scrolledTo = next.id; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - sc.clientHeight / 2); }); }
   }
 }
+// Weiche Linie durch alle Punkte (Catmull-Rom als Bézier-Kurven)
+function smoothPath(p) {
+  const f = n => +n.toFixed(1);
+  let d = `M${p[0][0]} ${p[0][1]}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const p0 = p[i - 1] || p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] || p2;
+    d += ` C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
 function worldMapHTML(w, next) {
   const art = !!w.map, H = art ? 100 : w.mapH, done = !!STORY.worlds[w.id];
   const X = st => art ? st.ax : st.x, Y = st => art ? st.ay : st.y;
   const segs = [];
-  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r); if (!a || a.world !== w.id) return; const ya = Y(a), yb = Y(st); segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="M${X(a)} ${ya} C${X(a)} ${(ya + yb) / 2} ${X(st)} ${(ya + yb) / 2} ${X(st)} ${yb}" vector-effect="non-scaling-stroke" />`); }));
+  // Wegpunkte (st.via[von]) lassen den Pfad den Gängen der Karte folgen, sonst eine einfache Kurve
+  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r); if (!a || a.world !== w.id) return; const ya = Y(a), yb = Y(st), via = art && st.via && st.via[r];
+    const d = via ? smoothPath([[X(a), ya], ...via, [X(st), yb]]) : `M${X(a)} ${ya} C${X(a)} ${(ya + yb) / 2} ${X(st)} ${(ya + yb) / 2} ${X(st)} ${yb}`;
+    segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="${d}" vector-effect="non-scaling-stroke" />`); }));
   const marks = (w.landmarks || []).map(([t, x, y]) => `<span class="st-mark${x < 25 ? ' l' : x > 75 ? ' r' : ''}" style="left:${x}%;top:${y}px">${esc(t)}</span>`).join('');
   const nodes = w.stations.map(st => {
     const un = stationUnlocked(st), dn = !!STORY.done[st.id], s = starsOf(st.id), mx = maxStars(st);
@@ -1003,7 +1017,7 @@ function startStation(id) {
   // Der Endgegner einer Welt (ab Welt 2) kommt nur im Bosskampf ins Deck
   const fin = w.id !== 'w1' && w.stations.find(x => x.final), bossName = fin && fin.scn && fin.scn.boss;
   if (bossName && !scn.boss) scn.counts[bossName] = 0;
-  GAME_TABLE = w.table || 'taverne'; GAME_THEME = w.theme || 'taverne';
+  GAME_TABLE = w.table || 'taverne'; GAME_THEME = w.theme || 'taverne'; TUT = null;
   SCN = scn; STORY_RUN = {st: st.id, done: false};
   $$('.endov').forEach(x => x.remove()); while (SHEETS.length) SHEETS.pop(); renderSheet(true);
   applySettings();
@@ -1075,6 +1089,10 @@ SHEET_VIEWS.station = s => {
     body += `<p class="st-purse">${coinImg}Du hast <b>${STORY.coins}</b> Münzen.</p><div class="shop">${st.shop.map(it => { const own = owns(it.id), poor = STORY.coins < it.price;
       return `<div class="shop-item">${cosmeticPreview(it.id)}<span>${esc(cosmeticName(it.id))}</span>${own ? '<em>Gehört dir</em>' : `<button type="button" class="btn small${poor ? ' poor' : ''}" data-buy="${it.id}">${coinImg}${it.price}</button>`}</div>`; }).join('')}</div>` +
       `<div class="acts"><button type="button" class="btn primary" data-storyclose>${esc(st.onward || 'Weiter')}</button></div>`;
+  } else if (st.type === 'tutorial') {
+    body += `<ul class="st-goals"><li class="${stars[0] ? 'ok' : ''}">${starSvg(!!stars[0])}<span>Probespiel schaffen</span></li></ul>`;
+    if (st.reward) body += `<p class="st-reward">Belohnung: ${esc(cosmeticName(st.reward))}${owns(st.reward) ? ' · hast du schon' : ''}</p>`;
+    body += `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Probespiel starten'}</button>${done ? '' : `<button type="button" class="btn" data-story-tutskip="${st.id}">Überspringen, ich kenne das Spiel</button>`}</div>`;
   } else {
     const goals = [['Station schaffen', !!stars[0]], ...(st.extras || []).map((e, i) => [e.t, !!stars[i + 1]])];
     body += `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>`;
@@ -1091,7 +1109,7 @@ function showStoryEnd(res) {
   const el = document.createElement('div'); el.className = 'endov story';
   const lose = st.type === 'puzzle' ? 'Das reicht noch nicht. Schau dir deine Karten noch einmal an.' : S && S.winner > 0 ? `${esc(P(S.winner).name)} war schneller. Gleich noch einmal?` : 'Gleich noch einmal?';
   el.innerHTML = `<div class="panel"><div class="se-stars">${res.stars.map((v, i) => `<span class="se-star${v ? ' on' : ''}" style="--d:${0.15 + i * 0.25}s">${starSvg(v)}</span>`).join('')}</div>` +
-    `<h2>${w ? (st.final ? esc(worldById(st.world).finalTitle || 'Welt geschafft!') : 'Geschafft!') : 'Nicht geschafft'}</h2><p>${w ? esc(st.name) + ' liegt hinter dir.' : lose}</p>` +
+    `<h2>${w ? (st.final ? esc(worldById(st.world).finalTitle || 'Welt geschafft!') : 'Geschafft!') : 'Nicht geschafft'}</h2><p>${w ? (st.winText ? esc(st.winText) : esc(st.name) + ' liegt hinter dir.') : lose}</p>` +
     `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>` +
     (res.coins ? `<p class="se-coins">${coinImg}+${res.coins} Münzen</p>` : '') +
     res.rewards.map(r => `<p class="se-reward">Neu: ${esc(cosmeticName(r))}</p>`).join('') +
@@ -1106,6 +1124,7 @@ function go(a) {
   switch (a) {
     case 'continue': continueGame(); break;
     case 'setup': show('setup'); break;
+    case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
     case 'resetstory': confirmDialog('Storymodus zurücksetzen?', 'Alle Stationen, Sterne, Münzen und Belohnungen aus dem Storymodus gehen verloren.', 'Zurücksetzen', 'Abbrechen').then(ok => { if (ok) { resetStory(); toast('Storymodus zurückgesetzt'); } }); break;
     case 'reroll': ROSTER = rollRoster(); renderFoes(); Snd.sfx('deal'); break;
     case 'story': show('story'); break;
@@ -1177,6 +1196,8 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-story-choice]'))) { pickChoice(el.dataset.storyChoice); return; }
   if ((el = t.closest('[data-buy]'))) { buyItem(el.dataset.buy); return; }
   if ((el = t.closest('[data-storyclose]'))) { closeAllSheets(); return; }
+  if ((el = t.closest('[data-story-tutskip]'))) { const st = stationById(el.dataset.storyTutskip); if (st && !STORY.done[st.id]) { STORY.done[st.id] = true; STORY.stars[st.id] = [false]; saveStory(); } closeAllSheets(); renderStory(); return; }
+  if ((el = t.closest('[data-tutok]'))) { if (TUT && TUT.cur) TUT.fin.add(TUT.cur); tutUpdate(); return; }
   if ((el = t.closest('[data-story-skip]'))) { skipStation(stationById(el.dataset.storySkip)); closeAllSheets(); toast('Station übersprungen'); renderStory(); return; }
   if ((el = t.closest('[data-story-skipto]'))) { skipTo(stationById(el.dataset.storySkipto)); closeAllSheets(); toast('Bis hierhin übersprungen'); renderStory(); return; }
   if ((el = t.closest('[data-deck]'))) { selectDeck(el.dataset.deck); return; }
@@ -1410,6 +1431,74 @@ const Drag = (() => {
 let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('#btn-install').hidden = false; });
 $('#btn-install').addEventListener('click', async () => { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (e) {} deferredInstall = null; $('#btn-install').hidden = true; });
+/* ================= Probespiel mit Hilde ================= */
+// Lektionen: Die erste, deren Lage eintritt (when), erscheint in Hildes Sprechblase und bleibt, bis sie erledigt ist (done)
+// oder mit „Verstanden“ weggetippt wird (ok). only = welche Knöpfe im Dock gerade erlaubt sind, hl = was aufleuchtet.
+let TUT = null;
+const tHand = n => S && me().hand.find(c => typeof n === 'string' ? c.n === n : n(c));
+const tEq = n => S && me().eq.some(c => c.n === n);
+const tCtx = () => UI.prompt && S.cur === 0 ? UI.prompt.ctx : null;
+const tFight = () => S.combat && !S.combat.resolved && S.combat.f === 0 && tCtx() === 'fight';
+const tCard = n => `#hand .mc[aria-label="${n}"]`;
+const tOpt = pred => () => { const i = (UI.opts || []).findIndex(pred); return i >= 0 ? `#act [data-opt="${i}"]` : null; };
+const TUT_LESSONS = [
+  {id: 'hallo', ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Schön, dass du da bist! Im Probespiel zeige ich dir die Grundlagen. Wer zuerst Stufe 4 erreicht, gewinnt. Du spielst gegen Berta, die ist heute ganz friedlich.'},
+  {id: 'schwert', when: () => tCtx() === 'kick' && tHand('Rostiges Schwert'), done: () => tEq('Rostiges Schwert'), only: () => false, hl: () => tCard('Rostiges Schwert'),
+    text: 'Unten liegen deine Handkarten. Das Rostige Schwert macht dich stärker: Zieh es aufs Spielfeld oder tipp es an und wähle „Ausrüsten“.'},
+  {id: 'tuer', when: () => tCtx() === 'kick' && S.turn === 1, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
+    text: 'Jeder Zug beginnt damit, dass du die Tür aufstößt. Dahinter kann ein Monster lauern oder etwas Nützliches liegen.'},
+  {id: 'kampf', when: () => tFight() && S.turn === 1 && evalCombat(S.combat).win, done: () => !tFight(), hl: () => ['#table .hud', '#act .btn.primary'],
+    text: 'Ein Monster! Unten links steht deine Kampfstärke, also Stufe plus Gegenstände. Rechts steht die des Monsters. Ist deine höher, gewinnst du: Tipp auf „Monster besiegen“.'},
+  {id: 'helm', when: () => tCtx() && tHand('Topfhelm mit Delle'), done: () => tEq('Topfhelm mit Delle') || !tHand('Topfhelm mit Delle'), hl: () => tCard('Topfhelm mit Delle'),
+    text: 'Gewonnen! Für jeden Sieg steigst du eine Stufe auf und bekommst Schätze. Der Topfhelm kommt auf den Kopf: Leg ihn genauso an wie das Schwert.'},
+  {id: 'zugende', when: () => tCtx() === 'charity' && S.turn === 1, done: () => tCtx() !== 'charity', hl: () => '#act .btn.primary',
+    text: 'Am Ende deines Zuges darfst du höchstens 5 Karten auf der Hand behalten. Du hast weniger, also beende deinen Zug. Dann ist Berta dran.'},
+  {id: 'berta', when: () => S.cur === 1, done: () => S.cur === 0,
+    text: 'Berta spielt nach denselben Regeln: Tür aufstoßen, kämpfen oder den Raum durchsuchen. Schau ihr kurz zu.'},
+  {id: 'rasse', when: () => tCtx() && tHand(c => c.k === 'race') && !me().race, done: () => !!me().race, only: () => false, hl: () => tCard('Elf'),
+    text: 'Hinter der Tür war diesmal eine Rasse. Rassen und Klassen geben dir besondere Fähigkeiten. Tipp die Elfe an, lies, was sie kann, und spiel sie dann aus.'},
+  {id: 'herausfordern', when: () => tCtx() === 'trouble' && tHand(c => c.k === 'monster'), done: () => tCtx() !== 'trouble', only: o => /^m\d+$/.test(String(o.v)), hl: () => '#act [data-dpick]',
+    text: 'Kein Monster hinter der Tür? Dann darfst du eins von deiner Hand herausfordern. Der Wütende Gartenzwerg ist schwach: Fordere ihn heraus.'},
+  {id: 'fluch', when: () => tCtx() === 'trouble' && S.log.some(e => /Pechsträhne/.test(e.t)), done: () => tCtx() !== 'trouble', only: o => o.v === 'loot', hl: tOpt(o => o.v === 'loot'),
+    text: 'Pech gehabt! Einen Fluch, den du beim Aufstoßen aufdeckst, bekommst du selbst ab. Jetzt kannst du noch den Raum durchsuchen: Dann ziehst du eine Karte verdeckt auf die Hand.'},
+  {id: 'verdeckt', ok: true, when: () => tCtx() && tHand('Windböe'), done: () => !tHand('Windböe'), hl: () => '.oc[data-opp="1"]',
+    text: 'Verdeckt gezogene Flüche wirken nicht auf dich. Die Windböe kannst du jederzeit auf einen Gegner spielen: Zieh sie oben auf Berta, dann ist ihr Hörnerhelm weg. Du kannst sie dir aber auch aufheben.'},
+  {id: 'trank', when: () => tFight() && !evalCombat(S.combat).win && tHand('Trank der Tapferkeit'), done: () => !tHand('Trank der Tapferkeit') || !tFight(), only: () => false, hl: () => tCard('Trank der Tapferkeit'),
+    text: 'Knapp! Bei Gleichstand gewinnt das Monster. Mit einem Trank aus der Hand drehst du den Kampf: Zieh ihn auf deine Seite des Spielfelds.'},
+  {id: 'hilfe', when: () => tFight() && !evalCombat(S.combat).win && S.combat.h == null, done: () => !tFight() || S.combat.h != null, only: o => o.v === 'help', hl: tOpt(o => o.v === 'help'),
+    text: 'Gegen dieses Monster hast du allein keine Chance. Bitte Berta um Hilfe: Ihre Kampfstärke zählt dann mit, dafür teilt ihr die Schätze. Hilft keiner, bleibt nur Weglaufen, dafür brauchst du eine 5 oder 6.'},
+  {id: 'hilfewer', when: () => tCtx() === 'helpWho', done: () => tCtx() !== 'helpWho', hl: tOpt(o => o.v === 1),
+    text: 'Tipp auf Berta.'},
+  {id: 'angebot', when: () => tCtx() === 'helpOffer', done: () => tCtx() !== 'helpOffer',
+    text: 'Wie viele Schätze bietest du ihr an? Je mehr, desto eher sagt jemand ja. Berta hilft dir heute aber sowieso.'},
+  {id: 'zusammen', when: () => tFight() && S.combat.h != null && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
+    text: 'Zusammen seid ihr stärker als der Troll. Tipp auf „Monster besiegen“ und hol dir die letzte Stufe!'}
+];
+const tutLesson = () => TUT && TUT.cur ? TUT_LESSONS.find(l => l.id === TUT.cur) : null;
+function tutGate(q, ctx) {
+  const L = SCN && SCN.tut && tutLesson();
+  if (!L || !L.only) return;
+  q.opts.forEach(o => { if (o.kind !== 'ghost' && !L.only(o)) o.dis = true; });
+}
+function tutUpdate() {
+  const box = $('#tutor'); if (!box) return;
+  const on = SCN && SCN.tut && S && CUR === 'game' && S.winner == null;
+  $$('.tut-hl').forEach(e => e.classList.remove('tut-hl'));
+  if (!on) { box.hidden = true; return; }
+  TUT = TUT || {fin: new Set(), cur: null};
+  const was = TUT.cur;
+  let L = tutLesson();
+  if (L && (TUT.fin.has(L.id) || (L.done && L.done()))) { TUT.fin.add(L.id); L = null; TUT.cur = null; }
+  if (!L) { L = TUT_LESSONS.find(l => !TUT.fin.has(l.id) && l.when()); if (L) TUT.cur = L.id; }
+  if (TUT.cur !== was) render();   // Knöpfe im Dock neu sperren oder freigeben
+  if (!L) { box.hidden = true; return; }
+  patch(box, `<img src="icons/portrait-hilde.png" alt=""><div class="tt"><b>Hilde</b><p>${esc(L.text)}</p>${L.ok ? '<button type="button" class="btn small" data-tutok>Verstanden</button>' : ''}</div>`);
+  box.dataset.lesson = L.id; box.hidden = false;
+  const t = $('#table'); if (t) box.style.top = Math.round(t.getBoundingClientRect().top + 6) + 'px';
+  if (L.hl) { let h = L.hl(); (Array.isArray(h) ? h : [h]).forEach(sel => { if (sel) $$(sel).forEach(e => e.classList.add('tut-hl')); }); }
+}
+
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }

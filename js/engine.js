@@ -492,11 +492,16 @@ function newGame(allBots){
   if(sc && sc.boss) placeBoss(sc.boss, sc.bossLvl);
   S.players.forEach(p=>{
     if(p.id===0 && sc && sc.start) applyStart(p, sc.start);
+    else if(!p.human && sc && sc.botStart && sc.botStart[p.name]) applyStart(p, sc.botStart[p.name]);
     else for(let i=0;i<4;i++){ p.hand.push(drawDoor()); p.hand.push(drawTr()); }
+    if(!p.human && sc && sc.botStyles && sc.botStyles[p.name]) p.style=sc.botStyles[p.name];
   });
+  // Probespiel: diese Karten liegen in genau der Reihenfolge oben auf den Stapeln (erste zuerst gezogen)
+  if(sc && sc.deck) ['door','tr'].forEach(k=>{ const list=(sc.deck[k]||[]).map(pullCard); for(let i=list.length-1;i>=0;i--) S[k].push(list[i]); });
   buildCatalog(allCards());
   S.players.filter(p=>!p.human).forEach(botSetup);
   if(sc && sc.fight) log('Rätselkampf: Gewinne diesen einen Kampf mit dem, was du hast.','sys');
+  else if(sc && sc.tut) log('Probespiel mit Hilde: Wer zuerst Stufe '+WINLVL()+' erreicht, gewinnt.','sys');
   else if(sc) log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt.${sc.boss?` Irgendwo im Türstapel lauert ${sc.boss}: Wer ihn besiegt, gewinnt sofort.`:''} Du beginnst.`,'sys');
   else log('Neue Partie. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.','sys');
   rule('Tippe deine Handkarten an, um sie auszuspielen. Rasse, Klasse und Gegenstände darfst du gleich jetzt auslegen.');
@@ -854,7 +859,7 @@ async function humanAskHelp(C){
 function botAcceptHelp(b,C,offer){
   const f=P(C.f), total=treasuresOf(C), st=styleOf(b);
   if(!wouldWinWith(C,b)) return {yes:false, why:'Selbst mit mir reicht das nicht.'};
-  if(SCN && SCN.perks && SCN.perks.freeHelp===b.name && f.human && !S.stats.perkUsed){ S.stats.perkUsed=true; return {yes:true, why:SCN.perks.why||'Ehrensache!'}; }
+  if(SCN && SCN.perks && SCN.perks.freeHelp===b.name && f.human && (!S.stats.perkUsed || SCN.perks.always)){ S.stats.perkUsed=true; return {yes:true, why:SCN.perks.why||'Ehrensache!'}; }
   if(f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss)) return {yes:false, why:'Damit du gewinnst? Sicher nicht!'};
   if(st.noHelp) return {yes:false, why:'Helfen? Ich? Pfoten weg von meinen Schätzen!'};
   if(hasRace(b,'elf') && b.lvl<WINLVL()-1) return {yes:true, why:'Als Elf steige ich dabei selbst auf. Gern!'};
