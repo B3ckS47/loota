@@ -30,6 +30,15 @@ function saveProfile() { try { localStorage.setItem(K_PROFILE, JSON.stringify(PR
 const ALL_PORTRAITS = [...PORTRAITS, ...Object.entries(COSMETICS.portrait).map(([k, v]) => [k, v.n, v.src, 'portrait:' + k])];
 const ALL_FRAMES = [...FRAMES, ...Object.entries(COSMETICS.frame).map(([k, v]) => [k, v.n, v.c, 'frame:' + k])];
 const cosOpen = x => !x[3] || owns(x[3]);
+// Hinweis, wo man eine gesperrte Optik bekommt
+function cosmeticSource(id) {
+  for (const w of WORLDS) for (const st of w.stations) {
+    if (st.reward === id) return `${cosmeticName(id)}: Belohnung in Welt ${w.n}, Station ${st.no} „${st.name}“.`;
+    const it = (st.shop || []).find(x => x.id === id);
+    if (it) return `${cosmeticName(id)}: in Welt ${w.n} bei „${st.name}“ für ${it.price} Münzen.`;
+  }
+  return 'Schaltest du im Storymodus frei.';
+}
 function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portrait && cosOpen(q)) || PORTRAITS[0]; return x[2]; }
 function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]; return f[2]; }
 function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
@@ -41,9 +50,11 @@ function renderProfile() {
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
   patch($('#pf-portraits'), ALL_PORTRAITS.map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join(''));
-  patch($('#pf-frames'), ALL_FRAMES.map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i></i><span>${l}</span>${on ? '' : lockI}</button>`; }).join(''));
-  const titles = Object.entries(COSMETICS.title);
-  patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => { const on = owns('title:' + k); return `<button type="button" class="pf-ti${on ? '' : ' locked'}" data-title="${k}" aria-pressed="${on && PROFILE.title === k}">${on ? '' : lockI}${esc(l)}</button>`; }).join('') + `<p class="hint">Titel, weitere Porträts und Rahmen schaltest du im Storymodus frei.</p>`);
+  patch($('#pf-frames'), ALL_FRAMES.map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i><span>${l}</span></button>`; }).join(''));
+  // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
+  const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k));
+  patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +
+    `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} verdienst du im Storymodus.</p>`);
 }
 document.addEventListener('input', e => {
   if (e.target.id !== 'pf-name') return;
@@ -1027,8 +1038,8 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
   if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
-  if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
-  if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('frame:' + el.dataset.frame)); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
   if ((el = t.closest('[data-story-start]'))) { startStation(el.dataset.storyStart); return; }
