@@ -983,7 +983,7 @@ function cosmeticPreview(id) {
 // Story-Text, wenn bekannt mit dem Gesicht dessen, der spricht oder auftritt
 const sayHTML = (face, text) => face ? `<div class="st-say"><img src="${face}" alt=""><p class="st-text">${esc(text)}</p></div>` : `<p class="st-text">${esc(text)}</p>`;
 /* Fluch aufs Spielfeld gezogen: hier wählst du, wen er trifft */
-function curseHits(c, t) {
+function curseImpact(c, t) {
   const e = c.eff || {};
   switch (e.t) {
     case 'lvl': return t.lvl > 1 ? `Stufe ${t.lvl} → ${Math.max(1, t.lvl - e.n)}` : 'Ist schon auf Stufe 1';
@@ -1001,7 +1001,7 @@ SHEET_VIEWS.curse = s => {
   const ts = curseTargets(c); if (!ts.length) return null;
   const C = S.combat, mean = c.txt ? `<b>Wirkung:</b> ${esc(c.txt)}` : cardMeaning(c);
   const row = ([t]) => { const role = C && !C.resolved ? (C.f === t.id ? 'kämpft' : C.h === t.id ? 'hilft' : '') : S.cur === t.id ? 'am Zug' : '';
-    return `<button type="button" class="ctgt" data-cursepick="${t.id}"><img src="${portrait(t)}" alt=""><span class="ct-t"><b>${esc(t.name)}</b><small>Stufe ${t.lvl} · Kampfstärke ${power(t)}${t.dead ? ' · tot' : ''}</small>${curseHits(c, t) ? `<em>${esc(curseHits(c, t))}</em>` : ''}</span>${role ? `<span class="ct-role">${role}</span>` : ''}</button>`; };
+    return `<button type="button" class="ctgt" data-cursepick="${t.id}"><img src="${portrait(t)}" alt=""><span class="ct-t"><b>${esc(t.name)}</b><small>Stufe ${t.lvl} · Kampfstärke ${power(t)}${t.dead ? ' · tot' : ''}</small>${curseImpact(c, t) ? `<em>${esc(curseImpact(c, t))}</em>` : ''}</span>${role ? `<span class="ct-role">${role}</span>` : ''}</button>`; };
   return {head: h3(`Wen triffst du mit „${esc(c.n)}“?`), body: (mean ? `<p class="meaning ct-mean">${mean}</p>` : '') + `<div class="ctg">${ts.map(row).join('')}</div>`};
 };
 SHEET_VIEWS.storyintro = s => {
