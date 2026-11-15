@@ -862,21 +862,23 @@ function renderStory() {
   const done = !!STORY.worlds[w.id];
   patch($('#st-head'), `<span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${done ? ' · abgeschlossen' : ''}</span>`);
   const next = w.stations.find(st => stationUnlocked(st) && !STORY.done[st.id]);
+  const art = !!w.map, H = art ? 100 : w.mapH;
+  const X = st => art ? st.ax : st.x, Y = st => art ? st.ay : st.y;
   const segs = [];
-  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r); segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="M${a.x} ${a.y} C${a.x} ${(a.y + st.y) / 2} ${st.x} ${(a.y + st.y) / 2} ${st.x} ${st.y}" vector-effect="non-scaling-stroke" />`); }));
+  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r), ya = Y(a), yb = Y(st); segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="M${X(a)} ${ya} C${X(a)} ${(ya + yb) / 2} ${X(st)} ${(ya + yb) / 2} ${X(st)} ${yb}" vector-effect="non-scaling-stroke" />`); }));
   const marks = w.landmarks.map(([t, x, y]) => `<span class="st-mark${x < 25 ? ' l' : x > 75 ? ' r' : ''}" style="left:${x}%;top:${y}px">${esc(t)}</span>`).join('');
   const nodes = w.stations.map(st => {
     const un = stationUnlocked(st), dn = !!STORY.done[st.id], s = starsOf(st.id), mx = maxStars(st);
     const stars = mx ? `<span class="sn-stars">${Array.from({length: mx}, (_, i) => starSvg(!!s[i])).join('')}</span>` : '';
-    return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}" data-station="${st.id}" style="left:${st.x}%;top:${st.y}px" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
+    return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}" data-station="${st.id}" style="left:${X(st)}%;top:${Y(st)}${art ? '%' : 'px'}" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
       `<span class="sn-medal"><svg viewBox="0 0 24 24">${un ? ST_ICON[st.type] : LOCK_PATH}</svg><i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${stars}</button>`;
   }).join('');
   const last = w.stations[w.stations.length - 1];
-  segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
-  patch($('#st-map'), `<div class="smap-in${w.map ? ' art' : ''}" style="height:${w.mapH}px${w.map ? `;background-image:url(${w.map})` : ''}"><svg class="st-path" viewBox="0 0 100 ${w.mapH}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${w.map ? '' : marks}${nodes}</div>` +
+  if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
+  patch($('#st-map'), `<div class="smap-in${art ? ' art' : ''}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}"><svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>` +
     WORLDS_SOON.map(f => fogHTML(f, done)).join(''));
   if (!STORY.intro[w.id]) { STORY.intro[w.id] = true; saveStory(); openSheet({id: 'storyintro', w: w.id}); }
-  else if (next && CUR === 'story') { const el = $(`.snode[data-station="${next.id}"]`), sc = $('#scr-story .content'); if (el && sc && !sc.__scrolled) { sc.__scrolled = true; sc.scrollTop = Math.max(0, next.y - 160); } }
+  else if (next && CUR === 'story') { const sc = $('#scr-story .content'); if (sc && !sc.__scrolled) { sc.__scrolled = true; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, el.offsetTop + $('#st-map').offsetTop - sc.clientHeight / 2); }); } }
 }
 // Nächste Welt: im Nebel zu erahnen, je weiter unten desto dichter
 function fogHTML(f, open) {

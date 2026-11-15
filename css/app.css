@@ -670,7 +670,6 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .pf-title{font-style:normal;font-weight:800;font-size:14px;color:var(--red)}
 
 /* Nächste Welt im Nebel */
-.smap-in.art{background-size:100% 100%;background-repeat:no-repeat}
 .st-link{width:0;height:40px;margin:0 auto;border-left:3px dotted rgba(241,227,196,.5)}
 .st-fog{position:relative;margin-bottom:16px;border-radius:16px;overflow:hidden;border:2px solid rgba(120,90,60,.6);box-shadow:0 3px 0 rgba(0,0,0,.3),0 14px 26px -14px rgba(0,0,0,.8)}
 .fog-map{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,210,130,.35),rgba(0,0,0,0) 55%),repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 38px,rgba(255,255,255,.03) 38px 40px),repeating-linear-gradient(0deg,rgba(0,0,0,.1) 0 22px,rgba(255,255,255,.04) 22px 24px),#6b5a48}
@@ -692,3 +691,21 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .fog-world{font:800 12px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#6b5540}
 .fog-label b{font:700 24px/1.1 var(--display);color:#5a2b1a}
 .fog-label small{font-size:14px;color:#4f3f30}
+
+/* Weltkarte als Bild: kleinere Stationen, Route hell auf dem Gras */
+.smap-in.art{background-size:100% 100%;background-repeat:no-repeat;box-shadow:inset 0 0 30px rgba(20,10,4,.45),0 3px 0 rgba(0,0,0,.3),0 14px 26px -14px rgba(0,0,0,.8)}
+.smap-in.art .st-path path{stroke:#fff3d6;stroke-width:3;stroke-dasharray:1 7;opacity:.95;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+.smap-in.art .st-path path.on{stroke:#f2b632;stroke-dasharray:none;opacity:.95}
+.smap-in.art .snode{width:108px;transform:translate(-50%,-22px);gap:2px}
+.smap-in.art .sn-medal{width:44px;height:44px;border-width:2.5px}
+.smap-in.art .sn-medal svg{width:22px;height:22px}
+.smap-in.art .sn-medal i{min-width:19px;height:19px;font-size:11px;line-height:15px;right:-6px;bottom:-4px}
+.smap-in.art .sn-name{max-width:108px;padding:1px 6px;font-size:11.5px;line-height:1.12;background:rgba(251,243,223,.95);box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.smap-in.art .sn-stars{padding:1px 4px;border-radius:7px;background:rgba(30,16,7,.55)}
+.smap-in.art .star{width:13px;height:13px;fill:rgba(255,240,210,.25);stroke:rgba(255,240,210,.7)}
+.smap-in.art .star.on{fill:#f2b632;stroke:#8a5a10}
+.smap-in.art .snode.t-boss{transform:translate(-50%,-28px)}
+.smap-in.art .t-boss .sn-medal{width:56px;height:56px}
+.smap-in.art .t-boss .sn-medal svg{width:28px;height:28px}
+.smap-in.art .snode.locked .sn-medal{filter:grayscale(1) brightness(.9);opacity:.85}
+.smap-in.art .snode.locked .sn-name{opacity:.8}
