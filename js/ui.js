@@ -783,8 +783,13 @@ function confirmDialog(title, text, yes, no) {
 const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Rassen'], ['class', 'Klassen'], ['enh', 'Monsterverstärker'], ['wander', 'Sonderkarten (Tür)'], ['item', 'Gegenstände'], ['oneshot', 'Einmal einsetzbar'], ['levelup', 'Stufenkarten'], ['amulet', 'Sonderkarten (Schatz)']];
 const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Rasse/Klasse'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
 const SLOT_ORDER = ['kopf', 'ruestung', 'schuhe', 'hand', 'none'];
+/* Filterleiste: dunkler Grund nur, solange sie oben festklebt */
+function updFilterStuck() {
+  const sc = $('#scr-cards .content'), f = $('#card-filter'); if (!sc || !f) return;
+  f.classList.toggle('stuck', f.getBoundingClientRect().top <= sc.getBoundingClientRect().top + 2);
+}
 function renderCards() {
-  renderDeckPanel();
+  renderDeckPanel(); requestAnimationFrame(updFilterStuck);
   const f = UI.kfilter || 'alle';
   patch($('#card-filter'), KFILTERS.map(([k, l]) => `<button type="button" class="chip" data-kf="${k}" aria-pressed="${f === k}">${l}</button>`).join(''));
   const show = k => f === 'alle' || f === k || (f === 'rc' && (k === 'race' || k === 'class')) || (f === 'misc' && ['enh', 'wander', 'oneshot', 'levelup', 'amulet'].includes(k));
@@ -1083,6 +1088,7 @@ applyProfile();
 setScreen('title');
 const tap = $('#tapstart');
 tap.hidden = false;
+{ let raf = 0; $('#scr-cards .content').addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; updFilterStuck(); }); }, {passive: true}); }
 tap.addEventListener('click', () => { Snd.unlock(); Snd.startMusic(); tap.hidden = true; Snd.sfx('page'); });
 document.addEventListener('pointerdown', () => Snd.unlock(), {once: true});
 
