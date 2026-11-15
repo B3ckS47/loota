@@ -77,45 +77,97 @@ const POOL = cardPool();
 const POOLCAT = Object.fromEntries(POOL.map(p => [p.tpl.n, p.tpl]));
 const DEF_COUNTS = Object.fromEntries(POOL.map(p => [p.tpl.n, p.def]));
 const DECK_MAX = 4;
-const mapCounts = f => Object.fromEntries(POOL.map(p => [p.tpl.n, Math.max(0, Math.min(DECK_MAX, f(p)))]));
-const PRESETS = [
-  ['empfohlen', 'Empfohlen', 'Die ausgewogene Mischung, mit der alles begann.', p => p.def],
-  ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', p => p.tpl.k === 'monster' ? p.def + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? p.def - 1 : p.tpl.k === 'enh' ? p.def + 1 : p.def],
-  ['fluchchaos', 'Fluch-Chaos', 'Doppelt so viele Flüche, dafür mehr Amulette.', p => p.tpl.k === 'curse' ? p.def * 2 : p.tpl.k === 'amulet' ? 3 : p.def],
-  ['schnell', 'Schnelle Runde', 'Mehr Stufenkarten und Einmal-Gegenstände, keine Riesenmonster.', p => p.tpl.k === 'levelup' ? 2 : p.tpl.k === 'oneshot' ? p.def + 1 : p.tpl.k === 'monster' && p.tpl.lvl >= 14 ? 0 : p.def]
+/* Decks und Varianten. Weitere Decks (z. B. je Welt aus dem Storymodus) bekommen eigene
+   Grund-Stückzahlen (base), ein ikonisches Bild (icon) und eine Freischaltung (unlocked). */
+const DECKS = [
+  {id: 'grund', name: 'Grunddeck', icon: 'Wütender Gartenzwerg', desc: 'Die 70 Karten, mit denen alles begann.', base: p => p.def, unlocked: () => true}
 ];
-const presetCounts = key => { const pr = PRESETS.find(x => x[0] === key) || PRESETS[0]; return mapCounts(pr[3]); };
-const DECK = (() => { let d = null; try { d = JSON.parse(localStorage.getItem(K_DECK)); } catch (e) {} d = d && d.counts ? d : {preset: 'empfohlen'}; if (d.preset !== 'eigenes') d.counts = presetCounts(d.preset); else d.counts = Object.assign({}, DEF_COUNTS, d.counts); return d; })();
-function saveDeck() { try { localStorage.setItem(K_DECK, JSON.stringify(DECK.preset === 'eigenes' ? DECK : {preset: DECK.preset})); } catch (e) {} }
+const VARIANTS = [
+  ['standard', 'Standard', 'Die ausgewogene Mischung.', (p, b) => b],
+  ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', (p, b) => !b ? 0 : p.tpl.k === 'monster' ? b + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? b - 1 : p.tpl.k === 'enh' ? b + 1 : b],
+  ['fluchchaos', 'Fluch-Chaos', 'Doppelt so viele Flüche, dafür mehr Amulette.', (p, b) => !b ? 0 : p.tpl.k === 'curse' ? b * 2 : p.tpl.k === 'amulet' ? 3 : b],
+  ['schnell', 'Schnelle Runde', 'Mehr Stufenkarten und Einmal-Gegenstände, keine Riesenmonster.', (p, b) => !b ? 0 : p.tpl.k === 'levelup' ? 2 : p.tpl.k === 'oneshot' ? b + 1 : p.tpl.k === 'monster' && p.tpl.lvl >= 14 ? 0 : b]
+];
+const clampCount = n => Math.max(0, Math.min(DECK_MAX, n));
+const deckById = id => DECKS.find(d => d.id === id) || DECKS[0];
+const variantName = k => k === 'eigenes' ? 'Eigenes' : (VARIANTS.find(v => v[0] === k) || VARIANTS[0])[1];
+function variantCounts(deckId, key) {
+  const d = deckById(deckId), v = VARIANTS.find(x => x[0] === key) || VARIANTS[0];
+  return Object.fromEntries(POOL.map(p => { const b = clampCount(d.base(p)); return [p.tpl.n, clampCount(v[3](p, b))]; }));
+}
+function currentCounts(s) {
+  if (s.variant !== 'eigenes') return variantCounts(s.deck, s.variant);
+  const c = s.custom[s.deck] || {}, d = deckById(s.deck);
+  return Object.fromEntries(POOL.map(p => [p.tpl.n, clampCount(c[p.tpl.n] != null ? c[p.tpl.n] : d.base(p))]));
+}
+const DECK = (() => {
+  let d = null; try { d = JSON.parse(localStorage.getItem(K_DECK)); } catch (e) {}
+  const s = {deck: 'grund', variant: 'standard', custom: {}};
+  if (d && d.v === 2) Object.assign(s, {deck: d.deck || 'grund', variant: d.variant || 'standard', custom: d.custom || {}});
+  else if (d && d.preset === 'eigenes' && d.counts) { s.variant = 'eigenes'; s.custom.grund = d.counts; }
+  else if (d && d.preset) s.variant = d.preset === 'empfohlen' ? 'standard' : d.preset;
+  if (!deckById(s.deck).unlocked()) s.deck = 'grund';
+  if (s.variant !== 'eigenes' && !VARIANTS.some(v => v[0] === s.variant)) s.variant = 'standard';
+  if (s.variant === 'eigenes' && !s.custom[s.deck]) s.variant = 'standard';
+  s.counts = currentCounts(s);
+  return s;
+})();
+function saveDeck() { try { localStorage.setItem(K_DECK, JSON.stringify({v: 2, deck: DECK.deck, variant: DECK.variant, custom: DECK.custom})); } catch (e) {} }
 function deckStats(counts) {
   let door = 0, tr = 0, mons = 0, curses = 0, lvls = 0, rc = 0;
   POOL.forEach(p => { const n = counts[p.tpl.n] || 0; if (p.deck === 'door') door += n; else tr += n; if (p.tpl.k === 'monster') mons += n; if (p.tpl.k === 'curse') curses += n; if (p.tpl.k === 'levelup') lvls += n; if (p.tpl.k === 'race' || p.tpl.k === 'class') rc += n; });
   const share = door ? mons / door : 0, errors = [], warnings = [];
-  if (door < 30) errors.push(`Der Türstapel braucht mindestens 30 Karten (jetzt ${door}).`);
-  if (tr < 25) errors.push(`Der Schatzstapel braucht mindestens 25 Karten (jetzt ${tr}).`);
-  if (mons < 12 || share < 0.3) errors.push(`Mindestens 12 Monster und 30 % des Türstapels (jetzt ${mons}, ${Math.round(share * 100)} %).`);
+  const okDoor = door >= 30, okTr = tr >= 25, okMons = mons >= 12 && share >= 0.3;
+  if (!okDoor) errors.push(`Der Türstapel braucht mindestens 30 Karten (jetzt ${door}).`);
+  if (!okTr) errors.push(`Der Schatzstapel braucht mindestens 25 Karten (jetzt ${tr}).`);
+  if (!okMons) errors.push(`Es braucht mindestens 12 Monster, und sie müssen 30 % der Türkarten ausmachen (jetzt ${mons}, ${Math.round(share * 100)} %).`);
   if (lvls > 6) warnings.push('Viele Stufenkarten: Partien werden sehr kurz.');
   if (curses > 16) warnings.push('Sehr viele Flüche: Es wird chaotisch.');
   if (!rc) warnings.push('Ohne Rassen und Klassen gibt es keine Fähigkeiten.');
-  return {door, tr, mons, share, errors, warnings, ok: !errors.length};
+  return {door, tr, mons, share, okDoor, okTr, okMons, errors, warnings, ok: !errors.length};
 }
-function deckLabel() { return DECK.preset === 'eigenes' ? 'Eigenes Deck' : (PRESETS.find(x => x[0] === DECK.preset) || PRESETS[0])[1]; }
+function deckLabel() { return `${deckById(DECK.deck).name} · ${variantName(DECK.variant)}`; }
+const LOCK_SVG = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>';
 function renderDeckPanel() {
-  const st = deckStats(DECK.counts), cur = PRESETS.find(x => x[0] === DECK.preset);
-  const chips = PRESETS.map(([k, l]) => `<button type="button" class="chip" data-preset="${k}" aria-pressed="${DECK.preset === k}">${l}</button>`).join('') + (DECK.preset === 'eigenes' ? '<button type="button" class="chip" aria-pressed="true" disabled>Eigenes</button>' : '');
-  const status = st.ok ? `<p class="dk-ok">Spielbereit${st.warnings.length ? ' · ' + st.warnings.map(esc).join(' ') : ''}</p>` : `<ul class="dk-err">${st.errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>`;
-  patch($('#deck-panel'), `<div class="dk-head"><b>Dein Deck</b><span>${esc(cur ? cur[2] : 'Deine eigene Zusammenstellung.')}</span></div><div class="chips dk-chips">${chips}</div>` +
-    `<div class="dk-stats"><span><b>${st.door}</b> Türkarten</span><span><b>${st.mons}</b> Monster (${Math.round(st.share * 100)} %)</span><span><b>${st.tr}</b> Schatzkarten</span></div>${status}` +
-    `<p class="hint">Mit − und + legst du fest, wie oft eine Karte im Deck ist (höchstens ${DECK_MAX}).${GAME_ON && S && S.winner == null ? ' Änderungen gelten ab dem nächsten Spiel.' : ''}</p>`);
+  const st = deckStats(DECK.counts), d = deckById(DECK.deck), v = VARIANTS.find(x => x[0] === DECK.variant);
+  const tiles = DECKS.map(x => { const un = x.unlocked(); return `<button type="button" class="dtile${un ? '' : ' locked'}" data-deck="${x.id}" aria-pressed="${DECK.deck === x.id}"><span class="dt-img"><img src="${ART[x.icon]}" alt="" draggable="false">${un ? '' : `<i>${LOCK_SVG}</i>`}</span><b>${esc(x.name)}</b></button>`; }).join('') +
+    `<button type="button" class="dtile soon" data-deck="soon"><span class="dt-img"><i>${LOCK_SVG}</i></span><b>Weitere Decks</b></button>`;
+  const vbtn = (k, l, wide) => `<button type="button" class="vbtn${wide ? ' wide' : ''}" data-variant="${k}" aria-pressed="${DECK.variant === k}">${l}</button>`;
+  const vars = VARIANTS.map(([k, l]) => vbtn(k, l)).join('') + vbtn('eigenes', DECK.custom[DECK.deck] ? 'Eigenes' : 'Eigenes <small>· noch leer</small>', true);
+  const row = (ok, need, val) => `<li class="${ok ? 'ok' : 'bad'}"><i aria-hidden="true">${ok ? '✓' : '✗'}</i><span>${need}</span><b>${val}</b></li>`;
+  const check = `<div class="dk-check"><p class="dk-st ${st.ok ? 'ok' : 'bad'}">${st.ok ? 'Spielbereit' : 'Noch nicht spielbereit'}</p><p class="dk-need">Damit ein Deck spielbereit ist, braucht es:</p><ul class="dk-req">` +
+    row(st.okDoor, 'mindestens 30 Türkarten', st.door) + row(st.okTr, 'mindestens 25 Schatzkarten', st.tr) + row(st.okMons, 'mindestens 12 Monster, die 30 % der Türkarten ausmachen', `${st.mons} · ${Math.round(st.share * 100)} %`) +
+    `</ul>${st.warnings.map(w => `<p class="dk-warn">${esc(w)}</p>`).join('')}</div>`;
+  patch($('#deck-panel'), `<div class="dk-head"><b>Dein Deck</b></div>` +
+    `<div class="dk-lbl">Deck</div><div class="dk-decks">${tiles}</div><p class="dk-desc">${esc(d.desc)}</p>` +
+    `<div class="dk-lbl">Variante</div><div class="dk-var">${vars}</div><p class="dk-desc">${esc(v ? v[2] : 'Deine eigene Zusammenstellung. Ändere unten die Anzahl der Karten.')}</p>` + check +
+    `<p class="hint">Mit − und + legst du fest, wie oft eine Karte im Deck ist (0 bis ${DECK_MAX}). Jede Änderung speichert die Mischung unter „Eigenes“.${GAME_ON && S && S.winner == null ? ' Änderungen gelten ab dem nächsten Spiel.' : ''}</p>`);
 }
-function setDeckCount(i, delta) {
+function selectDeck(id) {
+  if (id === 'soon') { toast('Neue Decks schaltest du später im Storymodus frei.'); return; }
+  const d = deckById(id);
+  if (!d.unlocked()) { toast(d.lockTxt || 'Dieses Deck ist noch nicht freigeschaltet.'); return; }
+  DECK.deck = d.id;
+  if (DECK.variant === 'eigenes' && !DECK.custom[d.id]) DECK.variant = 'standard';
+  DECK.counts = currentCounts(DECK); saveDeck(); renderCards();
+}
+function selectVariant(k) {
+  if (k === 'eigenes' && !DECK.custom[DECK.deck]) { DECK.custom[DECK.deck] = Object.assign({}, DECK.counts); toast('Eigenes Deck angelegt. Passe unten die Anzahl an.'); }
+  DECK.variant = k; DECK.counts = currentCounts(DECK); saveDeck(); renderCards();
+}
+async function setDeckCount(i, delta) {
   const p = POOL[i]; if (!p) return;
-  const n = Math.max(0, Math.min(DECK_MAX, (DECK.counts[p.tpl.n] || 0) + delta));
+  const n = clampCount((DECK.counts[p.tpl.n] || 0) + delta);
   if (n === DECK.counts[p.tpl.n]) { buzz(30); return; }
-  DECK.counts[p.tpl.n] = n; DECK.preset = 'eigenes';
-  const match = PRESETS.find(([k]) => { const c = presetCounts(k); return POOL.every(q => c[q.tpl.n] === DECK.counts[q.tpl.n]); });
-  if (match) DECK.preset = match[0];
-  saveDeck(); renderCards();
+  if (DECK.variant !== 'eigenes') {
+    const old = DECK.custom[DECK.deck];
+    if (old && POOL.some(q => clampCount(old[q.tpl.n] || 0) !== DECK.counts[q.tpl.n])) {
+      const ok = await confirmDialog('Eigenes Deck ersetzen?', `Deine Änderung startet ein neues eigenes Deck auf Basis von „${esc(variantName(DECK.variant))}“. Dein bisheriges eigenes Deck wird dabei ersetzt.`, 'Ersetzen', 'Abbrechen');
+      if (!ok) return;
+    } else toast('Deine Mischung steht jetzt unter „Eigenes“.');
+    DECK.custom[DECK.deck] = Object.assign({}, DECK.counts); DECK.variant = 'eigenes';
+  }
+  DECK.custom[DECK.deck][p.tpl.n] = n; DECK.counts = currentCounts(DECK); saveDeck(); renderCards();
 }
 
 const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile'];
@@ -202,9 +254,9 @@ async function startNewGame() {
   const st = deckStats(DECK.counts);
   let counts = DECK.counts;
   if (!st.ok) {
-    const useDef = await confirmDialog('Dein Deck ist noch nicht spielbereit', esc(st.errors[0]) + ' Mit dem empfohlenen Deck spielen?', 'Empfohlenes Deck', 'Deck bearbeiten');
+    const useDef = await confirmDialog('Dein Deck ist noch nicht spielbereit', esc(st.errors[0]) + ' Mit dem Grunddeck in der Variante „Standard“ spielen?', 'Standard spielen', 'Deck bearbeiten');
     if (!useDef) { show('cards'); return; }
-    counts = presetCounts('empfohlen');
+    counts = variantCounts('grund', 'standard');
   }
   DECK_COUNTS = counts;
   clearSave(); applySettings();
@@ -729,7 +781,7 @@ function confirmDialog(title, text, yes, no) {
 
 /* ================= Karten-Übersicht und Quiz ================= */
 const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Rassen'], ['class', 'Klassen'], ['enh', 'Monsterverstärker'], ['wander', 'Sonderkarten (Tür)'], ['item', 'Gegenstände'], ['oneshot', 'Einmal einsetzbar'], ['levelup', 'Stufenkarten'], ['amulet', 'Sonderkarten (Schatz)']];
-const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Rassen & Klassen'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
+const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Rasse/Klasse'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
 const SLOT_ORDER = ['kopf', 'ruestung', 'schuhe', 'hand', 'none'];
 function renderCards() {
   renderDeckPanel();
@@ -823,7 +875,8 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-frame]'))) { PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
-  if ((el = t.closest('[data-preset]'))) { DECK.preset = el.dataset.preset; DECK.counts = presetCounts(DECK.preset); saveDeck(); renderCards(); return; }
+  if ((el = t.closest('[data-deck]'))) { selectDeck(el.dataset.deck); return; }
+  if ((el = t.closest('[data-variant]'))) { selectVariant(el.dataset.variant); return; }
   if ((el = t.closest('[data-dk]'))) { setDeckCount(+el.dataset.dk, +el.dataset.d); Snd.sfx(+el.dataset.d > 0 ? 'deal' : 'tap', .6); return; }
   if ((el = t.closest('[data-kf]'))) { UI.kfilter = el.dataset.kf; renderCards(); const sc = $('#scr-cards .content'); sc.scrollTop = Math.min(sc.scrollTop, $('#deck-panel').offsetHeight + 6); return; }
   if ((el = t.closest('[data-q]'))) {
