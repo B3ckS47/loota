@@ -1506,9 +1506,9 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 applySettings();
 applyProfile();
 setScreen('title');
-const tap = $('#tapstart');
-tap.hidden = false;
 { let raf = 0; $('#scr-cards .content').addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; updFilterStuck(); }); }, {passive: true}); }
-tap.addEventListener('click', () => { Snd.unlock(); Snd.startMusic(); tap.hidden = true; Snd.sfx('page'); });
-document.addEventListener('pointerdown', () => Snd.unlock(), {once: true});
+// Direkt ins Menü: Browser erlauben Ton erst nach der ersten Berührung, dann startet die Musik von selbst
+{ const EV = ['pointerup', 'touchend', 'click', 'keydown'];
+  const first = () => { Snd.unlock(); Snd.startMusic(); if (Snd.running()) EV.forEach(e => document.removeEventListener(e, first, true)); };
+  EV.forEach(e => document.addEventListener(e, first, true)); }
 

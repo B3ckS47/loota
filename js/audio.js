@@ -206,6 +206,7 @@ const Snd = (() => {
 
   return {
     unlock() { if (!init()) return; if (ctx.state === 'suspended') ctx.resume(); },
+    running: () => !!ctx && ctx.state === 'running',
     set(o) { Object.assign(st, o); applyVol(false); if (st.music && ctx && !playing) startMusic(); },
     sfx,
     startMusic() { if (st.music) startMusic(); },
