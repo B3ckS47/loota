@@ -358,6 +358,9 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .acts .err{color:var(--red);font-weight:700}
 .sel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:12px 8px;margin:10px 0}
 .sel-grid .mc{width:100%}
+.selgrp{display:flex;align-items:center;gap:8px;margin:14px 0 -2px;font:800 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.selgrp span{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--edge);color:var(--card-hi,#fff)}
+.selgrp::after{content:'';flex:1;height:1px;background:var(--edge);opacity:.6}
 .sel-extra{margin:6px 0 0;font-size:14.5px;font-variant-numeric:tabular-nums}
 .sel-err{color:var(--red);font-weight:700;margin:6px 0 0}
 .sheet .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}

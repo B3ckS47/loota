@@ -527,8 +527,12 @@ const SHEET_VIEWS = {
     [['hand', p.hand], ['eq', p.eq], ['pack', p.pack]].forEach(([w, arr]) => arr.forEach(c => { if (s.filter(c, w)) cands.push([c, w]); }));
     const picked = [...s.picked].map(findCard).filter(Boolean), err = s.validate ? s.validate(picked) : null;
     const ok = picked.length >= s.min && picked.length <= s.max && !err;
-    const grid = cands.map(([c, w]) => cardMini(c, {where: w, extra: (s.picked.has(c.uid) ? 'picked' : '') + (UI.adv && UI.adv.picks && UI.adv.picks.includes(c.uid) ? ' rec' : '')})).join('');
-    return {head: h3(esc(s.title || 'Karten wählen')), body: `<p class="atxt" style="margin:0">${s.text} <span class="hint">(${picked.length} gewählt)</span></p>${adviceBox()}${s.extra ? `<p class="sel-extra">${s.extra(picked)}</p>` : ''}${err ? `<p class="sel-err">${err}</p>` : ''}<div class="sel-grid">${grid}</div>` +
+    const mini = ([c, w]) => cardMini(c, {where: w, extra: (s.picked.has(c.uid) ? 'picked' : '') + (UI.adv && UI.adv.picks && UI.adv.picks.includes(c.uid) ? ' rec' : '') + (w === 'eq' && !usable(p, c) ? ' inactive' : '')});
+    const zones = [['eq', 'Ausgerüstet'], ['pack', 'Im Rucksack'], ['hand', 'Auf der Hand']].filter(([w]) => cands.some(x => x[1] === w));
+    const grid = zones.length > 1
+      ? zones.map(([w, l]) => { const cs = cands.filter(x => x[1] === w); return `<h4 class="selgrp">${l}<span>${cs.length}</span></h4><div class="sel-grid">${cs.map(mini).join('')}</div>`; }).join('')
+      : `<div class="sel-grid">${cands.map(mini).join('')}</div>`;
+    return {head: h3(esc(s.title || 'Karten wählen')), body: `<p class="atxt" style="margin:0">${s.text} <span class="hint">(${picked.length} gewählt)</span></p>${adviceBox()}${s.extra ? `<p class="sel-extra">${s.extra(picked)}</p>` : ''}${err ? `<p class="sel-err">${err}</p>` : ''}${grid}` +
       `<div class="acts"><button type="button" class="btn primary" data-sel="ok" ${ok ? '' : 'disabled'}>${s.confirm ? s.confirm(picked) : 'Bestätigen'}</button>${s.optional ? '<button type="button" class="btn" data-sel="skip">Überspringen</button>' : ''}${s.cancel ? '<button type="button" class="btn ghost" style="color:var(--ink);border-color:var(--edge)" data-sel="cancel">Abbrechen</button>' : ''}</div>`};
   }
 };
@@ -780,7 +784,7 @@ function dragIntents(c) {
   const C = S.combat;
   switch (c.k) {
     case 'item': case 'race': case 'class': case 'levelup':
-      acts.forEach(a => I.push({zones: ['table', 'me'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis})); break;
+      acts.forEach(a => I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis})); break;
     case 'oneshot':
       acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis}); }); break;
     case 'enh':
@@ -812,7 +816,6 @@ const Drag = (() => {
     if ((z = el.closest('#table .side.mon'))) return {key: 'monside', el: z};
     if ((z = el.closest('#table .art[data-uid]'))) return {key: 'art:' + z.dataset.uid, el: z, art: true};
     if ((z = el.closest('#table'))) return {key: 'table', el: z};
-    if ((z = el.closest('#mebar'))) return {key: 'me', el: z};
     return null;
   }
   function intentFor(zone) {
@@ -823,7 +826,6 @@ const Drag = (() => {
   }
   function zoneEls(key) {
     if (key === 'table') return [$('#table')];
-    if (key === 'me') return [$('#mebar')];
     if (key === 'fighter') return [$('#table .side.me')];
     if (key === 'monside') return [$('#table .side.mon')];
     if (key.startsWith('opp:')) return [$(`.oc[data-opp="${key.slice(4)}"]`)];
