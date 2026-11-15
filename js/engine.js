@@ -245,16 +245,26 @@ let CHECKPOINT_HANDLER = null;
 let SCN = null;
 const WINLVL = () => (SCN && SCN.target) || 10;
 // Spielweisen der Gegner (gelten auch im freien Spiel)
+// l = kurze Beschreibung für das Gegnerblatt
 const STYLES = {
-  Berta: {help:1.35, curse:0.6, intf:0.8, fair:true},
-  Kalle: {help:0.6, curse:1, intf:1.1, seek:0.35},
-  Uschi: {help:0.9, curse:1.5, intf:1.3, spite:true},
+  Berta: {help:1.35, curse:0.6, intf:0.8, fair:true, l:'hilfsbereit, will aber fair beteiligt werden'},
+  Kalle: {help:0.6, curse:1, intf:1.1, seek:0.35, l:'Schlitzohr, kämpft lieber allein'},
+  Uschi: {help:0.9, curse:1.5, intf:1.3, spite:true, l:'giftig, verflucht gern'},
   // Welt 2: Kellerbewohner
-  Rosi: {help:0, curse:1.8, intf:1, spite:true, noHelp:true},
-  Fridolin: {help:1.4, curse:0.5, intf:0.7, greedy:true, seek:0.5},
-  Gustav: {help:0.8, curse:0.9, intf:1.7}
+  Rosi: {help:0, curse:1.8, intf:1, spite:true, noHelp:true, l:'verflucht jeden, der führt, und hilft nie'},
+  Fridolin: {help:1.4, curse:0.5, intf:0.7, greedy:true, seek:0.5, l:'hilft nur für fast alle Schätze'},
+  Gustav: {help:0.8, curse:0.9, intf:1.7, l:'mischt sich ständig ein'}
 };
-const styleOf = p => (p && STYLES[p.name]) || {};
+// Spielweisen für zufällige Gegner im freien Spiel
+const BOT_STYLES = [
+  {help:1.35, curse:0.6, intf:0.8, fair:true, l:'hilfsbereit, will aber fair beteiligt werden'},
+  {help:0.6, curse:1, intf:1.1, seek:0.35, l:'Schlitzohr, kämpft lieber allein'},
+  {help:0.9, curse:1.5, intf:1.3, spite:true, l:'giftig, verflucht gern'},
+  {help:1.2, curse:0.7, intf:0.8, greedy:true, l:'hilft nur für fast alle Schätze'},
+  {help:0.8, curse:0.9, intf:1.7, l:'mischt sich ständig ein'},
+  {l:'ausgeglichen'}
+];
+const styleOf = p => (p && (p.style || STYLES[p.name])) || {};
 function stat(k, n=1){ if(S && S.stats) S.stats[k]=(S.stats[k]||0)+n; }
 const SPEEDS = {langsam:1500, normal:900, schnell:380};
 const spd = (f=1) => HEADLESS ? 0 : SPEEDS[UI.speed]*f;
@@ -451,10 +461,12 @@ function newGame(allBots){
   const d=buildDecks(sc && sc.counts);
   S={players:[], door:d.door, tr:d.tr, doorDisc:[], trDisc:[], cur:0, turn:1, phase:0, combat:null, reveal:null, log:[], winner:null,
      scn: sc ? sc.id||true : null, stats:{played:0, lvlLost:0, curses:0, help:0, ran:0, bossBy:null, bossHelped:false, fightWon:false}};
-  const names = sc && sc.bots ? sc.bots : ['Berta','Kalle','Uschi'].slice(0, UI.bots);
+  // Freies Spiel: zufällige Gegner aus UI.roster (Name, Bild, Spielweise), sonst der Stammtisch
+  const roster = !sc && UI.roster && UI.roster.length >= UI.bots ? UI.roster.slice(0, UI.bots) : null;
+  const names = sc && sc.bots ? sc.bots : roster ? roster.map(r=>r.name) : ['Berta','Kalle','Uschi'].slice(0, UI.bots);
   S.players.push(newPlayer(0,'Du',!allBots));
   if(allBots) S.players[0].name='Testbot';
-  names.forEach((n,i)=>S.players.push(newPlayer(i+1,n,false)));
+  names.forEach((n,i)=>{ const p=newPlayer(i+1,n,false); if(roster){ p.face=roster[i].face; p.style=roster[i].style; } S.players.push(p); });
   if(sc && sc.boss) placeBoss(sc.boss, sc.bossLvl);
   S.players.forEach(p=>{
     if(p.id===0 && sc && sc.start) applyStart(p, sc.start);

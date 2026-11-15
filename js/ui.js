@@ -14,7 +14,7 @@ const ICON = {
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
 const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
-const portrait = p => p.human ? myPortrait() : (ICON.portrait[p.name] || ICON.portrait.Du);
+const portrait = p => p.human ? myPortrait() : (p.face || ICON.portrait[p.name] || ICON.portrait.Du);
 
 /* ================= Profil: Name, Porträt, Rahmen ================= */
 const K_PROFILE = 'loota.profile';
@@ -23,6 +23,19 @@ const PORTRAITS = [
   ['halbling', 'Halbling', 'art/rasse-halbling.webp'], ['krieger', 'Krieger', 'art/klasse-krieger.webp'], ['zauberer', 'Zauberer', 'art/klasse-zauberer.webp'],
   ['dieb', 'Dieb', 'art/klasse-dieb.webp'], ['priester', 'Priester', 'art/klasse-priester.webp']
 ];
+// Zufällige Gegner im freien Spiel: ein Profilbild (nicht deins), ein Name, der zum Bild passt, und eine Spielweise
+const BOT_NAMES = {
+  du: ['Alrik', 'Jorin', 'Torben', 'Lasse', 'Hennes'], elf: ['Elwira', 'Ilvana', 'Sirana', 'Lyria', 'Faelis'], zwerg: ['Grimbart', 'Brokk', 'Gundolf', 'Barthel', 'Ragnar'],
+  halbling: ['Fiete', 'Hinnerk', 'Tobbe', 'Wilm', 'Ole'], krieger: ['Hagen', 'Gunnar', 'Ulfried', 'Bruno', 'Sigurd'], zauberer: ['Wendelin', 'Ottokar', 'Balduin', 'Eusebius', 'Mirko'],
+  dieb: ['Fenja', 'Nyra', 'Kira', 'Elster', 'Mara'], priester: ['Bonifaz', 'Kunibert', 'Anselm', 'Benno', 'Gregor']
+};
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function rollRoster() {
+  const faces = PORTRAITS.filter(x => x[0] !== PROFILE.portrait && BOT_NAMES[x[0]]).sort(() => Math.random() - 0.5).slice(0, 3);
+  const styles = BOT_STYLES.slice().sort(() => Math.random() - 0.5), used = new Set([PROFILE.name]);
+  return faces.map(([k, , src], i) => { let n = pick(BOT_NAMES[k]); while (used.has(n)) n = pick(BOT_NAMES[k]); used.add(n); return {name: n, face: src, style: styles[i]}; });
+}
+let ROSTER = null;
 const FRAMES = [['gold', 'Gold', '#e9cf9a'], ['silber', 'Silber', '#dfe5ea'], ['bronze', 'Bronze', '#c8875a'], ['rubin', 'Rubin', '#c0392b'], ['smaragd', 'Smaragd', '#3f9a5c'], ['saphir', 'Saphir', '#3d6fb5']];
 const PROFILE = Object.assign({id: null, name: '', portrait: 'du', frame: 'gold'}, (() => { try { return JSON.parse(localStorage.getItem(K_PROFILE)); } catch (e) { return null; } })() || {});
 if (!PROFILE.id) { PROFILE.id = (crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2)); try { localStorage.setItem(K_PROFILE, JSON.stringify(PROFILE)); } catch (e) {} }
@@ -74,7 +87,7 @@ function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return 
 function clearSave() { try { localStorage.removeItem(K_SAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
-const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne'}, SAVED_SET || {});
+const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall'}, SAVED_SET || {});
 // Lernhilfen sind ab Einstellungs-Version 2 standardmäßig aus, auch für bereits gespeicherte Einstellungen
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
@@ -212,7 +225,7 @@ function setScreen(name) {
   Snd.theme(name === 'game' ? GAME_THEME : 'taverne');
   $('#app').classList.toggle('tbl-keller', name === 'game' && GAME_TABLE === 'keller');
   if (name === 'title') renderTitle();
-  if (name === 'setup') { renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
+  if (name === 'setup') { renderFoes(); renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
   if (name === 'settings') { renderControls(); renderSaveInfo(); }
   if (name === 'cards') renderCards();
   if (name === 'quiz') renderQuiz();
@@ -269,6 +282,15 @@ function renderControls() {
   $('#diff-hint').textContent = DIFF_TXT[SET.diff] || '';
   $('#row-vibrate').hidden = !('vibrate' in navigator);
 }
+// Freies Spiel: die Gegner der nächsten Partie (zufällig oder der Stammtisch)
+function renderFoes() {
+  if (SET.foes !== 'stammtisch' && !ROSTER) ROSTER = rollRoster();
+  const list = SET.foes === 'stammtisch' ? ['Berta', 'Kalle', 'Uschi'].map(n => ({name: n, face: ICON.portrait[n], style: STYLES[n]})) : ROSTER;
+  $$('.seg[data-set="bots"] .pts img').forEach((img, i) => { const f = list[i % 3]; if (f) img.src = f.face; });
+  const el = $('#setup-foes'); if (!el) return;
+  patch(el, list.slice(0, SET.bots).map(f => `<div class="foe"><img src="${f.face}" alt=""><span><b>${esc(f.name)}</b><small>${esc(f.style.l || '')}</small></span></div>`).join('') +
+    (SET.foes === 'stammtisch' ? '' : '<button type="button" class="btn small" data-go="reroll">Neu würfeln</button>'));
+}
 function renderSaveInfo() {
   const s = load(K_SAVE);
   $('#save-info').textContent = s ? `Gespeichert am ${new Date(s.ts).toLocaleString('de-DE', {dateStyle: 'short', timeStyle: 'short'})}: Runde ${s.S.turn}, du auf Stufe ${s.S.players[0].lvl}.` : 'Kein gespeichertes Spiel.';
@@ -295,6 +317,7 @@ async function startNewGame() {
     counts = variantCounts('grund', 'standard');
   }
   DECK_COUNTS = counts;
+  UI.roster = SET.foes === 'stammtisch' ? null : (ROSTER || rollRoster()); ROSTER = null;
   SCN = null; STORY_RUN = null; freeMood();
   clearSave(); applySettings();
   W.reset(); GAME_ON = true;
@@ -714,7 +737,7 @@ const SHEET_VIEWS = {
     const ab = abilList(p);
     const rows = slotRows(p, false);
     const hand = UI.open && p.hand.length ? `<div class="tipbox"><span class="tip-h">Handkarten (sichtbar, weil eingeschaltet)</span>${p.hand.map(c => linkify(esc(cardLabel(c)))).join(', ')}</div>` : '';
-    return {head: `<img class="pt" src="${portrait(p)}" alt=""><h3>${esc(p.name)}<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span></h3>`,
+    return {head: `<img class="pt" src="${portrait(p)}" alt=""><h3>${esc(p.name)}<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}</h3>`,
       body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${rc}${ab}${stats3(p)}<div class="tipbox">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="slots">${rows}</div>${hand}`};
   },
   equip() {
@@ -1076,6 +1099,7 @@ function go(a) {
   switch (a) {
     case 'continue': continueGame(); break;
     case 'setup': show('setup'); break;
+    case 'reroll': ROSTER = rollRoster(); renderFoes(); Snd.sfx('deal'); break;
     case 'story': show('story'); break;
     case 'storymap': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (GAME_ON && S && S.scn && S.winner == null) { TOKEN++; } if (S && S.scn) GAME_ON = false; STACK.length = 0; STACK.push('title'); setScreen('story'); break;
     case 'start': startNewGame(); break;
@@ -1135,7 +1159,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-back]'))) { back(); return; }
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
   if ((el = t.closest('.seg[data-set] button.locked'))) { toast('Schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'); buzz(30); return; }
-  if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); return; }
+  if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); if (CUR === 'setup') renderFoes(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('frame:' + el.dataset.frame)); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
