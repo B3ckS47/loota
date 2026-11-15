@@ -228,13 +228,13 @@ function renderTop() {
   badge.textContent = unread > 99 ? '99+' : unread;
 }
 function renderOpps() {
-  const C = S.combat;
+  const C = S.combat, many = S.players.length > 3;
   const html = S.players.filter(p => !p.human).map(p => {
     const role = C && (C.f === p.id ? 'kämpft' : C.h === p.id ? 'hilft' : ''), turn = S.cur === p.id && S.winner == null;
     return `<button type="button" class="oc${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
       (role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : '') +
       `<span class="pt"><img src="${portrait(p)}" alt=""><span class="lvb">${p.lvl}</span></span>` +
-      `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span><span><img src="${ICON.hand}" alt="">${p.hand.length}</span></span></span></button>`;
+      `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span>${many ? '' : `<span><img src="${ICON.hand}" alt="">${p.hand.length}</span>`}</span></span></button>`;
   }).join('');
   patch($('#opps'), html);
   if (W.pulse.size) { W.pulse.forEach(id => { const el = $(`.oc[data-opp="${id}"]`); if (el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); } }); W.pulse.clear(); }
@@ -384,10 +384,13 @@ function renderAct() {
     html = `<button type="button" class="cap${hasInfo ? ' info' : ''}" ${hasInfo ? 'data-dinfo' : 'disabled'}>${tip}<span class="ct">${esc(stripTags(promptCaption(q, ctx, data)))}</span>${hasInfo ? '<span class="ii" aria-label="Mehr Infos">i</span>' : ''}</button><div class="dbtns">${btns}</div>`;
   } else {
     cls += ' idle';
-    const last = S.log.slice().reverse().find(e => e.kind !== 'turn' && (UI.coach || e.kind !== 'rule'));
+    // letzte Meldung seit dem Zugwechsel; direkt nach dem Wechsel steht dort, wer jetzt dran ist
+    const last = S.log.slice().reverse().find(e => UI.coach || e.kind !== 'rule');
     const who = P(S.cur);
-    const line = last ? stripTags(last.t) : (S.cur === 0 ? 'Einen Moment …' : `${who.name} ist am Zug`);
-    html = `<div class="cap"><img class="cpt" src="${portrait(who)}" alt=""><span class="ct">${esc(line)}</span></div>`;
+    const line = !last || last.kind === 'turn' ? (S.cur === 0 ? 'Einen Moment …' : `${who.name} ist am Zug`) : stripTags(last.t);
+    // Porträt passend zur Meldung: wer am Satzanfang steht, sonst wer am Zug ist
+    const actor = S.players.find(p => p.human ? /^(Du|Dein|Deine)\b/.test(line) : line.startsWith(p.name + ' ') || line.startsWith(p.name + ':')) || who;
+    html = `<div class="cap"><img class="cpt" src="${portrait(actor)}" alt=""><span class="ct">${esc(line)}</span></div>`;
   }
   if (el.className !== cls) el.className = cls;
   patch(el, html);
