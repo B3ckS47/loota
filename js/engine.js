@@ -185,6 +185,7 @@ const ART = {
   "Elf":"art/rasse-elf.webp",
   "Halbling":"art/rasse-halbling.webp",
   "Zwerg":"art/rasse-zwerg.webp",
+  "Mensch":"art/rasse-mensch.webp",
   "Glücksamulett":"art/sonder-gluecksamulett.webp",
   "Ungebetener Gast":"art/sonder-ungebetener-gast.webp",
   "Pizza für alle bestellt":"art/stufe-pizza-fuer-alle-bestellt.webp",

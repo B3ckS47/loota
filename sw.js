@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-3b1befdbdd';
+const CACHE = 'loota-2baf44edc6';
 const FILES = [
 "./",
 "index.html",
@@ -98,6 +98,7 @@ const FILES = [
 "art/monster-zombie-hausmeister.webp",
 "art/rasse-elf.webp",
 "art/rasse-halbling.webp",
+"art/rasse-mensch.webp",
 "art/rasse-zwerg.webp",
 "art/ruecken-schatz.webp",
 "art/ruecken-tuer.webp",
@@ -149,6 +150,7 @@ const FILES = [
 "icons/st-event.png",
 "icons/st-lock.png",
 "icons/st-puzzle.png",
+"icons/st-shop.png",
 "icons/stern-leer.png",
 "icons/stern-voll.png",
 "icons/wert-hand.png",

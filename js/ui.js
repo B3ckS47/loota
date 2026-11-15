@@ -944,7 +944,7 @@ const ST_ICON = {
 };
 const starSvg = on => `<img class="star${on ? ' on' : ''}" src="icons/stern-${on ? 'voll' : 'leer'}.png" alt="" aria-hidden="true">`;
 // Medaillen der Stationen: Musely-Symbole, solange eins fehlt das gezeichnete
-const ST_IMG = {puzzle: 'icons/st-puzzle.png', duel: 'icons/st-duel.png', event: 'icons/st-event.png', boss: 'icons/st-boss.png', lock: 'icons/st-lock.png'};
+const ST_IMG = {puzzle: 'icons/st-puzzle.png', duel: 'icons/st-duel.png', event: 'icons/st-event.png', shop: 'icons/st-shop.png', boss: 'icons/st-boss.png', lock: 'icons/st-lock.png'};
 const medalIcon = t => ST_IMG[t] ? `<img class="mi" src="${ST_IMG[t]}" alt="">` : `<svg viewBox="0 0 24 24">${ST_ICON[t] || LOCK_PATH}</svg>`;
 const coinImg = '<img src="icons/muenze-voll.png" alt="">';
 function renderStory() {
