@@ -92,7 +92,10 @@ const WORLDS = [{
 
 // Welten, die noch kommen: auf der Karte im Nebel zu erahnen (map = späteres Musely-Bild)
 const WORLDS_SOON = [
-  {id: 'w2', n: 2, name: 'Der Tavernenkeller', h: 330, map: null, teaser: [[50, 52], [27, 118], [70, 176]],
+  // teaser: Punkte in Prozent des sichtbaren Ausschnitts (oberste 55 % des Bildes)
+  // Spätere Stationen auf dem ganzen Bild (Prozent): Treppe 50/14, Fässer links 21/17, Fass rechts 75/16,
+  // Vorratsraum 44/34, Weinkeller 35/52 und 62/52, Kartoffelkeller 45/74, Thron 50/92
+  {id: 'w2', n: 2, name: 'Der Tavernenkeller', map: 'art/karte-welt2.webp', ratio: 768 / 1376, show: 0.55, teaser: [[50.1, 25.1], [20.8, 31.7], [43.6, 62.1]],
     hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.', soon: 'Folgt bald: neue Karten, neue Gegner und ein Rattenkönig.'}
 ];
 

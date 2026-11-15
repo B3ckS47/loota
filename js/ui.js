@@ -875,16 +875,17 @@ function renderStory() {
   }).join('');
   const last = w.stations[w.stations.length - 1];
   if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
-  patch($('#st-map'), `<div class="smap-in${art ? ' art' : ''}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}"><svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>` +
+  patch($('#st-map'), `<div class="smap-in${art ? ' pic' : ''}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}"><svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>` +
     WORLDS_SOON.map(f => fogHTML(f, done)).join(''));
   if (!STORY.intro[w.id]) { STORY.intro[w.id] = true; saveStory(); openSheet({id: 'storyintro', w: w.id}); }
   else if (next && CUR === 'story') { const sc = $('#scr-story .content'); if (sc && !sc.__scrolled) { sc.__scrolled = true; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, el.offsetTop + $('#st-map').offsetTop - sc.clientHeight / 2); }); } }
 }
 // Nächste Welt: im Nebel zu erahnen, je weiter unten desto dichter
 function fogHTML(f, open) {
-  const seg = f.teaser.map((p, i) => i ? `<path d="M${f.teaser[i - 1][0]} ${f.teaser[i - 1][1]} C${f.teaser[i - 1][0]} ${(f.teaser[i - 1][1] + p[1]) / 2} ${p[0]} ${(f.teaser[i - 1][1] + p[1]) / 2} ${p[0]} ${p[1]}" vector-effect="non-scaling-stroke" />` : `<path d="M50 0 C50 ${p[1] / 2} ${p[0]} ${p[1] / 2} ${p[0]} ${p[1]}" vector-effect="non-scaling-stroke" />`).join('');
-  const dots = f.teaser.map(([x, y]) => `<span class="fog-node" style="left:${x}%;top:${y}px"><span class="sn-medal"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8v.5 M12 17h.01" /></svg></span></span>`).join('');
-  return `<div class="st-link" aria-hidden="true"></div><div class="st-fog${open ? ' near' : ''}" style="height:${f.h}px"><div class="fog-map${f.map ? ' art' : ''}"${f.map ? ` style="background-image:url(${f.map})"` : ''}><svg class="st-path" viewBox="0 0 100 ${f.h}" preserveAspectRatio="none" aria-hidden="true">${seg}</svg>${dots}</div>` +
+  const pts = [[50, 0], ...f.teaser];
+  const seg = f.teaser.map((p, i) => { const a = pts[i]; return `<path d="M${a[0]} ${a[1]} C${a[0]} ${(a[1] + p[1]) / 2} ${p[0]} ${(a[1] + p[1]) / 2} ${p[0]} ${p[1]}" vector-effect="non-scaling-stroke" />`; }).join('');
+  const dots = f.teaser.map(([x, y]) => `<span class="fog-node" style="left:${x}%;top:${y}%"><span class="sn-medal"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8v.5 M12 17h.01" /></svg></span></span>`).join('');
+  return `<div class="st-link" aria-hidden="true"></div><div class="st-fog${open ? ' near' : ''}" style="aspect-ratio:${(f.ratio / f.show).toFixed(4)}"><div class="fog-map${f.map ? ' pic' : ''}"${f.map ? ` style="background-image:url(${f.map})"` : ''}><svg class="st-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${seg}</svg>${dots}</div>` +
     `<div class="fog-layer" aria-hidden="true"></div><div class="fog-drift d1" aria-hidden="true"></div><div class="fog-drift d2" aria-hidden="true"></div>` +
     `<div class="fog-label"><span class="sn-medal"><svg viewBox="0 0 24 24">${LOCK_PATH}</svg></span><span class="fog-world">Welt ${f.n}</span><b>${esc(f.name)}</b><small>${open ? esc(f.soon) : esc(f.hint)}</small></div></div>`;
 }
