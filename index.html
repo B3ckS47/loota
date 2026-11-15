@@ -28,7 +28,8 @@
     <div class="emblem" aria-hidden="true"><img src="art/logo-emblem.webp" alt=""></div>
     <nav class="menu" aria-label="Hauptmenü">
       <button class="btn primary" type="button" data-go="continue" id="btn-continue" hidden>Weiterspielen<small id="continue-info"></small></button>
-      <button class="btn" type="button" data-go="setup">Neues Spiel</button>
+      <button class="btn story" type="button" data-go="story">Storymodus<small id="story-info">Welt 1 · Rund um die Taverne</small></button>
+      <button class="btn" type="button" data-go="setup">Freies Spiel</button>
       <div class="menu-row">
         <button class="btn" type="button" data-go="rules">Regeln</button>
         <button class="btn" type="button" data-go="cards">Karten</button>
@@ -42,9 +43,15 @@
     <p class="fine">Monster besiegen · Beute machen · Stufe 10 erreichen</p>
   </section>
 
-  <!-- ============ Neues Spiel ============ -->
-  <section id="scr-setup" class="screen" aria-label="Neues Spiel" hidden>
-    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Neues Spiel</h2></header>
+  <!-- ============ Storymodus ============ -->
+  <section id="scr-story" class="screen" aria-label="Storymodus" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Storymodus</h2><span class="st-coins" id="st-coins"></span></header>
+    <div class="content st-content"><div class="panel st-head" id="st-head"></div><div class="smap" id="st-map"></div></div>
+  </section>
+
+  <!-- ============ Freies Spiel ============ -->
+  <section id="scr-setup" class="screen" aria-label="Freies Spiel" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Freies Spiel</h2></header>
     <div class="content">
       <div class="panel">
         <h3 class="lbl">Mitspieler</h3>
@@ -215,6 +222,10 @@
         <p class="hint" id="pf-name-hint">2 bis 16 Zeichen. Später kann das dein Name für Partien gegen andere sein.</p>
       </div>
       <div class="panel pf-sec">
+        <h4 class="lbl">Titel</h4>
+        <div class="pf-titles" id="pf-titles"></div>
+      </div>
+      <div class="panel pf-sec">
         <h4 class="lbl">Porträt</h4>
         <div class="pf-grid" id="pf-portraits"></div>
         <p class="hint">Nur die Optik. Rasse und Klasse bestimmen im Spiel weiter deine Karten.</p>
@@ -249,6 +260,7 @@
 </div>
 
 <script src="js/engine.js"></script>
+<script src="js/story.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/ui.js"></script>
 </body>

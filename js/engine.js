@@ -185,6 +185,20 @@ const diffF = () => DIFF[UI.diff]||1;
 let FX_HANDLER = null;
 function fx(type, data){ if(FX_HANDLER){ try{ FX_HANDLER(type, data||{}); }catch(e){ console.error(e); } } }
 let CHECKPOINT_HANDLER = null;
+/* ================= Szenarien (Storymodus) =================
+   SCN setzt die Oberfläche vor newGame; null = freies Spiel.
+   {target, bots:[Namen], counts, start:{lvl, race, cls, eq:[], hand:[], deal}, boss:'Kartenname',
+    fight:{mons:[], enh:[]}, perks:{freeHelp:'Name'}} */
+let SCN = null;
+const WINLVL = () => (SCN && SCN.target) || 10;
+// Spielweisen der Gegner (gelten auch im freien Spiel)
+const STYLES = {
+  Berta: {help:1.35, curse:0.6, intf:0.8, fair:true},
+  Kalle: {help:0.6, curse:1, intf:1.1, seek:0.35},
+  Uschi: {help:0.9, curse:1.5, intf:1.3, spite:true}
+};
+const styleOf = p => (p && STYLES[p.name]) || {};
+function stat(k, n=1){ if(S && S.stats) S.stats[k]=(S.stats[k]||0)+n; }
 const SPEEDS = {langsam:1500, normal:900, schnell:380};
 const spd = (f=1) => HEADLESS ? 0 : SPEEDS[UI.speed]*f;
 
@@ -368,20 +382,64 @@ function newGame(allBots){
   if(UI.sel){ const r=UI.sel.reject; UI.sel=null; try{ r(); }catch(e){} }
   UI.menu=null; UI.roll=null; UI.seen={}; UI.logLen=0;
   UID=1;
-  const d=buildDecks();
-  buildCatalog([...d.door,...d.tr]);
-  S={players:[], door:d.door, tr:d.tr, doorDisc:[], trDisc:[], cur:0, turn:1, phase:0, combat:null, reveal:null, log:[], winner:null};
-  const names=['Berta','Kalle','Uschi'];
+  const sc=SCN;
+  const d=buildDecks(sc && sc.counts);
+  S={players:[], door:d.door, tr:d.tr, doorDisc:[], trDisc:[], cur:0, turn:1, phase:0, combat:null, reveal:null, log:[], winner:null,
+     scn: sc ? sc.id||true : null, stats:{played:0, lvlLost:0, curses:0, help:0, ran:0, bossBy:null, bossHelped:false, fightWon:false}};
+  const names = sc && sc.bots ? sc.bots : ['Berta','Kalle','Uschi'].slice(0, UI.bots);
   S.players.push(newPlayer(0,'Du',!allBots));
   if(allBots) S.players[0].name='Testbot';
-  for(let i=0;i<UI.bots;i++) S.players.push(newPlayer(i+1,names[i],false));
-  S.players.forEach(p=>{ for(let i=0;i<4;i++){ p.hand.push(drawDoor()); p.hand.push(drawTr()); } });
+  names.forEach((n,i)=>S.players.push(newPlayer(i+1,n,false)));
+  if(sc && sc.boss) placeBoss(sc.boss, sc.bossLvl);
+  S.players.forEach(p=>{
+    if(p.id===0 && sc && sc.start) applyStart(p, sc.start);
+    else for(let i=0;i<4;i++){ p.hand.push(drawDoor()); p.hand.push(drawTr()); }
+  });
+  buildCatalog(allCards());
   S.players.filter(p=>!p.human).forEach(botSetup);
-  log('Neue Partie. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.','sys');
+  if(sc && sc.fight) log('Rätselkampf: Gewinne diesen einen Kampf mit dem, was du hast.','sys');
+  else if(sc) log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt.${sc.boss?` Irgendwo im Türstapel lauert ${sc.boss}: Wer ihn besiegt, gewinnt sofort.`:''} Du beginnst.`,'sys');
+  else log('Neue Partie. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.','sys');
   rule('Tippe deine Handkarten an, um sie auszuspielen. Rasse, Klasse und Gegenstände darfst du gleich jetzt auslegen.');
   fx('newgame');
   const t=TOKEN;
-  return gameLoop(t).catch(e=>{ if(e!==STALE){ console.error(e); if(!HEADLESS) log('Hoppla, ein Programmfehler: '+e.message,'sys'); else throw e; } });
+  return (sc && sc.fight ? puzzleLoop(t) : gameLoop(t)).catch(e=>{ if(e!==STALE){ console.error(e); if(!HEADLESS) log('Hoppla, ein Programmfehler: '+e.message,'sys'); else throw e; } });
+}
+function allCards(){ const a=[...S.door,...S.tr,...S.doorDisc,...S.trDisc]; S.players.forEach(p=>a.push(...p.hand,...p.eq,...p.pack,...[p.race,p.cls].filter(Boolean))); return a; }
+// Karte für ein Szenario holen: aus den Stapeln nehmen, sonst neu anlegen
+function pullCard(name){
+  for(const st of [S.door,S.tr]){ const i=st.findIndex(c=>c.n===name); if(i>=0) return st.splice(i,1)[0]; }
+  const t=cardPool().find(x=>x.tpl.n===name);
+  if(!t) throw new Error('Unbekannte Karte im Szenario: '+name);
+  return mk(Object.assign({},t.tpl),t.deck);
+}
+function applyStart(p,st){
+  p.lvl=st.lvl||1;
+  if(st.race){ p.race=pullCard(st.race); }
+  if(st.cls){ p.cls=pullCard(st.cls); }
+  (st.eq||[]).forEach(n=>p.eq.push(pullCard(n)));
+  (st.hand||[]).forEach(n=>p.hand.push(pullCard(n)));
+  if(st.deal!==false){ for(let i=0;i<4;i++){ p.hand.push(drawDoor()); p.hand.push(drawTr()); } }
+}
+// Bossmonster in die untere Hälfte des Türstapels mischen (gezogen wird von oben = Ende)
+function placeBoss(name, lvl){
+  const t=cardPool().find(x=>x.tpl.n===name); if(!t) throw new Error('Unbekannter Boss: '+name);
+  S.door=S.door.filter(c=>c.n!==name);
+  const b=mk(Object.assign({},t.tpl,{boss:true},lvl?{lvl}:{}),'door');
+  S.door.splice(rnd(Math.max(1,Math.floor(S.door.length/2))),0,b);
+}
+// Rätselkampf: ein einzelner Kampf, danach ist Schluss
+async function puzzleLoop(t){
+  const f=SCN.fight, p=me();
+  S.cur=0; S.phase=2;
+  log('Rätselkampf','turn');
+  fx('turn',{p});
+  const mons=f.mons.map(pullCard);
+  await combat(0, mons, (f.enh||[]).map(pullCard));
+  if(t!==TOKEN) return;
+  if(S.winner==null) S.winner = S.stats.fightWon ? 0 : -1;
+  fx('gameover',{winner:S.winner});
+  render();
 }
 async function gameLoop(t){
   while(S.winner==null && t===TOKEN){
@@ -481,8 +539,8 @@ function hintStart(p){
   if(!p.cls && p.hand.some(c=>c.k==='class')) h.push('Du hast eine Klassenkarte auf der Hand. Spiel sie aus, manche Gegenstände brauchen sie.');
   if(eqable.length) h.push(`Anlegen lohnt sich: ${eqable.map(c=>c.n).join(', ')}. Karte antippen, dann „Ausrüsten“.`);
   const sv=sellValue(p,[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)]);
-  if(sv.sum>=1000 && p.lvl<9) h.push(`Du hast nicht genutzte Gegenstände für ${fmt(sv.sum)} Gold. Verkaufen bringt dir eine Stufe.`);
-  if(p.hand.some(c=>c.k==='levelup') && p.lvl<9) h.push('Eine Stufenkarte direkt zu benutzen lohnt sich fast immer.');
+  if(sv.sum>=1000 && p.lvl<WINLVL()-1) h.push(`Du hast nicht genutzte Gegenstände für ${fmt(sv.sum)} Gold. Verkaufen bringt dir eine Stufe.`);
+  if(p.hand.some(c=>c.k==='levelup') && p.lvl<WINLVL()-1) h.push('Eine Stufenkarte direkt zu benutzen lohnt sich fast immer.');
   if(!h.length) h.push('Alles bereit. Deine Kampfstärke: '+power(p)+'.');
   return h;
 }
@@ -532,21 +590,21 @@ async function botManage(p){
   botSetup(p);
   if(p.race!==r0) log(`${p.name} spielt die Rasse ${p.race.n} aus.`);
   if(p.cls!==c0) log(`${p.name} spielt die Klasse ${p.cls.n} aus.`);
-  for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<9){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.'); } }
+  for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.'); } }
   botSell(p);
   for(const cu of p.hand.filter(c=>c.k==='curse')){
     const t=pickCurseTarget(p,cu);
-    if(t && Math.random()<Math.min(0.95,0.75*diffF())){ take(p,cu); log(`${p.name} spielt den Fluch „${cu.n}“ auf ${nmA(t)}!`,'bad'); ruleOnce('cursehand','Flüche von der Hand darf man jederzeit auf jeden Spieler spielen.'); await sleep(spd(0.6)); await applyCurse(t,cu,p); }
+    if(t && Math.random()<Math.min(0.95,0.75*diffF()*(styleOf(p).curse||1))){ take(p,cu); log(`${p.name} spielt den Fluch „${cu.n}“ auf ${nmA(t)}!`,'bad'); ruleOnce('cursehand','Flüche von der Hand darf man jederzeit auf jeden Spieler spielen.'); await sleep(spd(0.6)); await applyCurse(t,cu,p); }
   }
 }
 function botSell(p){
-  if(p.lvl>=9) return;
+  if(p.lvl>=WINLVL()-1) return;
   const cands=[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)];
   const total=sellValue(p,cands).sum; if(total<1000) return;
-  const target=Math.min(Math.floor(total/1000),9-p.lvl);
+  const target=Math.min(Math.floor(total/1000),WINLVL()-1-p.lvl);
   cands.sort((a,b)=>b.g-a.g);
   const pick=[]; for(const c of cands){ pick.push(c); if(sellValue(p,pick).sum>=target*1000) break; }
-  const sv=sellValue(p,pick); const lv=Math.min(sv.lv,9-p.lvl); if(lv<1) return;
+  const sv=sellValue(p,pick); const lv=Math.min(sv.lv,WINLVL()-1-p.lvl); if(lv<1) return;
   pick.forEach(c=>{ take(p,c); discard(c); }); p.lvl+=lv; if(sv.dbl) p.soldDouble=true;
   log(`${p.name} verkauft ${pick.map(c=>c.n).join(', ')} für ${fmt(sv.sum)} Gold${sv.dbl?` (als Halbling ${sv.dbl.n} doppelt)`:''} und steigt auf Stufe ${p.lvl}.`);
   ruleOnce('sell','Verkaufen: Je 1.000 Gold gibt es 1 Stufe. Wechselgeld gibt es nicht.');
@@ -563,7 +621,7 @@ function pickCurseTarget(p,c){
   const others=S.players.filter(o=>o.id!==p.id && !o.dead && curseHits(o,c));
   if(!others.length) return null;
   const max=Math.max(...others.map(o=>o.lvl));
-  if(max<p.lvl) return null;
+  if(max<p.lvl - (styleOf(p).spite?1:0)) return null;
   const top=others.filter(o=>o.lvl===max);
   return top[rnd(top.length)];
 }
@@ -604,8 +662,8 @@ async function botTurn(p){
 }
 
 /* ================= Kampf ================= */
-async function combat(fid, cards){
-  const C=S.combat={f:fid, h:null, deal:0, mons:cards.map(c=>({c,enh:[]})), pB:[], mB:[], used:[], berserk:0, turning:0, stabbed:{}, intf:{}, asked:{}, resolved:false, hchg:false};
+async function combat(fid, cards, preEnh){
+  const C=S.combat={f:fid, h:null, deal:0, mons:cards.map((c,i)=>({c,enh: i===0 && preEnh ? preEnh : []})), pB:[], mB:[], used:[], berserk:0, turning:0, stabbed:{}, intf:{}, asked:{}, resolved:false, hchg:false};
   const f=P(fid);
   log(`Kampf: ${nm(f)} gegen <b>${monNames(C)}</b> (Stufe ${C.mons[0].c.lvl}).`);
   ruleOnce('power','Kampfstärke = Stufe + Boni der ausgerüsteten Gegenstände. Sie muss höher sein als die Monsterstufe. Gleichstand verliert, außer für Krieger.');
@@ -613,7 +671,11 @@ async function combat(fid, cards){
   if(f.human) await humanFight(C); else await botFight(C);
   C.resolved=true;
   const r=evalCombat(C);
-  if(r.win) await winCombat(C); else await loseCombat(C);
+  if(SCN && SCN.fight){
+    S.stats.fightWon=r.win;
+    if(r.win){ fx('win',{p:f, mine:true}); log(`Du besiegst ${monNames(C)}! Rätsel gelöst.`,'good'); }
+    else { fx('lose',{p:f, mine:true}); log(`${monNames(C)} ist zu stark. Versuch es noch einmal.`,'bad'); }
+  } else if(r.win) await winCombat(C); else await loseCombat(C);
   C.mons.forEach(m=>{ discard(m.c); m.enh.forEach(discard); });
   C.used.forEach(discard);
   await sleep(spd(0.5));
@@ -635,10 +697,10 @@ function combatPrompt(C){
     h.push('Wenn du „Fertig“ sagst, haben die anderen noch kurz Zeit einzugreifen.');
     const plus=p.hand.find(c=>c.k==='enh' && c.v>0);
     if(plus && r.a-r.b>plus.v+1) h.push(`Trick: „${plus.n}“ (${sign(plus.v)}) auf dein eigenes Monster bringt dir mehr Schätze. Nur, wenn du trotzdem sicher gewinnst.`);
-    if(p.lvl+levelsGained(C)>=10) h.push('Dieser Sieg bringt dir das Spiel. Rechne mit Gegenwehr!');
+    if(p.lvl+levelsGained(C)>=WINLVL()) h.push('Dieser Sieg bringt dir das Spiel. Rechne mit Gegenwehr!');
   }
   const opts=[];
-  opts.push(r.win ? {l:'Fertig: Monster besiegen',v:'done',kind:'primary'} : {l:'Aufgeben und weglaufen',v:'run',kind:'danger'});
+  opts.push(r.win ? {l:'Fertig: Monster besiegen',v:'done',kind:'primary'} : {l: SCN && SCN.fight ? 'Aufgeben' : 'Aufgeben und weglaufen',v:'run',kind:'danger'});
   if(C.h==null && S.players.some(x=>!x.human && !x.dead && !C.asked[x.id])) opts.push({l:'Um Hilfe bitten',v:'help'});
   if(hasCls(p,'krieger') && C.berserk<3 && p.hand.length) opts.push({l:`Krieger: Karten abwerfen (+1 je Karte)`,v:'berserk'});
   if(hasCls(p,'priester') && C.mons.some(m=>m.c.undead) && C.turning<3 && p.hand.length) opts.push({l:'Priester: gegen Untote (+3 je Karte)',v:'turn'});
@@ -684,17 +746,20 @@ async function humanAskHelp(C){
   log(`Du bittest ${b.name} um Hilfe und bietest ${offer} ${pl(offer,'Schatz','Schätze')}.`);
   await sleep(spd(0.6));
   const ans=botAcceptHelp(b,C,offer);
-  if(ans.yes){ C.h=b.id; C.deal=offer; log(`${b.name}: „${ans.why}“ ${b.name} hilft dir.`,'good'); ruleOnce('helper','Mit Helfer zählen beide Kampfstärken. Verliert ihr, müssen beide einzeln weglaufen.'); }
+  if(ans.yes){ C.h=b.id; C.deal=offer; stat('help'); log(`${b.name}: „${ans.why}“ ${b.name} hilft dir.`,'good'); ruleOnce('helper','Mit Helfer zählen beide Kampfstärken. Verliert ihr, müssen beide einzeln weglaufen.'); }
   else log(`${b.name} lehnt ab: „${ans.why}“`,'bad');
 }
 function botAcceptHelp(b,C,offer){
-  const f=P(C.f), total=treasuresOf(C);
+  const f=P(C.f), total=treasuresOf(C), st=styleOf(b);
   if(!wouldWinWith(C,b)) return {yes:false, why:'Selbst mit mir reicht das nicht.'};
-  if(f.lvl+levelsGained(C)>=10) return {yes:false, why:'Damit du gewinnst? Sicher nicht!'};
-  if(hasRace(b,'elf') && b.lvl<9) return {yes:true, why:'Als Elf steige ich dabei selbst auf. Gern!'};
+  if(SCN && SCN.perks && SCN.perks.freeHelp===b.name && f.human && !S.stats.perkUsed){ S.stats.perkUsed=true; return {yes:true, why:'Du hast mir meinen Helm zurückgebracht. Ehrensache!'}; }
+  if(f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss)) return {yes:false, why:'Damit du gewinnst? Sicher nicht!'};
+  if(hasRace(b,'elf') && b.lvl<WINLVL()-1) return {yes:true, why:'Als Elf steige ich dabei selbst auf. Gern!'};
   const leaderGap=f.lvl - Math.max(...S.players.filter(x=>x.id!==f.id).map(x=>x.lvl));
   let chance = offer===0 ? 0.2 : (total>0 && offer/total>=0.5 ? 0.9 : 0.65);
   if(leaderGap>=2) chance-=0.35;
+  chance*=st.help||1;
+  if(st.fair && offer<Math.ceil(total/2)) chance*=0.4;
   if(Math.random()<chance) return {yes:true, why: offer>0 ? 'Abgemacht.' : 'Na gut, ausnahmsweise.'};
   return {yes:false, why: offer===0 ? 'Für nichts? Nein danke.' : 'Nicht dieses Mal.'};
 }
@@ -708,7 +773,7 @@ function interferePrompt(C){
   const f=P(C.f), p=me(), r=evalCombat(C), helper=C.h===0, h=[];
   if(helper){ h.push('Du hilfst. Mit Einmal-Gegenständen kannst du eure Seite stärken.'); }
   else if(r.win){
-    if(f.lvl+levelsGained(C)>=10) h.push(`Achtung: Gewinnt ${f.name} diesen Kampf, ist das Spiel vorbei!`);
+    if(f.lvl+levelsGained(C)>=WINLVL()) h.push(`Achtung: Gewinnt ${f.name} diesen Kampf, ist das Spiel vorbei!`);
     const opts=[];
     p.hand.filter(c=>c.k==='enh' && c.v>0).forEach(c=>opts.push(`„${c.n}“ (${sign(c.v)})`));
     p.hand.filter(c=>c.k==='oneshot' && c.b).forEach(c=>opts.push(`${c.n} für das Monster (+${c.b})`));
@@ -780,6 +845,7 @@ function botBoost(b,C){
 }
 async function botSeekHelp(b,C){
   if(C.h!=null) return;
+  const sk=styleOf(b).seek; if(sk!=null && Math.random()>sk && !severe(strongestMon(C).c.bad)) return;
   const total=treasuresOf(C);
   const cands=S.players.filter(p=>p.id!==b.id && !p.dead && !C.asked[p.id] && wouldWinWith(C,p))
     .sort((x,y)=>(y.human?1:0)-(x.human?1:0));
@@ -808,11 +874,11 @@ async function botsInterfere(C){
     if(b.human || b.id===C.f || b.id===C.h || b.dead) continue;
     const r=evalCombat(C); if(!r.win) break;
     const f=P(C.f);
-    const threat=f.lvl+levelsGained(C)>=10;
+    const threat=f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss);
     if((C.intf[b.id]||0) >= (threat?2:1)) continue;
     const others=S.players.filter(x=>x.id!==f.id);
     const leading=f.lvl>=Math.max(...others.map(x=>x.lvl));
-    const chance=threat?1:Math.min(1,(leading?0.45:0.15)*diffF());
+    const chance=threat?1:Math.min(1,(leading?0.45:0.15)*diffF()*(styleOf(b).intf||1));
     if(Math.random()>chance) continue;
     if(botPlayAgainst(b,C,threat)){ C.intf[b.id]=(C.intf[b.id]||0)+1; any=true; await sleep(spd()); }
   }
@@ -842,9 +908,16 @@ async function winCombat(C){
   const f=P(C.f), h=C.h!=null?P(C.h):null, lv=levelsGained(C);
   fx('win',{p:f, mine: f.human || (h&&h.human)});
   f.lvl+=lv;
-  log(`${nm(f)} ${V(f,'besiegst','besiegt')} ${monNames(C)}${h?` mit Hilfe von ${nmD(h)}`:''} und ${V(f,'steigst','steigt')} ${lv} ${pl(lv,'Stufe','Stufen')} auf: Stufe ${Math.min(f.lvl,10)}.`,'good');
-  if(f.lvl>=10){ f.lvl=10; S.winner=f.id; log(f.human ? 'Stufe 10! Du hast gewonnen!' : `${f.name} erreicht Stufe 10 und gewinnt das Spiel.`, f.human?'good':'bad'); render(); return; }
-  if(h && hasRace(h,'elf')){ const g=Math.min(C.mons.length,Math.max(0,9-h.lvl)); if(g>0){ h.lvl+=g; log(`${nm(h)} ${V(h,'steigst','steigt')} als Elf-Helfer auf: Stufe ${h.lvl}.`,'good'); ruleOnce('elfhelp','Elfen steigen auf, wenn sie jemandem helfen, ein Monster zu besiegen.'); } }
+  const boss=C.mons.find(m=>m.c.boss);
+  if(boss){
+    if(f.lvl>WINLVL()) f.lvl=WINLVL();
+    S.stats.bossBy=f.id; S.stats.bossHelped=!!h; S.winner=f.id;
+    log(f.human ? `Du besiegst ${boss.c.n}${h?` mit Hilfe von ${nmD(h)}`:''} und gewinnst!` : `${f.name} besiegt ${boss.c.n} und gewinnt das Spiel.`, f.human?'good':'bad');
+    render(); return;
+  }
+  log(`${nm(f)} ${V(f,'besiegst','besiegt')} ${monNames(C)}${h?` mit Hilfe von ${nmD(h)}`:''} und ${V(f,'steigst','steigt')} ${lv} ${pl(lv,'Stufe','Stufen')} auf: Stufe ${Math.min(f.lvl,WINLVL())}.`,'good');
+  if(f.lvl>=WINLVL()){ f.lvl=WINLVL(); S.winner=f.id; log(f.human ? `Stufe ${WINLVL()}! Du hast gewonnen!` : `${f.name} erreicht Stufe ${WINLVL()} und gewinnt das Spiel.`, f.human?'good':'bad'); render(); return; }
+  if(h && hasRace(h,'elf')){ const g=Math.min(C.mons.length,Math.max(0,WINLVL()-1-h.lvl)); if(g>0){ h.lvl+=g; log(`${nm(h)} ${V(h,'steigst','steigt')} als Elf-Helfer auf: Stufe ${h.lvl}.`,'good'); ruleOnce('elfhelp','Elfen steigen auf, wenn sie jemandem helfen, ein Monster zu besiegen.'); } }
   const n=treasuresOf(C), drawn=[];
   for(let i=0;i<n;i++){ const t=drawTr(); if(t) drawn.push(t); }
   if(h){
@@ -864,6 +937,7 @@ async function winCombat(C){
 async function loseCombat(C){
   const f=P(C.f), h=C.h!=null?P(C.h):null;
   fx('lose',{p:f, mine: f.human || (h&&h.human)});
+  if(f.human || (h&&h.human)) stat('ran');
   log(`${nm(f)} ${V(f,'verlierst','verliert')} den Kampf und ${V(f,'musst','muss')} weglaufen!`,'bad');
   ruleOnce('lose','Verloren heißt: keine Stufen, keine Schätze. Jeder Beteiligte würfelt für jedes Monster: ab 5 gelingt die Flucht.');
   for(const p of [f,h].filter(Boolean)){
@@ -922,6 +996,7 @@ async function applyCurse(t,c,by){
     if(use){ take(t,am); discard(am); discard(c); log(`${nm(t)} ${V(t,'wehrst','wehrt')} den Fluch mit dem Glücksamulett ab.`,'good'); return; }
   }
   log(`Fluch „${c.n}“ trifft ${nmA(t)}: ${c.txt}`,'bad');
+  if(t.human) stat('curses');
   fx('curse',{p:t});
   applyBad(t,c.eff);
   discard(c);
@@ -929,14 +1004,14 @@ async function applyCurse(t,c,by){
 }
 function applyBad(p,eff){
   switch(eff.t){
-    case 'lvl': { const b=p.lvl; p.lvl=Math.max(1,p.lvl-eff.n); if(b===p.lvl){ log(`${nm(p)} ${V(p,'bist','ist')} schon auf Stufe 1. Tiefer geht es nicht.`); ruleOnce('min1','Unter Stufe 1 kann niemand fallen.'); } else log(`${nm(p)} ${V(p,'verlierst','verliert')} ${b-p.lvl} ${pl(b-p.lvl,'Stufe','Stufen')}: jetzt Stufe ${p.lvl}.`,'bad'); break; }
+    case 'lvl': { const b=p.lvl; p.lvl=Math.max(1,p.lvl-eff.n); if(p.human) stat('lvlLost',b-p.lvl); if(b===p.lvl){ log(`${nm(p)} ${V(p,'bist','ist')} schon auf Stufe 1. Tiefer geht es nicht.`); ruleOnce('min1','Unter Stufe 1 kann niemand fallen.'); } else log(`${nm(p)} ${V(p,'verlierst','verliert')} ${b-p.lvl} ${pl(b-p.lvl,'Stufe','Stufen')}: jetzt Stufe ${p.lvl}.`,'bad'); break; }
     case 'slot': { const it=p.eq.find(i=>i.slot===eff.s); if(it){ take(p,it); discard(it); log(`${nm(p)} ${V(p,'verlierst','verliert')} ${it.n}.`,'bad'); } else { log(`${nm(p)} ${V(p,'trägst','trägt')} keine ${SLOTN[eff.s]}. Glück gehabt!`); ruleOnce('nothing','Betrifft ein Fluch oder eine Niederlage etwas, das du nicht hast, passiert einfach nichts.'); } break; }
     case 'best': { const all=[...p.eq,...p.pack].sort((a,b)=>(b.b||0)-(a.b||0)||(b.g-a.g)); if(all.length){ take(p,all[0]); discard(all[0]); log(`${nm(p)} ${V(p,'verlierst','verliert')} ${all[0].n}.`,'bad'); } else log(`${nm(p)} ${V(p,'hast','hat')} keine Gegenstände zu verlieren.`); break; }
     case 'hand': { const n=Math.min(eff.n,p.hand.length), lost=[]; for(let i=0;i<n;i++){ const c=p.hand.splice(rnd(p.hand.length),1)[0]; lost.push(c); discard(c); }
       log(n ? `${nm(p)} ${V(p,'wirfst','wirft')} ${eff.n>=99?'die ganze Hand':n+' '+pl(n,'Handkarte','Handkarten')} ab: ${lost.map(c=>`<b>${cardLabel(c)}</b>`).join(', ')}.` : `${nm(p)} ${V(p,'hast','hat')} keine Handkarten.`,'bad');
       if(n) ruleOnce('discardpublic','Abgeworfene Karten liegen offen in der Ablage. Jeder darf sehen, was weg ist.');
       break; }
-    case 'class': { if(p.cls){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Klasse ${p.cls.n}.`,'bad'); discard(p.cls); p.cls=null; } else { p.lvl=Math.max(1,p.lvl-1); log(`Keine Klasse da: ${nm(p)} ${V(p,'verlierst','verliert')} stattdessen 1 Stufe.`,'bad'); } break; }
+    case 'class': { if(p.cls){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Klasse ${p.cls.n}.`,'bad'); discard(p.cls); p.cls=null; } else { if(p.human && p.lvl>1) stat('lvlLost'); p.lvl=Math.max(1,p.lvl-1); log(`Keine Klasse da: ${nm(p)} ${V(p,'verlierst','verliert')} stattdessen 1 Stufe.`,'bad'); } break; }
     case 'race': { if(p.race){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Rasse ${p.race.n} und ${V(p,'bist','ist')} wieder Mensch.`,'bad'); discard(p.race); p.race=null; } else log(`${nm(p)} ${V(p,'bist','ist')} sowieso Mensch. Nichts passiert.`); break; }
     case 'death': kill(p); break;
     case 'multi': eff.l.forEach(e=>applyBad(p,e)); break;
@@ -1020,7 +1095,7 @@ function cardActions(c, where){
         S.players.filter(x=>!x.human).forEach(t=>A.push({l:`Auf ${t.name} spielen`, fn:()=>playCurseOn(c,t)}));
         A.push({info:'Flüche von der Hand gehen jederzeit, auf jeden.'}); break;
       }
-      case 'levelup': A.push({l:'Benutzen: +1 Stufe', fn:()=>useLevelUp(c), kind:'primary', dis: p.lvl>=9 ? 'Stufe 10 gibt es nur für einen Monstersieg.' : false}); break;
+      case 'levelup': A.push({l:'Benutzen: +1 Stufe', fn:()=>useLevelUp(c), kind:'primary', dis: p.lvl>=WINLVL()-1 ? `Stufe ${WINLVL()} gibt es nur für einen Monstersieg.` : false}); break;
       case 'amulet': A.push({info:'Das Spiel fragt dich automatisch, wenn dich ein Fluch trifft.'}); break;
     }
   } else if(where==='eq'){
@@ -1042,27 +1117,27 @@ function doEquip(c){
   if(c.big) ruleOnce('big','Große Gegenstände: Davon darfst du nur einen haben, außer du bist Zwerg.');
 }
 function playRC(c){
-  const p=me(); take(p,c);
+  const p=me(); take(p,c); if(S.combat) stat('played');
   if(c.k==='race'){ if(p.race){ discard(p.race); } p.race=c; } else { if(p.cls){ discard(p.cls); } p.cls=c; }
   log(`Du bist jetzt ${c.n}: ${c.txt}`,'good');
   ruleOnce('onerc','Du hast höchstens 1 Rasse und 1 Klasse. Eine neue Karte ersetzt die alte.');
 }
 function markIntf(){ const C=S.combat; if(C && C.f!==0){ C.hchg=true; } fx('play',{}); }
 function playOneShot(c,side){
-  const p=me(), C=S.combat; take(p,c); C.used.push(c);
+  const p=me(), C=S.combat; take(p,c); C.used.push(c); stat('played'); stat('os');
   if(side==='p'){ C.pB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für ${C.f===0||C.h===0?'eure Seite':P(C.f).name} ein (+${c.b}).`,'good'); }
   else { C.mB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für das Monster ein (+${c.b}).`); if(C.f!==0 && C.h!==0) C.asked[0]=true; }
   markIntf();
 }
 function playEnh(c,m){
-  const p=me(), C=S.combat; take(p,c); m.enh.push(c);
+  const p=me(), C=S.combat; take(p,c); m.enh.push(c); stat('played');
   log(`Du spielst „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`);
   ruleOnce('enh','Monsterverstärker darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.');
   if(C.f!==0 && C.h!==0 && c.v>0) C.asked[0]=true;
   markIntf();
 }
 function playWander(w,m){
-  const p=me(), C=S.combat; take(p,w); take(p,m); discard(w); C.mons.push({c:m,enh:[]});
+  const p=me(), C=S.combat; take(p,w); take(p,m); discard(w); C.mons.push({c:m,enh:[]}); stat('played');
   log(`Du spielst „Ungebetener Gast“: <b>${m.n}</b> (Stufe ${m.lvl}) mischt mit!`);
   ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.');
   C.asked[0]=true; markIntf();
@@ -1075,21 +1150,21 @@ function playCurseOn(c,t){
   applyCurse(t,c,p).catch(e=>{ if(e!==STALE) console.error(e); });
 }
 function useLevelUp(c){
-  const p=me(); if(p.lvl>=9) return; take(p,c); discard(c); p.lvl++;
+  const p=me(); if(p.lvl>=WINLVL()-1) return; take(p,c); discard(c); p.lvl++;
   log(`Du spielst „${c.n}“: Stufe ${p.lvl}.`,'good');
   ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.');
 }
 async function startSell(pre){
   const p=me(); if(!isFree()) return;
-  if(p.lvl>=9){ log('Auf Stufe 9 bringt Verkaufen nichts mehr: Stufe 10 gibt es nur für einen Monstersieg.','sys'); return; }
+  if(p.lvl>=WINLVL()-1){ log(`Auf Stufe ${WINLVL()-1} bringt Verkaufen nichts mehr: Stufe ${WINLVL()} gibt es nur für einen Monstersieg.`,'sys'); return; }
   try{
     const sel=await selectCards({ctx:'sell', title:'Gegenstände verkaufen', text:'Wähle Gegenstände aus Hand, Ausrüstung oder Rucksack. Je 1.000 Gold gibt es 1 Stufe.', min:1, max:99, pre: Array.isArray(pre)?pre:(pre?[pre]:[]), cancel:true,
       filter:(c,w)=> (c.k==='item'||c.k==='oneshot') && c.g>0 && ['hand','eq','pack'].includes(w),
-      extra:cs=>{ const v=sellValue(p,cs), lv=Math.min(v.lv,9-p.lvl), rest=v.sum-lv*1000; return `Summe: <b>${fmt(v.sum)} Gold</b>${v.dbl?` (Halbling: ${v.dbl.n} zählt doppelt)`:''} · ergibt <b>${lv} ${pl(lv,'Stufe','Stufen')}</b>${rest>0&&cs.length?` · ${fmt(rest)} Gold verfallen`:''}`; },
+      extra:cs=>{ const v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl), rest=v.sum-lv*1000; return `Summe: <b>${fmt(v.sum)} Gold</b>${v.dbl?` (Halbling: ${v.dbl.n} zählt doppelt)`:''} · ergibt <b>${lv} ${pl(lv,'Stufe','Stufen')}</b>${rest>0&&cs.length?` · ${fmt(rest)} Gold verfallen`:''}`; },
       validate:cs=>{ if(!cs.length) return null; return sellValue(p,cs).lv<1 ? 'Noch keine 1.000 Gold zusammen.' : null; },
       confirm:()=>'Verkaufen'});
     if(!sel || !sel.length) return;
-    const cs=sel.map(findCard).filter(Boolean), v=sellValue(p,cs), lv=Math.min(v.lv,9-p.lvl);
+    const cs=sel.map(findCard).filter(Boolean), v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl);
     if(lv<1) return;
     cs.forEach(c=>{ take(p,c); discard(c); }); p.lvl+=lv; if(v.dbl) p.soldDouble=true;
     log(`Du verkaufst ${cs.map(c=>c.n).join(', ')} für ${fmt(v.sum)} Gold${v.dbl?` (als Halbling ${v.dbl.n} doppelt)`:''}: Stufe ${p.lvl}.`,'good');
@@ -1105,7 +1180,7 @@ function cheapest(p,n){ return p.hand.slice().sort((a,b)=>keepValue(p,a)-keepVal
 const names = cs => cs.map(c=>c.n).join(', ');
 function dblWhy(v){ return v.dbl ? ` Als Halbling darfst du einmal pro Zug einen Gegenstand doppelt verkaufen: ${v.dbl.n} bringt ${fmt(v.dbl.g*2)} statt ${fmt(v.dbl.g)} Gold.` : ''; }
 function chooseSell(p,cands){
-  const maxLv=9-p.lvl, target=Math.min(Math.floor(sellValue(p,cands).sum/1000),maxLv);
+  const maxLv=WINLVL()-1-p.lvl, target=Math.min(Math.floor(sellValue(p,cands).sum/1000),maxLv);
   if(target<1) return [];
   const pick=[]; for(const c of cands.slice().sort((a,b)=>b.g-a.g)){ pick.push(c); if(sellValue(p,pick).sum>=target*1000) break; }
   for(const c of pick.slice().sort((a,b)=>a.g-b.g)){ const rest=pick.filter(x=>x!==c); if(rest.length && sellValue(p,rest).sum>=target*1000) pick.splice(pick.indexOf(c),1); }
@@ -1128,7 +1203,7 @@ function curseTargetAdv(p,c,charity){
   const ts=S.players.filter(o=>!o.human && !o.dead && curseHits(o,c)).sort((a,b)=>b.lvl-a.lvl || power(b)-power(a));
   if(!ts.length) return null;
   const t=ts[0];
-  return charity || t.lvl>=p.lvl+2 || t.lvl>=8 ? t : null;
+  return charity || t.lvl>=p.lvl+2 || t.lvl>=WINLVL()-2 ? t : null;
 }
 function curseLoss(f,c){
   const e=c.eff;
@@ -1155,10 +1230,10 @@ function adviseFree(p,charity){
   const items=[...p.hand.filter(c=>c.k==='item'),...p.pack].map(c=>({c,g:gainOf(p,c)})).filter(x=>x.g>0).sort((a,b)=>b.g-a.g);
   if(items.length){ const it=items[0].c; return {uid:it.uid, act:p.pack.includes(it)?'Anlegen':'Ausrüsten', text:`Rüste ${it.n} aus.`, why:gainWhy(p,it)}; }
   const lu=p.hand.find(c=>c.k==='levelup');
-  if(lu && p.lvl<9) return {uid:lu.uid, act:'Benutzen', text:`Benutze „${lu.n}“.`, why:'Eine Stufe mehr heißt +1 Kampfstärke und ein Schritt zum Sieg. Aufheben bringt fast nie etwas.'};
-  if(p.lvl<9){
+  if(lu && p.lvl<WINLVL()-1) return {uid:lu.uid, act:'Benutzen', text:`Benutze „${lu.n}“.`, why:'Eine Stufe mehr heißt +1 Kampfstärke und ein Schritt zum Sieg. Aufheben bringt fast nie etwas.'};
+  if(p.lvl<WINLVL()-1){
     const pick=chooseSell(p,[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)]);
-    if(pick.length){ const v=sellValue(p,pick), lv=Math.min(v.lv,9-p.lvl);
+    if(pick.length){ const v=sellValue(p,pick), lv=Math.min(v.lv,WINLVL()-1-p.lvl);
       return {sell:true, picks:pick.map(c=>c.uid), text:`Verkaufe ${names(pick)}.`, why:`${pl(pick.length,'Den','Die')} nutzt du gerade nicht.${dblWhy(v)} Zusammen ${fmt(v.sum)} Gold ergeben ${lv} ${pl(lv,'Stufe','Stufen')}.`}; }
   }
   for(const c of p.hand.filter(c=>c.k==='curse')){
@@ -1170,15 +1245,15 @@ function adviseFree(p,charity){
 function adviseTrouble(p){
   const os=p.hand.filter(c=>c.k==='oneshot' && c.b).reduce((s,c)=>s+c.b,0);
   const ms=p.hand.filter(c=>c.k==='monster').map(m=>({m, lv:m.lvl+(m.vs && hasRace(p,m.vs.race)?m.vs.val:0)}))
-    .filter(x=>{ const buf=power(p)+os-x.lv, win=p.lvl+(x.m.up||1)>=10; return power(p)>x.lv && buf>=(win?7:4); })
+    .filter(x=>{ const buf=power(p)+os-x.lv, win=p.lvl+(x.m.up||1)>=WINLVL(); return power(p)>x.lv && buf>=(win?7:4); })
     .sort((a,b)=>b.m.lvl-a.m.lvl);
-  if(ms.length){ const x=ms[0], win=p.lvl+(x.m.up||1)>=10;
+  if(ms.length){ const x=ms[0], win=p.lvl+(x.m.up||1)>=WINLVL();
     return {opt:'m'+x.m.uid, text:`Kämpfe gegen ${x.m.n}.`, why:`Kampfstärke ${power(p)} gegen ${x.lv}${os?`, dazu +${os} aus Einmal-Gegenständen als Reserve`:''}. Genug Puffer, falls jemand eingreift. Bringt ${x.m.tr} ${pl(x.m.tr,'Schatz','Schätze')} und eine Stufe.${win?' Das wäre der Sieg, rechne mit Gegenwehr.':''}`}; }
   return {opt:'loot', text:'Durchsuche den Raum.', why: p.hand.some(c=>c.k==='monster') ? 'Keins deiner Hand-Monster schlägst du mit genug Puffer. Durchsuchen bringt eine Karte ohne Risiko.' : 'Du hast kein Monster auf der Hand. Durchsuchen bringt eine Karte ohne Risiko.'};
 }
 function bestHelper(C){
-  const f=P(C.f); if(f.lvl+levelsGained(C)>=10) return null;
-  const elf=x=>hasRace(x,'elf') && x.lvl<9 ? 1 : 0;
+  const f=P(C.f); if(f.lvl+levelsGained(C)>=WINLVL()) return null;
+  const elf=x=>hasRace(x,'elf') && x.lvl<WINLVL()-1 ? 1 : 0;
   return S.players.filter(x=>!x.human && !x.dead && x.id!==C.f && !C.asked[x.id] && wouldWinWith(C,x))
     .sort((a,b)=>elf(b)-elf(a) || a.lvl-b.lvl || power(b)-power(a))[0] || null;
 }
@@ -1208,12 +1283,12 @@ function adviseFight(p,C){
     const b=bestHelper(C);
     if(b) return {opt:'help', text:`Bitte ${b.name} um Hilfe.`, why:`Mit ${b.name} (Kampfstärke ${power(b)}) stündet ihr bei ${r.a+power(b)} gegen ${r.b}.${hasRace(b,'elf')?' Als Elf steigt '+b.name+' beim Helfen selbst auf und sagt eher Ja.':''}`};
   }
-  const won=p.lvl+levelsGained(C)>=10 && C.h==null;
+  const won=p.lvl+levelsGained(C)>=WINLVL() && C.h==null;
   return {opt:'run', text:'Gib auf und lauf weg.', why:`Dir ${pl(need,'fehlt','fehlen')} ${need}, und mit deinen Karten ist das nicht zu schaffen.${won?' Hilfe bekommst du nicht, weil du damit gewinnen würdest.':''} Heb deine Karten für später auf.`};
 }
 function adviseBotHelp(p,C,d){
   const b=d.b, after=Math.min(10,b.lvl+levelsGained(C));
-  if(after>=9 && after>p.lvl) return {opt:'no', text:'Lehne ab.', why:`${b.name} käme auf Stufe ${after}. So nah am Sieg hilft man niemandem.`};
+  if(after>=WINLVL()-1 && after>p.lvl) return {opt:'no', text:'Lehne ab.', why:`${b.name} käme auf Stufe ${after}. So nah am Sieg hilft man niemandem.`};
   if(b.lvl>=p.lvl+2) return {opt:'no', text:'Lehne ab.', why:`${b.name} liegt schon ${b.lvl-p.lvl} Stufen vor dir. Hilf lieber nicht beim Davonziehen.`};
   if(d.offer===0 && !hasRace(p,'elf')) return {opt:'no', text:'Lehne ab.', why:'Ohne Belohnung hast du nichts davon.'};
   const risky=C.mons.some(m=>severe(m.c.bad));
@@ -1227,7 +1302,7 @@ function adviseInterfere(p,C){
     return {opt:'ok', text:'Weiter.', why: r.win ? 'Ihr gewinnt bereits. Spar dir deine Karten.' : 'Du hast nichts, was hilft.'};
   }
   if(!r.win) return {opt:'ok', text:'Nicht eingreifen.', why:`${f.name} verliert sowieso.`};
-  const threat=f.lvl+levelsGained(C)>=10;
+  const threat=f.lvl+levelsGained(C)>=WINLVL();
   const maxO=Math.max(...S.players.filter(x=>x.id!==f.id).map(x=>x.lvl));
   const leading=f.lvl>=maxO && f.lvl>=p.lvl+1;
   if(!threat && !leading) return {opt:'ok', text:'Nicht eingreifen.', why:`${f.name} liegt nicht vorn. Eingreifen kostet Karten, die du später gegen den Führenden brauchst.`};
@@ -1288,7 +1363,7 @@ function advise(){
     }
     case 'fight': return adviseFight(p,C);
     case 'helpWho': { const b=bestHelper(C); return b ? {opt:b.id, text:`Frag ${b.name}.`, why:`Mit ${b.name} gewinnt ihr.${hasRace(b,'elf')?' Als Elf steigt '+b.name+' beim Helfen selbst auf.':''}`} : {opt:'x', text:'Abbrechen.', why:'Keiner der übrigen Mitspieler würde den Kampf drehen.'}; }
-    case 'helpOffer': { const total=treasuresOf(C), elf=hasRace(d.b,'elf') && d.b.lvl<9, n=elf?0:Math.min(total,Math.max(1,Math.ceil(total/2)));
+    case 'helpOffer': { const total=treasuresOf(C), elf=hasRace(d.b,'elf') && d.b.lvl<WINLVL()-1, n=elf?0:Math.min(total,Math.max(1,Math.ceil(total/2)));
       return {opt:n, text:`Biete ${n} ${pl(n,'Schatz','Schätze')} an.`, why: elf ? `${d.b.name} ist Elf und steigt beim Helfen selbst auf. Das reicht meist als Anreiz.` : 'Etwa die Hälfte ist ein faires Angebot. Bei zu wenig sagen viele Nein.'}; }
     case 'botHelp': return adviseBotHelp(p,C,d);
     case 'interfere': return adviseInterfere(p,C);

@@ -26,16 +26,24 @@ const FRAMES = [['gold', 'Gold', '#e9cf9a'], ['silber', 'Silber', '#dfe5ea'], ['
 const PROFILE = Object.assign({id: null, name: '', portrait: 'du', frame: 'gold'}, (() => { try { return JSON.parse(localStorage.getItem(K_PROFILE)); } catch (e) { return null; } })() || {});
 if (!PROFILE.id) { PROFILE.id = (crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2)); try { localStorage.setItem(K_PROFILE, JSON.stringify(PROFILE)); } catch (e) {} }
 function saveProfile() { try { localStorage.setItem(K_PROFILE, JSON.stringify(PROFILE)); } catch (e) {} applyProfile(); }
-function myPortrait() { const x = PORTRAITS.find(q => q[0] === PROFILE.portrait) || PORTRAITS[0]; return x[2]; }
-function myFrame() { const f = FRAMES.find(q => q[0] === PROFILE.frame) || FRAMES[0]; return f[2]; }
+// Aus dem Storymodus freischaltbar: [Schlüssel, Name, Bild/Farbe, Freischalt-ID]
+const ALL_PORTRAITS = [...PORTRAITS, ...Object.entries(COSMETICS.portrait).map(([k, v]) => [k, v.n, v.src, 'portrait:' + k])];
+const ALL_FRAMES = [...FRAMES, ...Object.entries(COSMETICS.frame).map(([k, v]) => [k, v.n, v.c, 'frame:' + k])];
+const cosOpen = x => !x[3] || owns(x[3]);
+function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portrait && cosOpen(q)) || PORTRAITS[0]; return x[2]; }
+function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]; return f[2]; }
+function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
 function myName() { return PROFILE.name || 'Du'; }
 function applyProfile() { document.documentElement.style.setProperty('--pf', myFrame()); if (S && CUR === 'game') { W.renderedOnce = true; render(); } }
 const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
 function renderProfile() {
-  patch($('#pf-hero'), `<img class="pf-big" src="${myPortrait()}" alt=""><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b><span>${esc((PORTRAITS.find(q => q[0] === PROFILE.portrait) || PORTRAITS[0])[1])} · Rahmen ${esc((FRAMES.find(q => q[0] === PROFILE.frame) || FRAMES[0])[1])}</span></div>`);
+  patch($('#pf-hero'), `<img class="pf-big" src="${myPortrait()}" alt=""><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
-  patch($('#pf-portraits'), PORTRAITS.map(([k, l, src]) => `<button type="button" class="pf-pt" data-portrait="${k}" aria-pressed="${PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy"><span>${l}</span></button>`).join(''));
-  patch($('#pf-frames'), FRAMES.map(([k, l, c]) => `<button type="button" class="pf-fr" data-frame="${k}" aria-pressed="${PROFILE.frame === k}" style="--c:${c}"><i></i><span>${l}</span></button>`).join(''));
+  const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
+  patch($('#pf-portraits'), ALL_PORTRAITS.map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join(''));
+  patch($('#pf-frames'), ALL_FRAMES.map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i></i><span>${l}</span>${on ? '' : lockI}</button>`; }).join(''));
+  const titles = Object.entries(COSMETICS.title);
+  patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => { const on = owns('title:' + k); return `<button type="button" class="pf-ti${on ? '' : ' locked'}" data-title="${k}" aria-pressed="${on && PROFILE.title === k}">${on ? '' : lockI}${esc(l)}</button>`; }).join('') + `<p class="hint">Titel, weitere Porträts und Rahmen schaltest du im Storymodus frei.</p>`);
 }
 document.addEventListener('input', e => {
   if (e.target.id !== 'pf-name') return;
@@ -58,7 +66,8 @@ const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
 function applySettings() {
-  UI.advice = SET.advice; UI.coach = SET.coach; UI.open = SET.open; UI.speed = SET.speed; UI.bots = SET.bots; UI.diff = SET.diff;
+  UI.advice = SET.advice && !SCN; UI.coach = SET.coach && !SCN; UI.open = SET.open; UI.speed = SET.speed;
+  if (!SCN) { UI.bots = SET.bots; UI.diff = SET.diff; }
   UI.reduce = SET.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.documentElement.classList.toggle('reduce', !!SET.reduce);
   Snd.set({music: SET.music, sfx: SET.sfx, mvol: SET.mvol, svol: SET.svol});
@@ -68,7 +77,7 @@ function applySettings() {
 function buzz(p) { if (SET.vibrate && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
 
 let GAME_ON = false;
-CHECKPOINT_HANDLER = () => { store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
+CHECKPOINT_HANDLER = () => { if (SCN) return; store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
 
 /* ================= Bildschirme ================= */
 /* ================= Deck-Baukasten ================= */
@@ -170,7 +179,7 @@ async function setDeckCount(i, delta) {
   DECK.custom[DECK.deck][p.tpl.n] = n; DECK.counts = currentCounts(DECK); saveDeck(); renderCards();
 }
 
-const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile'];
+const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile', 'story'];
 let CUR = 'title';
 const STACK = [];
 function show(name) { if (name !== CUR) STACK.push(CUR); setScreen(name); }
@@ -185,6 +194,7 @@ function setScreen(name) {
   if (name === 'cards') renderCards();
   if (name === 'quiz') renderQuiz();
   if (name === 'profile') renderProfile();
+  if (name === 'story') renderStory();
   if (name === 'game') { W.renderedOnce = false; render(); }
   Motes.toggle(name === 'title');
 }
@@ -201,9 +211,12 @@ window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, 
 /* ================= Startbildschirm ================= */
 function renderTitle() {
   const save = load(K_SAVE), active = GAME_ON && S && S.winner == null;
+  const w1 = WORLDS[0], si = $('#story-info');
+  if (si) si.textContent = `Welt ${w1.n} · ${worldStars(w1)} von ${worldMaxStars(w1)} Sternen`;
   const btn = $('#btn-continue');
   btn.hidden = !(active || save);
-  if (active) $('#continue-info').textContent = `Runde ${S.turn} · Stufe ${S.players[0].lvl}`;
+  if (active && S.scn) { const st = stationById(S.scn); $('#continue-info').textContent = st ? `Storymodus · ${st.no} ${st.name}` : 'Storymodus'; }
+  else if (active) $('#continue-info').textContent = `Runde ${S.turn} · Stufe ${S.players[0].lvl}`;
   else if (save) $('#continue-info').textContent = `Gespeichert: Runde ${save.S.turn} · Stufe ${save.S.players[0].lvl}`;
 }
 const Motes = (() => {
@@ -259,6 +272,7 @@ async function startNewGame() {
     counts = variantCounts('grund', 'standard');
   }
   DECK_COUNTS = counts;
+  SCN = null; STORY_RUN = null;
   clearSave(); applySettings();
   W.reset(); GAME_ON = true;
   STACK.length = 0; STACK.push('title');
@@ -268,6 +282,7 @@ async function startNewGame() {
 function continueGame() {
   if (GAME_ON && S && S.winner == null) { setScreen('game'); return; }
   const d = load(K_SAVE); if (!d) return;
+  SCN = null; STORY_RUN = null; applySettings();
   UI.bots = d.bots || UI.bots; UI.diff = d.diff || UI.diff;
   W.reset(); GAME_ON = true;
   STACK.length = 0; STACK.push('title');
@@ -306,7 +321,7 @@ function cardBig(c) {
   return `<div class="bc k-${c.k}"><div class="bc-head"><span class="bc-type">${human ? 'Rasse · keine Karte' : `${t.l} · ${t.d}karte`}</span>${num !== '' ? `<span class="bc-num">${num}</span>` : ''}</div>` +
     `<div class="bc-name">${esc(c.n)}</div>${art}<div class="bc-body">${body}</div>${foot ? `<div class="bc-foot">${foot}</div>` : ''}</div>`;
 }
-const coinsHTML = l => { let s = ''; for (let i = 1; i <= 10; i++) s += `<i class="${i <= l ? 'on' : ''}${i === l ? ' cur' : ''}${i === 10 ? ' goal' : ''}"></i>`; return s; };
+const coinsHTML = l => { const m = WINLVL(); let s = ''; for (let i = 1; i <= m; i++) s += `<i class="${i <= l ? 'on' : ''}${i === l ? ' cur' : ''}${i === m ? ' goal' : ''}"></i>`; return s; };
 
 /* ================= Beobachter: Effekte aus Zustandsänderungen ================= */
 const W = {
@@ -331,7 +346,7 @@ function watch() {
   ids.forEach(u => { if (!W.hand.has(u)) { added++; if (!first) W.fresh.add(u); } });
   if (added && !first && CUR === 'game') { Snd.sfx('deal'); setTimeout(() => { W.fresh.clear(); render(); }, 650); }
   W.hand = ids;
-  if (S.reveal && S.reveal.uid !== W.reveal) { W.reveal = S.reveal.uid; Snd.sfx('thud'); setTimeout(() => Snd.sfx('flip'), 160); buzz(25); }
+  if (S.reveal && S.reveal.uid !== W.reveal) { W.reveal = S.reveal.uid; if (S.reveal.boss) banner(S.reveal.n + '!', 'bad'); Snd.sfx('thud'); setTimeout(() => Snd.sfx('flip'), 160); buzz(25); }
   if (!S.reveal) W.reveal = null;
   const inC = !!S.combat;
   if (inC && !W.combat) { Snd.sfx('battle'); buzz(30); }
@@ -360,7 +375,7 @@ function renderSoundBtn() {
 }
 function renderTop() {
   const who = S.winner != null ? 'Spiel vorbei' : S.cur === 0 ? 'Dein Zug' : `${P(S.cur).name} ist am Zug`;
-  patch($('#tb-title'), `Runde ${S.turn} · ${esc(who)}`);
+  patch($('#tb-title'), SCN && SCN.fight ? 'Rätselkampf' : SCN ? `Ziel Stufe ${WINLVL()} · Runde ${S.turn}` : `Runde ${S.turn} · ${esc(who)}`);
   patch($('#phasedots'), ICON.phase.map((src, i) => `<img src="${src}" alt="${PHASES[i]}" title="${PHASES[i]}" class="${S.phase === i + 1 ? 'on' : S.phase > i + 1 ? 'done' : ''}">`).join(''));
   const unread = Math.max(0, S.log.length - W.logSeen), badge = $('#log-badge');
   badge.hidden = unread === 0 || topSheet()?.id === 'log';
@@ -388,7 +403,7 @@ function revealTxt(c) {
 }
 function artTop(c, enh) {
   const t = TYPES[c.k];
-  const chip = c.k === 'monster' ? `Monster · Stufe ${c.lvl}` : `${t.d} · ${t.l}`;
+  const chip = c.k === 'monster' ? `${c.boss ? 'Boss' : 'Monster'} · Stufe ${c.lvl}` : `${t.d} · ${t.l}`;
   return `<span class="chip-k">${chip}</span><span class="aname">${esc(c.n)}</span>` +
     (enh && enh.length ? `<span class="enhs">${enh.map(e => `<span class="enh">${esc(e.n)} ${sign(e.v)}</span>`).join('')}</span>` : '');
 }
@@ -504,9 +519,9 @@ function renderAct() {
   const el = $('#act');
   let html, cls = 'act';
   if (S.winner != null) {
-    const w = P(S.winner);
+    const w = S.winner >= 0 ? P(S.winner) : null, story = !!S.scn;
     cls += ' your';
-    html = `<div class="cap"><span class="ct">${w.human ? 'Du hast gewonnen!' : esc(w.name) + ' gewinnt.'}</span></div><div class="dbtns"><button type="button" class="btn primary" data-go="again">Nochmal</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
+    html = `<div class="cap"><span class="ct">${w && w.human ? 'Du hast gewonnen!' : w ? esc(w.name) + ' gewinnt.' : 'Nicht geschafft.'}</span></div><div class="dbtns"><button type="button" class="btn primary" data-go="again">Nochmal</button><button type="button" class="btn" data-go="${story ? 'storymap' : 'menu'}">${story ? 'Zur Karte' : 'Hauptmenü'}</button></div>`;
   } else if (UI.prompt) {
     const q = UI.prompt.get(), ctx = UI.prompt.ctx, data = UI.prompt.data; UI.opts = q.opts;
     cls += ' your';
@@ -661,6 +676,8 @@ const SHEET_VIEWS = {
       `<p class="hint">${r.win ? 'Die kämpfende Seite ist stärker und gewinnt.' : r.a === r.b ? 'Gleichstand reicht nicht, außer für Krieger.' : 'Das Monster ist stärker. Ohne weitere Hilfe heißt es weglaufen.'}</p>`};
   },
   pause() {
+    if (S && S.scn) { const st = stationById(S.scn);
+      return {head: h3(st ? `${st.no} · ${esc(st.name)}` : 'Pause'), body: `${st ? `<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>` : ''}<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="storymap">Station abbrechen</button></div><p class="hint">Im Storymodus wird nicht zwischengespeichert. Brichst du ab, startest du die Station neu.</p>`}; }
     return {head: h3('Pause'), body: `<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="cards">Alle Karten</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div><p class="hint">Dein Spiel wird zu Beginn jedes deiner Züge gespeichert.</p>`};
   },
   sel() {
@@ -758,7 +775,10 @@ FX_HANDLER = (t, d) => {
     case 'death': Snd.sfx('death'); if (d.p.human) { flash('dark'); banner('Tot!', 'bad'); buzz([100, 50, 100]); } break;
     case 'dice': Snd.sfx('dice'); W.diceHideAt = 0; break;
     case 'diceland': Snd.sfx('diceland'); buzz(20); W.diceHideAt = performance.now() + 1500; setTimeout(render, 1550); break;
-    case 'gameover': setTimeout(() => showEnd(d.winner), 1000); clearSave(); break;
+    case 'gameover':
+      if (S && S.scn && STORY_RUN && !STORY_RUN.done) { STORY_RUN.done = true; const res = finishStation(stationById(STORY_RUN.st), S); setTimeout(() => showStoryEnd(res), 1000); }
+      else if (!(S && S.scn)) { setTimeout(() => showEnd(d.winner), 1000); clearSave(); }
+      break;
   }
 };
 function showEnd(wid) {
@@ -823,11 +843,127 @@ function renderQuiz() {
     (a != null ? `<p class="qexpl">${a === q.a ? 'Richtig. ' : 'Nicht ganz. '}${q.e}</p><div class="acts"><button type="button" class="btn primary" data-q="next">${Q.i + 1 < QUIZ.length ? 'Nächste Frage' : 'Ergebnis'}</button></div>` : '') + '</div>');
 }
 
+/* ================= Storymodus: Karte, Stationen, Ergebnis ================= */
+let STORY_RUN = null; // {st, done} während eine Station läuft
+const LOCK_PATH = '<rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />';
+const ST_TYPES = {puzzle: 'Rätselkampf', duel: 'Herausforderung', event: 'Ereignis', shop: 'Händler', boss: 'Boss'};
+const ST_ICON = {
+  puzzle: '<path d="M14.5 4H20v5.5L9.5 20 4 14.5z M7.5 13.5l3 3 M4 20l2.5-2.5" />',
+  duel: '<rect x="3.5" y="5" width="10" height="14" rx="2" /><path d="M15 6.5l5 1.3-3.2 12.2-3.3-.9" />',
+  event: '<path d="M5 5h14v10H10l-5 4z M9 9h6 M9 12h4" />',
+  shop: '<path d="M6 9h12l-1.2 11H7.2z M9 9a3 3 0 0 1 6 0" />',
+  boss: '<path d="M4 18l1.8-10 4.2 5 2-7 2 7 4.2-5L20 18z M4 21h16" />'
+};
+const starSvg = on => `<svg class="star${on ? ' on' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6L12 16.8l-5.3 2.9 1.1-6-4.4-4.2 6-.8z" /></svg>`;
+const coinImg = '<img src="icons/muenze-voll.png" alt="">';
+function renderStory() {
+  const w = WORLDS[0];
+  patch($('#st-coins'), `${coinImg}<b>${STORY.coins}</b>`);
+  const done = !!STORY.worlds[w.id];
+  patch($('#st-head'), `<span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${done ? ' · abgeschlossen' : ''}</span>`);
+  const next = w.stations.find(st => stationUnlocked(st) && !STORY.done[st.id]);
+  const segs = [];
+  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r); segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="M${a.x} ${a.y} C${a.x} ${(a.y + st.y) / 2} ${st.x} ${(a.y + st.y) / 2} ${st.x} ${st.y}" vector-effect="non-scaling-stroke" />`); }));
+  const marks = w.landmarks.map(([t, x, y]) => `<span class="st-mark${x < 25 ? ' l' : x > 75 ? ' r' : ''}" style="left:${x}%;top:${y}px">${esc(t)}</span>`).join('');
+  const nodes = w.stations.map(st => {
+    const un = stationUnlocked(st), dn = !!STORY.done[st.id], s = starsOf(st.id), mx = maxStars(st);
+    const stars = mx ? `<span class="sn-stars">${Array.from({length: mx}, (_, i) => starSvg(!!s[i])).join('')}</span>` : '';
+    return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}" data-station="${st.id}" style="left:${st.x}%;top:${st.y}px" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
+      `<span class="sn-medal"><svg viewBox="0 0 24 24">${un ? ST_ICON[st.type] : LOCK_PATH}</svg><i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${stars}</button>`;
+  }).join('');
+  patch($('#st-map'), `<div class="smap-in" style="height:${w.mapH}px"><svg class="st-path" viewBox="0 0 100 ${w.mapH}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${marks}${nodes}</div>` +
+    `<div class="panel st-next"><span class="sn-medal"><svg viewBox="0 0 24 24">${LOCK_PATH}</svg></span><span><b>Welt 2 · Der Tavernenkeller</b><small>${done ? 'Folgt bald: neue Karten, neue Gegner und ein Rattenkönig.' : 'Besiege den Drachen des Montagmorgens, um hinabzusteigen.'}</small></span></div>`);
+  if (!STORY.intro[w.id]) { STORY.intro[w.id] = true; saveStory(); openSheet({id: 'storyintro', w: w.id}); }
+  else if (next && CUR === 'story') { const el = $(`.snode[data-station="${next.id}"]`), sc = $('#scr-story .content'); if (el && sc && !sc.__scrolled) { sc.__scrolled = true; sc.scrollTop = Math.max(0, next.y - 160); } }
+}
+function openStation(id) {
+  const st = stationById(id); if (!st) return;
+  if (!stationUnlocked(st)) { toast('Erst die Station davor schaffen.'); buzz(30); return; }
+  if (st.type === 'shop') visitShop(st);
+  openSheet({id: 'station', st: id});
+  renderStory();
+}
+function startStation(id) {
+  const st = stationById(id); if (!st || !st.scn || !stationUnlocked(st)) return;
+  const scn = scenarioFor(st);
+  scn.counts = variantCounts(worldById(st.world).deck, scn.variant || 'standard'); delete scn.variant;
+  SCN = scn; STORY_RUN = {st: st.id, done: false};
+  $$('.endov').forEach(x => x.remove()); while (SHEETS.length) SHEETS.pop(); renderSheet(true);
+  applySettings();
+  UI.bots = (scn.bots || []).length; UI.diff = scn.diff || 'normal';
+  W.reset(); GAME_ON = true;
+  STACK.length = 0; STACK.push('title', 'story');
+  setScreen('game');
+  newGame(false);
+}
+function pickChoice(v) {
+  const s = topSheet(); if (!s || s.id !== 'station') return;
+  const st = stationById(s.st), r = chooseEvent(st, v); if (!r) return;
+  Snd.sfx('coin'); toast(`+${r.coins} Münzen`); renderSheet(false); renderStory();
+}
+function buyItem(id) {
+  const s = topSheet(); if (!s || s.id !== 'station') return;
+  const st = stationById(s.st), item = (st.shop || []).find(x => x.id === id); if (!item) return;
+  const r = buyCosmetic(item);
+  if (r === 'poor') { toast(`Dafür brauchst du ${item.price} Münzen.`); buzz(40); return; }
+  if (r === 'ok') { Snd.sfx('coin'); toast(`${cosmeticName(id)} gehört dir. Auswählen kannst du ihn im Charakter-Bildschirm.`); }
+  renderSheet(false); renderStory();
+}
+function cosmeticPreview(id) {
+  const [k, key] = id.split(':'), c = COSMETICS[k][key];
+  if (k === 'portrait') return `<img class="cos-pt" src="${c.src}" alt="">`;
+  if (k === 'frame') return `<i class="cos-fr" style="--c:${c.c}"></i>`;
+  return `<i class="cos-ti">„“</i>`;
+}
+SHEET_VIEWS.storyintro = s => {
+  const w = worldById(s.w);
+  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `<p class="st-text">${esc(w.intro)}</p><ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du in der Taverne gegen Rahmen und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
+};
+SHEET_VIEWS.station = s => {
+  const st = stationById(s.st); if (!st) return null;
+  const done = !!STORY.done[st.id], stars = starsOf(st.id);
+  let body = `<span class="st-type t-${st.type}">${ST_TYPES[st.type]}${st.hard ? ' · schwer' : st.easy ? ' · leicht' : ''} · ${esc(st.place)}</span><p class="st-text">${esc(st.text)}</p><div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>`;
+  if (st.type === 'event') {
+    const ch = STORY.choice[st.id];
+    body += ch ? `<p class="st-chosen">${starSvg(true)}<span>Entschieden: <b>${esc(st.choices.find(c => c.v === ch).l)}</b>. ${esc(st.choices.find(c => c.v === ch).d)}</span></p><div class="acts"><button type="button" class="btn" data-storyclose>Schließen</button></div>`
+      : `<div class="st-choices">${st.choices.map(c => `<button type="button" class="btn st-choice" data-story-choice="${c.v}"><b>${esc(c.l)}</b><small>${esc(c.d)}</small></button>`).join('')}</div><p class="hint">Die Entscheidung gilt für diesen Durchgang der Welt.</p>`;
+  } else if (st.type === 'shop') {
+    body += `<p class="st-purse">${coinImg}Du hast <b>${STORY.coins}</b> Münzen.</p><div class="shop">${st.shop.map(it => { const own = owns(it.id), poor = STORY.coins < it.price;
+      return `<div class="shop-item">${cosmeticPreview(it.id)}<span>${esc(cosmeticName(it.id))}</span>${own ? '<em>Gehört dir</em>' : `<button type="button" class="btn small${poor ? ' poor' : ''}" data-buy="${it.id}">${coinImg}${it.price}</button>`}</div>`; }).join('')}</div>` +
+      `<div class="acts"><button type="button" class="btn primary" data-storyclose>Weiter zum Drachen</button></div>`;
+  } else {
+    const goals = [['Station schaffen', !!stars[0]], ...(st.extras || []).map((e, i) => [e.t, !!stars[i + 1]])];
+    body += `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>`;
+    if (st.reward) body += `<p class="st-reward">Belohnung: ${esc(cosmeticName(st.reward))}${owns(st.reward) ? ' · hast du schon' : ''}</p>`;
+    body += `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Los geht’s'}</button></div>`;
+  }
+  return {head: h3(`${esc(st.no)} · ${esc(st.name)}`), body};
+};
+function showStoryEnd(res) {
+  if (!STORY_RUN) return;
+  const st = stationById(STORY_RUN.st), w = res.won;
+  Snd.sfx(w ? 'victory' : 'defeat'); buzz(w ? [40, 60, 40, 60, 120] : 200);
+  const goals = [['Station geschafft', res.stars[0]], ...(st.extras || []).map((e, i) => [e.t, res.stars[i + 1]])];
+  const el = document.createElement('div'); el.className = 'endov story';
+  const lose = st.type === 'puzzle' ? 'Das reicht noch nicht. Schau dir deine Karten noch einmal an.' : S && S.winner > 0 ? `${esc(P(S.winner).name)} war schneller. Gleich noch einmal?` : 'Gleich noch einmal?';
+  el.innerHTML = `<div class="panel"><div class="se-stars">${res.stars.map((v, i) => `<span class="se-star${v ? ' on' : ''}" style="--d:${0.15 + i * 0.25}s">${starSvg(v)}</span>`).join('')}</div>` +
+    `<h2>${w ? (st.final ? 'Der Drache ist besiegt!' : 'Geschafft!') : 'Nicht geschafft'}</h2><p>${w ? esc(st.name) + ' liegt hinter dir.' : lose}</p>` +
+    `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>` +
+    (res.coins ? `<p class="se-coins">${coinImg}+${res.coins} Münzen</p>` : '') +
+    res.rewards.map(r => `<p class="se-reward">Neu: ${esc(cosmeticName(r))}</p>`).join('') +
+    (res.worldDone ? `<p class="se-outro">${esc(worldById(st.world).outro)}</p>` : '') +
+    `<div class="acts"><button type="button" class="btn primary" data-go="storymap">Zur Karte</button><button type="button" class="btn" data-go="again">Nochmal</button></div></div>`;
+  document.body.appendChild(el);
+  if (w) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 4) clearInterval(iv); }, 280); }
+}
+
 /* ================= Eingaben ================= */
 function go(a) {
   switch (a) {
     case 'continue': continueGame(); break;
     case 'setup': show('setup'); break;
+    case 'story': show('story'); break;
+    case 'storymap': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (GAME_ON && S && S.scn && S.winner == null) { TOKEN++; } if (S && S.scn) GAME_ON = false; STACK.length = 0; STACK.push('title'); setScreen('story'); break;
     case 'start': startNewGame(); break;
     case 'rules': closeAllSheets(); show('rules'); break;
     case 'cards': closeAllSheets(); show('cards'); break;
@@ -837,7 +973,7 @@ function go(a) {
     case 'pause': openSheet({id: 'pause'}); break;
     case 'resume': closeAllSheets(); break;
     case 'menu': $$('.endov').forEach(x => x.remove()); closeAllSheets(); STACK.length = 0; setScreen('title'); break;
-    case 'again': $$('.endov').forEach(x => x.remove()); closeAllSheets(); GAME_ON = false; startNewGame(); break;
+    case 'again': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (STORY_RUN && S && S.scn) { startStation(STORY_RUN.st); break; } GAME_ON = false; startNewGame(); break;
     case 'log': $$('.endov').forEach(x => x.remove()); openSheet({id: 'log'}); break;
     case 'equip': openSheet({id: 'equip'}); break;
     case 'parts': openSheet({id: 'parts'}); break;
@@ -878,8 +1014,14 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
   if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
-  if ((el = t.closest('[data-portrait]'))) { PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
-  if ((el = t.closest('[data-frame]'))) { PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
+  if ((el = t.closest('[data-story-start]'))) { startStation(el.dataset.storyStart); return; }
+  if ((el = t.closest('[data-story-choice]'))) { pickChoice(el.dataset.storyChoice); return; }
+  if ((el = t.closest('[data-buy]'))) { buyItem(el.dataset.buy); return; }
+  if ((el = t.closest('[data-storyclose]'))) { closeAllSheets(); return; }
   if ((el = t.closest('[data-deck]'))) { selectDeck(el.dataset.deck); return; }
   if ((el = t.closest('[data-variant]'))) { selectVariant(el.dataset.variant); return; }
   if ((el = t.closest('[data-dk]'))) { setDeckCount(+el.dataset.dk, +el.dataset.d); Snd.sfx(+el.dataset.d > 0 ? 'deal' : 'tap', .6); return; }
