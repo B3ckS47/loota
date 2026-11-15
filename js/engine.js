@@ -225,19 +225,30 @@ function ruleOnce(key,t){ if(UI.seen[key]) return; UI.seen[key]=true; rule(t); }
 
 /* ================= Decks ================= */
 function mk(def, deck){ return Object.assign({uid:UID++, deck}, def); }
-function buildDecks(){
+// Kartenpool: jede Karte einmal als Vorlage, mit empfohlener Stückzahl
+function cardPool(){
+  const P=[], add=(tpl,deck,def)=>P.push({tpl,deck,def});
+  MONSTERS.forEach(m=>add(Object.assign({k:'monster'},m),'door',m.x||1));
+  CURSES.forEach(c=>add(Object.assign({k:'curse'},c),'door',c.x||1));
+  Object.keys(RACES).forEach(r=>add({k:'race',r,n:RACES[r].n,txt:RACES[r].txt},'door',2));
+  Object.keys(CLASSES).forEach(c=>add({k:'class',c,n:CLASSES[c].n,txt:CLASSES[c].txt},'door',2));
+  ENH.forEach(e=>add(Object.assign({k:'enh'},e),'door',e.x||1));
+  add({k:'wander',n:'Ungebetener Gast',txt:'Spiele diese Karte mit einem Monster von deiner Hand in einen fremden Kampf. Das Monster kämpft mit.'},'door',2);
+  ITEMS.forEach(i=>add(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ONESHOTS.forEach(o=>add(Object.assign({k:'oneshot'},o),'tr',o.x||1));
+  LEVELUPS.forEach(n=>add({k:'levelup',n,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  add({k:'amulet',n:'Glücksamulett',txt:'Spiele diese Karte, wenn dich ein Fluch trifft: Er wirkt nicht.'},'tr',2);
+  return P;
+}
+// Stückzahlen pro Kartenname; null = Empfehlung. Wird von der Oberfläche vor einem neuen Spiel gesetzt.
+let DECK_COUNTS=null;
+function buildDecks(counts){
+  counts = counts || DECK_COUNTS;
   const door=[], tr=[];
-  const rep = (x,f) => { for(let i=0;i<(x||1);i++) f(); };
-  MONSTERS.forEach(m=>rep(m.x,()=>door.push(mk(Object.assign({k:'monster'},m),'door'))));
-  CURSES.forEach(c=>rep(c.x,()=>door.push(mk(Object.assign({k:'curse'},c),'door'))));
-  Object.keys(RACES).forEach(r=>rep(2,()=>door.push(mk({k:'race',r,n:RACES[r].n,txt:RACES[r].txt},'door'))));
-  Object.keys(CLASSES).forEach(c=>rep(2,()=>door.push(mk({k:'class',c,n:CLASSES[c].n,txt:CLASSES[c].txt},'door'))));
-  ENH.forEach(e=>rep(e.x,()=>door.push(mk(Object.assign({k:'enh'},e),'door'))));
-  rep(2,()=>door.push(mk({k:'wander',n:'Ungebetener Gast',txt:'Spiele diese Karte mit einem Monster von deiner Hand in einen fremden Kampf. Das Monster kämpft mit.'},'door')));
-  ITEMS.forEach(i=>tr.push(mk(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr')));
-  ONESHOTS.forEach(o=>rep(o.x,()=>tr.push(mk(Object.assign({k:'oneshot'},o),'tr'))));
-  LEVELUPS.forEach(n=>tr.push(mk({k:'levelup',n,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr')));
-  rep(2,()=>tr.push(mk({k:'amulet',n:'Glücksamulett',txt:'Spiele diese Karte, wenn dich ein Fluch trifft: Er wirkt nicht.'},'tr')));
+  cardPool().forEach(({tpl,deck,def})=>{
+    const n = counts && counts[tpl.n]!=null ? counts[tpl.n] : def;
+    for(let i=0;i<n;i++) (deck==='door'?door:tr).push(mk(Object.assign({},tpl),deck));
+  });
   return {door:shuffle(door), tr:shuffle(tr)};
 }
 function drawDoor(){

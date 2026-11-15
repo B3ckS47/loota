@@ -63,6 +63,10 @@
         <p class="hint" id="diff-hint"></p>
       </div>
       <div class="panel">
+        <h3 class="lbl">Deck</h3>
+        <button type="button" class="btn deckbtn" data-go="cards" id="setup-deck">Empfohlen</button>
+      </div>
+      <div class="panel">
         <h3 class="lbl">Tempo der Bots</h3>
         <div class="seg" data-set="speed">
           <button type="button" data-v="langsam">Langsam</button>
@@ -224,9 +228,8 @@
 
   <!-- ============ Karten ============ -->
   <section id="scr-cards" class="screen" aria-label="Kartenübersicht" hidden>
-    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Alle Karten</h2></header>
-    <div class="chips" id="card-filter"></div>
-    <div class="content"><div class="cgrid" id="card-grid"></div></div>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Karten &amp; Deck</h2></header>
+    <div class="content"><div class="panel deckp" id="deck-panel"></div><div class="chips cfilter" id="card-filter"></div><div class="cgrid" id="card-grid"></div></div>
   </section>
 
   <!-- ============ Quiz ============ -->

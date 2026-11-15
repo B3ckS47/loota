@@ -71,6 +71,53 @@ let GAME_ON = false;
 CHECKPOINT_HANDLER = () => { store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
 
 /* ================= Bildschirme ================= */
+/* ================= Deck-Baukasten ================= */
+const K_DECK = 'loota.deck';
+const POOL = cardPool();
+const POOLCAT = Object.fromEntries(POOL.map(p => [p.tpl.n, p.tpl]));
+const DEF_COUNTS = Object.fromEntries(POOL.map(p => [p.tpl.n, p.def]));
+const DECK_MAX = 4;
+const mapCounts = f => Object.fromEntries(POOL.map(p => [p.tpl.n, Math.max(0, Math.min(DECK_MAX, f(p)))]));
+const PRESETS = [
+  ['empfohlen', 'Empfohlen', 'Die ausgewogene Mischung, mit der alles begann.', p => p.def],
+  ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', p => p.tpl.k === 'monster' ? p.def + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? p.def - 1 : p.tpl.k === 'enh' ? p.def + 1 : p.def],
+  ['fluchchaos', 'Fluch-Chaos', 'Doppelt so viele Flüche, dafür mehr Amulette.', p => p.tpl.k === 'curse' ? p.def * 2 : p.tpl.k === 'amulet' ? 3 : p.def],
+  ['schnell', 'Schnelle Runde', 'Mehr Stufenkarten und Einmal-Gegenstände, keine Riesenmonster.', p => p.tpl.k === 'levelup' ? 2 : p.tpl.k === 'oneshot' ? p.def + 1 : p.tpl.k === 'monster' && p.tpl.lvl >= 14 ? 0 : p.def]
+];
+const presetCounts = key => { const pr = PRESETS.find(x => x[0] === key) || PRESETS[0]; return mapCounts(pr[3]); };
+const DECK = (() => { let d = null; try { d = JSON.parse(localStorage.getItem(K_DECK)); } catch (e) {} d = d && d.counts ? d : {preset: 'empfohlen'}; if (d.preset !== 'eigenes') d.counts = presetCounts(d.preset); else d.counts = Object.assign({}, DEF_COUNTS, d.counts); return d; })();
+function saveDeck() { try { localStorage.setItem(K_DECK, JSON.stringify(DECK.preset === 'eigenes' ? DECK : {preset: DECK.preset})); } catch (e) {} }
+function deckStats(counts) {
+  let door = 0, tr = 0, mons = 0, curses = 0, lvls = 0, rc = 0;
+  POOL.forEach(p => { const n = counts[p.tpl.n] || 0; if (p.deck === 'door') door += n; else tr += n; if (p.tpl.k === 'monster') mons += n; if (p.tpl.k === 'curse') curses += n; if (p.tpl.k === 'levelup') lvls += n; if (p.tpl.k === 'race' || p.tpl.k === 'class') rc += n; });
+  const share = door ? mons / door : 0, errors = [], warnings = [];
+  if (door < 30) errors.push(`Der Türstapel braucht mindestens 30 Karten (jetzt ${door}).`);
+  if (tr < 25) errors.push(`Der Schatzstapel braucht mindestens 25 Karten (jetzt ${tr}).`);
+  if (mons < 12 || share < 0.3) errors.push(`Mindestens 12 Monster und 30 % des Türstapels (jetzt ${mons}, ${Math.round(share * 100)} %).`);
+  if (lvls > 6) warnings.push('Viele Stufenkarten: Partien werden sehr kurz.');
+  if (curses > 16) warnings.push('Sehr viele Flüche: Es wird chaotisch.');
+  if (!rc) warnings.push('Ohne Rassen und Klassen gibt es keine Fähigkeiten.');
+  return {door, tr, mons, share, errors, warnings, ok: !errors.length};
+}
+function deckLabel() { return DECK.preset === 'eigenes' ? 'Eigenes Deck' : (PRESETS.find(x => x[0] === DECK.preset) || PRESETS[0])[1]; }
+function renderDeckPanel() {
+  const st = deckStats(DECK.counts), cur = PRESETS.find(x => x[0] === DECK.preset);
+  const chips = PRESETS.map(([k, l]) => `<button type="button" class="chip" data-preset="${k}" aria-pressed="${DECK.preset === k}">${l}</button>`).join('') + (DECK.preset === 'eigenes' ? '<button type="button" class="chip" aria-pressed="true" disabled>Eigenes</button>' : '');
+  const status = st.ok ? `<p class="dk-ok">Spielbereit${st.warnings.length ? ' · ' + st.warnings.map(esc).join(' ') : ''}</p>` : `<ul class="dk-err">${st.errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>`;
+  patch($('#deck-panel'), `<div class="dk-head"><b>Dein Deck</b><span>${esc(cur ? cur[2] : 'Deine eigene Zusammenstellung.')}</span></div><div class="chips dk-chips">${chips}</div>` +
+    `<div class="dk-stats"><span><b>${st.door}</b> Türkarten</span><span><b>${st.mons}</b> Monster (${Math.round(st.share * 100)} %)</span><span><b>${st.tr}</b> Schatzkarten</span></div>${status}` +
+    `<p class="hint">Mit − und + legst du fest, wie oft eine Karte im Deck ist (höchstens ${DECK_MAX}).${GAME_ON && S && S.winner == null ? ' Änderungen gelten ab dem nächsten Spiel.' : ''}</p>`);
+}
+function setDeckCount(i, delta) {
+  const p = POOL[i]; if (!p) return;
+  const n = Math.max(0, Math.min(DECK_MAX, (DECK.counts[p.tpl.n] || 0) + delta));
+  if (n === DECK.counts[p.tpl.n]) { buzz(30); return; }
+  DECK.counts[p.tpl.n] = n; DECK.preset = 'eigenes';
+  const match = PRESETS.find(([k]) => { const c = presetCounts(k); return POOL.every(q => c[q.tpl.n] === DECK.counts[q.tpl.n]); });
+  if (match) DECK.preset = match[0];
+  saveDeck(); renderCards();
+}
+
 const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile'];
 let CUR = 'title';
 const STACK = [];
@@ -81,7 +128,7 @@ function setScreen(name) {
   updatePaused();
   Snd.mood(name === 'game' && S && S.combat ? 'combat' : 'tavern');
   if (name === 'title') renderTitle();
-  if (name === 'setup') renderControls();
+  if (name === 'setup') { renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
   if (name === 'settings') { renderControls(); renderSaveInfo(); }
   if (name === 'cards') renderCards();
   if (name === 'quiz') renderQuiz();
@@ -152,6 +199,14 @@ async function startNewGame() {
     const ok = await confirmDialog('Neues Spiel?', 'Dein laufendes Spiel wird dabei überschrieben.', 'Neues Spiel', 'Abbrechen');
     if (!ok) return;
   }
+  const st = deckStats(DECK.counts);
+  let counts = DECK.counts;
+  if (!st.ok) {
+    const useDef = await confirmDialog('Dein Deck ist noch nicht spielbereit', esc(st.errors[0]) + ' Mit dem empfohlenen Deck spielen?', 'Empfohlenes Deck', 'Deck bearbeiten');
+    if (!useDef) { show('cards'); return; }
+    counts = presetCounts('empfohlen');
+  }
+  DECK_COUNTS = counts;
   clearSave(); applySettings();
   W.reset(); GAME_ON = true;
   STACK.length = 0; STACK.push('title');
@@ -513,7 +568,7 @@ const SHEET_VIEWS = {
   },
   card(s) {
     let c = null;
-    if (s.human) c = HUMAN; else if (s.cname) c = CATALOG[s.cname]; else c = findCard(s.uid);
+    if (s.human) c = HUMAN; else if (s.cname) c = CATALOG[s.cname] || POOLCAT[s.cname]; else c = findCard(s.uid);
     if (!c) return null;
     const live = !s.cname && !s.human && s.where && ['hand', 'eq', 'pack', 'race', 'cls'].includes(s.where);
     const acts = live ? cardActions(c, s.where) : [];
@@ -677,17 +732,22 @@ const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Rassen'
 const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Rassen & Klassen'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
 const SLOT_ORDER = ['kopf', 'ruestung', 'schuhe', 'hand', 'none'];
 function renderCards() {
+  renderDeckPanel();
   const f = UI.kfilter || 'alle';
   patch($('#card-filter'), KFILTERS.map(([k, l]) => `<button type="button" class="chip" data-kf="${k}" aria-pressed="${f === k}">${l}</button>`).join(''));
   const show = k => f === 'alle' || f === k || (f === 'rc' && (k === 'race' || k === 'class')) || (f === 'misc' && ['enh', 'wander', 'oneshot', 'levelup', 'amulet'].includes(k));
-  const all = Object.values(CATALOG);
+  const all = POOL.map((p, i) => [p.tpl, i]);
   const sorter = {monster: (a, b) => a.lvl - b.lvl, item: (a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot) || (a.hands || 0) - (b.hands || 0) || a.b - b.b, oneshot: (a, b) => (a.b || 0) - (b.b || 0), enh: (a, b) => a.v - b.v};
   let html = '';
   KGROUPS.forEach(([k, label]) => {
     if (!show(k)) return;
-    const cs = all.filter(c => c.k === k).sort(sorter[k] || ((a, b) => a.n.localeCompare(b.n, 'de')));
+    const cs = all.filter(([c]) => c.k === k).sort(([a], [b]) => (sorter[k] || ((x, y) => x.n.localeCompare(y.n, 'de')))(a, b));
     if (!cs.length) return;
-    html += `<h3 class="cgroup">${label}<span>${cs.length}</span></h3>` + cs.map(c => cardMini(c, {cname: true, size: 'grid'})).join('');
+    const total = cs.reduce((n, [c]) => n + (DECK.counts[c.n] || 0), 0);
+    html += `<h3 class="cgroup">${label}<span>${total} im Deck</span></h3>` + cs.map(([c, i]) => {
+      const n = DECK.counts[c.n] || 0;
+      return `<div class="dk${n ? '' : ' off'}">${cardMini(c, {cname: true, size: 'grid'})}<div class="stp"><button type="button" data-dk="${i}" data-d="-1" aria-label="${esc(c.n)} einmal weniger" ${n ? '' : 'disabled'}>−</button><b>${n}×</b><button type="button" data-dk="${i}" data-d="1" aria-label="${esc(c.n)} einmal mehr" ${n >= DECK_MAX ? 'disabled' : ''}>+</button></div></div>`;
+    }).join('');
   });
   patch($('#card-grid'), html);
 }
@@ -763,7 +823,9 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-frame]'))) { PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
-  if ((el = t.closest('[data-kf]'))) { UI.kfilter = el.dataset.kf; renderCards(); $('#scr-cards .content').scrollTop = 0; return; }
+  if ((el = t.closest('[data-preset]'))) { DECK.preset = el.dataset.preset; DECK.counts = presetCounts(DECK.preset); saveDeck(); renderCards(); return; }
+  if ((el = t.closest('[data-dk]'))) { setDeckCount(+el.dataset.dk, +el.dataset.d); Snd.sfx(+el.dataset.d > 0 ? 'deal' : 'tap', .6); return; }
+  if ((el = t.closest('[data-kf]'))) { UI.kfilter = el.dataset.kf; renderCards(); const sc = $('#scr-cards .content'); sc.scrollTop = Math.min(sc.scrollTop, $('#deck-panel').offsetHeight + 6); return; }
   if ((el = t.closest('[data-q]'))) {
     const Q = UI.q, v = el.dataset.q;
     if (v === 'next') { Q.i++; } else if (v === 'restart') { UI.q = {i: 0, ans: []}; } else { Q.ans[Q.i] = +v; Snd.sfx(+v === QUIZ[Q.i].a ? 'coin' : 'leveldown'); buzz(+v === QUIZ[Q.i].a ? 15 : 50); }
