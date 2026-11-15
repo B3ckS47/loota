@@ -250,6 +250,27 @@ function starReward(worldId, rewards) {
   const w = worldById(worldId), r = w && w.starReward;
   if (r && worldStars(w) >= r.n && grant(r.id)) rewards.push(r.id);
 }
+// Testmodus: eine Station als geschafft werten, mit allen Sternen, Belohnung und Münzen wie bei einem Sieg
+function skipStation(st) {
+  if (!st || STORY.done[st.id]) return;
+  if (st.type === 'event') { chooseEvent(st, st.choices[0].v); return; }
+  STORY.done[st.id] = true;
+  if (st.type !== 'shop') {
+    const stars = [true, ...(st.extras || []).map(() => true)], mul = st.coinMul || 1;
+    STORY.stars[st.id] = stars; STORY.coins += (10 + 5 * stars.length) * mul;
+    if (st.reward) grant(st.reward);
+    if (st.final) STORY.worlds[st.world] = true;
+    starReward(st.world, []);
+  }
+  saveStory();
+}
+// Testmodus: alles bis vor diese Station überspringen (frühere Welten und die Stationen davor)
+function skipTo(st) {
+  for (const w of WORLDS) {
+    for (const x of w.stations) { if (x === st) return; if (!(x.easy && w.stations.some(y => y.hard && STORY.done[y.id]))) skipStation(x); }
+  }
+}
+function resetStory() { Object.assign(STORY, {done: {}, stars: {}, coins: 0, owned: [], choice: {}, worlds: {}, intro: {}, fails: {}}); saveStory(); }
 function visitShop(st) { if (!STORY.done[st.id]) { STORY.done[st.id] = true; saveStory(); } }
 function buyCosmetic(item) {
   if (owns(item.id)) return 'owned';

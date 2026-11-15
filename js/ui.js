@@ -88,7 +88,7 @@ function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return 
 function clearSave() { try { localStorage.removeItem(K_SAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
-const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall'}, SAVED_SET || {});
+const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall', test: false}, SAVED_SET || {});
 // Lernhilfen sind ab Einstellungs-Version 2 standardmäßig aus, auch für bereits gespeicherte Einstellungen
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
@@ -990,7 +990,7 @@ function fogHTML(f, open) {
 }
 function openStation(id) {
   const st = stationById(id); if (!st) return;
-  if (!stationUnlocked(st)) { toast('Erst die Station davor schaffen.'); buzz(30); return; }
+  if (!stationUnlocked(st) && !SET.test) { toast('Erst die Station davor schaffen.'); buzz(30); return; }
   if (st.type === 'shop') visitShop(st);
   openSheet({id: 'station', st: id});
   renderStory();
@@ -1063,6 +1063,9 @@ SHEET_VIEWS.storyintro = s => {
 SHEET_VIEWS.station = s => {
   const st = stationById(s.st); if (!st) return null;
   const done = !!STORY.done[st.id], stars = starsOf(st.id);
+  // Testmodus: gesperrte Stationen lassen sich bis hierhin überspringen, offene direkt
+  if (SET.test && !stationUnlocked(st)) return {head: h3(`${esc(st.no)} · ${esc(st.name)}`), body: `<p class="st-test">Testmodus: Diese Station ist noch gesperrt.</p><div class="acts"><button type="button" class="btn primary" data-story-skipto="${st.id}">Alles bis hierhin überspringen</button><button type="button" class="btn" data-storyclose>Schließen</button></div>`};
+  const testBtn = SET.test && !done && st.type !== 'shop' && st.type !== 'event' ? `<button type="button" class="btn" data-story-skip="${st.id}">Überspringen (Test)</button>` : '';
   let body = `<span class="st-type t-${st.type}">${ST_TYPES[st.type]}${st.hard ? ' · schwer' : st.easy ? ' · leicht' : ''} · ${esc(st.place)}</span>${sayHTML(st.face, st.text)}<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>`;
   if (st.type === 'event') {
     const ch = STORY.choice[st.id];
@@ -1076,7 +1079,7 @@ SHEET_VIEWS.station = s => {
     const goals = [['Station schaffen', !!stars[0]], ...(st.extras || []).map((e, i) => [e.t, !!stars[i + 1]])];
     body += `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>`;
     if (st.reward) body += `<p class="st-reward">Belohnung: ${esc(cosmeticName(st.reward))}${owns(st.reward) ? ' · hast du schon' : ''}</p>`;
-    body += `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Los geht’s'}</button></div>`;
+    body += `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Los geht’s'}</button>${testBtn}</div>`;
   }
   return {head: h3(`${esc(st.no)} · ${esc(st.name)}`), body};
 };
@@ -1103,6 +1106,7 @@ function go(a) {
   switch (a) {
     case 'continue': continueGame(); break;
     case 'setup': show('setup'); break;
+    case 'resetstory': confirmDialog('Storymodus zurücksetzen?', 'Alle Stationen, Sterne, Münzen und Belohnungen aus dem Storymodus gehen verloren.', 'Zurücksetzen', 'Abbrechen').then(ok => { if (ok) { resetStory(); toast('Storymodus zurückgesetzt'); } }); break;
     case 'reroll': ROSTER = rollRoster(); renderFoes(); Snd.sfx('deal'); break;
     case 'story': show('story'); break;
     case 'storymap': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (GAME_ON && S && S.scn && S.winner == null) { TOKEN++; } if (S && S.scn) GAME_ON = false; STACK.length = 0; STACK.push('title'); setScreen('story'); break;
@@ -1173,6 +1177,8 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-story-choice]'))) { pickChoice(el.dataset.storyChoice); return; }
   if ((el = t.closest('[data-buy]'))) { buyItem(el.dataset.buy); return; }
   if ((el = t.closest('[data-storyclose]'))) { closeAllSheets(); return; }
+  if ((el = t.closest('[data-story-skip]'))) { skipStation(stationById(el.dataset.storySkip)); closeAllSheets(); toast('Station übersprungen'); renderStory(); return; }
+  if ((el = t.closest('[data-story-skipto]'))) { skipTo(stationById(el.dataset.storySkipto)); closeAllSheets(); toast('Bis hierhin übersprungen'); renderStory(); return; }
   if ((el = t.closest('[data-deck]'))) { selectDeck(el.dataset.deck); return; }
   if ((el = t.closest('[data-variant]'))) { selectVariant(el.dataset.variant); return; }
   if ((el = t.closest('[data-dk]'))) { setDeckCount(+el.dataset.dk, +el.dataset.d); Snd.sfx(+el.dataset.d > 0 ? 'deal' : 'tap', .6); return; }

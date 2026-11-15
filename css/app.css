@@ -787,3 +787,4 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .smap-in.pic .t-boss .sn-medal img.mi{width:40px;height:40px}
 .fog-label .sn-medal img.mi{width:32px;height:32px}
 img.star{object-fit:contain}
+.st-test{margin:4px 0 12px;font-weight:700;color:var(--muted)}
