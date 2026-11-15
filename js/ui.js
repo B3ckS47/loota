@@ -476,8 +476,8 @@ function adviceBox() {
 }
 /* Aktionsleiste: eine Zeile Kontext, darunter wenige kompakte Buttons */
 const SHORT_OPT = [
-  [/^Fertig: Monster besiegen$/, 'Monster besiegen'], [/^Aufgeben und weglaufen$/, 'Weglaufen'],
-  [/^Krieger: .*/, 'Krieger-Fähigkeit'], [/^Priester: .*/, 'Gegen Untote'], [/^Dieb: .*/, 'In den Rücken fallen'],
+  [/^Fertig: Monster besiegen$/, 'Monster besiegen'], [/^Aufgeben und weglaufen$/, 'Weglaufen'], [/^Um Hilfe bitten$/, 'Hilfe holen'],
+  [/^Krieger: .*/, 'Krieger +1'], [/^Priester: .*/, 'Priester +3'], [/^Dieb: .*/, 'Dieb −2'], [/^Nebelpulver einsetzen$/, 'Nebelpulver'],
   [/^(.+) \(Kampfstärke (\d+)\)$/, '$1 ($2)'], [/^Helfen \(für (\d+) (Schatz|Schätze)\)$/, 'Helfen: $1 $2'], [/^Glücksamulett einsetzen$/, 'Amulett einsetzen']
 ];
 function shortOpt(l, ctx) {
@@ -535,7 +535,7 @@ function renderAct() {
       if (it.o.kind === 'ghost' && /^Abbrechen$/.test(it.o.l)) return `<button type="button" class="btn ghost x" ${attr} aria-label="Abbrechen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button>`;
       return `<button type="button" class="btn${k}${rec}${num}" ${attr} ${it.o.dis ? 'disabled' : ''}>${esc(it.type === 'opt' ? shortOpt(it.o.l, ctx) : it.o.l)}</button>`;
     }).join('');
-    html = `<button type="button" class="cap${hasInfo ? ' info' : ''}" ${hasInfo ? 'data-dinfo' : 'disabled'}>${tip}<span class="ct">${esc(stripTags(promptCaption(q, ctx, data)))}</span>${hasInfo ? '<span class="ii" aria-label="Mehr Infos">i</span>' : ''}</button><div class="dbtns">${btns}</div>`;
+    html = `<button type="button" class="cap${hasInfo ? ' info' : ''}" ${hasInfo ? 'data-dinfo' : 'disabled'}>${tip}<span class="ct">${esc(stripTags(promptCaption(q, ctx, data)))}</span>${hasInfo ? '<span class="ii" aria-label="Mehr Infos">i</span>' : ''}</button><div class="dbtns" data-n="${dockButtons(q, ctx).length}">${btns}</div>`;
   } else {
     cls += ' idle';
     // letzte Meldung seit dem Zugwechsel; direkt nach dem Wechsel steht dort, wer jetzt dran ist
@@ -871,10 +871,20 @@ function renderStory() {
     return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}" data-station="${st.id}" style="left:${st.x}%;top:${st.y}px" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
       `<span class="sn-medal"><svg viewBox="0 0 24 24">${un ? ST_ICON[st.type] : LOCK_PATH}</svg><i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${stars}</button>`;
   }).join('');
-  patch($('#st-map'), `<div class="smap-in" style="height:${w.mapH}px"><svg class="st-path" viewBox="0 0 100 ${w.mapH}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${marks}${nodes}</div>` +
-    `<div class="panel st-next"><span class="sn-medal"><svg viewBox="0 0 24 24">${LOCK_PATH}</svg></span><span><b>Welt 2 · Der Tavernenkeller</b><small>${done ? 'Folgt bald: neue Karten, neue Gegner und ein Rattenkönig.' : 'Besiege den Drachen des Montagmorgens, um hinabzusteigen.'}</small></span></div>`);
+  const last = w.stations[w.stations.length - 1];
+  segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
+  patch($('#st-map'), `<div class="smap-in${w.map ? ' art' : ''}" style="height:${w.mapH}px${w.map ? `;background-image:url(${w.map})` : ''}"><svg class="st-path" viewBox="0 0 100 ${w.mapH}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${w.map ? '' : marks}${nodes}</div>` +
+    WORLDS_SOON.map(f => fogHTML(f, done)).join(''));
   if (!STORY.intro[w.id]) { STORY.intro[w.id] = true; saveStory(); openSheet({id: 'storyintro', w: w.id}); }
   else if (next && CUR === 'story') { const el = $(`.snode[data-station="${next.id}"]`), sc = $('#scr-story .content'); if (el && sc && !sc.__scrolled) { sc.__scrolled = true; sc.scrollTop = Math.max(0, next.y - 160); } }
+}
+// Nächste Welt: im Nebel zu erahnen, je weiter unten desto dichter
+function fogHTML(f, open) {
+  const seg = f.teaser.map((p, i) => i ? `<path d="M${f.teaser[i - 1][0]} ${f.teaser[i - 1][1]} C${f.teaser[i - 1][0]} ${(f.teaser[i - 1][1] + p[1]) / 2} ${p[0]} ${(f.teaser[i - 1][1] + p[1]) / 2} ${p[0]} ${p[1]}" vector-effect="non-scaling-stroke" />` : `<path d="M50 0 C50 ${p[1] / 2} ${p[0]} ${p[1] / 2} ${p[0]} ${p[1]}" vector-effect="non-scaling-stroke" />`).join('');
+  const dots = f.teaser.map(([x, y]) => `<span class="fog-node" style="left:${x}%;top:${y}px"><span class="sn-medal"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8v.5 M12 17h.01" /></svg></span></span>`).join('');
+  return `<div class="st-link" aria-hidden="true"></div><div class="st-fog${open ? ' near' : ''}" style="height:${f.h}px"><div class="fog-map${f.map ? ' art' : ''}"${f.map ? ` style="background-image:url(${f.map})"` : ''}><svg class="st-path" viewBox="0 0 100 ${f.h}" preserveAspectRatio="none" aria-hidden="true">${seg}</svg>${dots}</div>` +
+    `<div class="fog-layer" aria-hidden="true"></div><div class="fog-drift d1" aria-hidden="true"></div><div class="fog-drift d2" aria-hidden="true"></div>` +
+    `<div class="fog-label"><span class="sn-medal"><svg viewBox="0 0 24 24">${LOCK_PATH}</svg></span><span class="fog-world">Welt ${f.n}</span><b>${esc(f.name)}</b><small>${open ? esc(f.soon) : esc(f.hint)}</small></div></div>`;
 }
 function openStation(id) {
   const st = stationById(id); if (!st) return;

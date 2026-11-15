@@ -29,7 +29,7 @@ function cosmeticName(id) {
 
 const storyWon = S => S.winner === 0;
 const WORLDS = [{
-  id: 'w1', n: 1, name: 'Rund um die Taverne', deck: 'grund', mapH: 1000,
+  id: 'w1', n: 1, name: 'Rund um die Taverne', deck: 'grund', mapH: 1000, map: null,
   intro: 'Du bist neu in der Taverne. Berta, Kalle und Uschi sitzen jeden Abend am Stammtisch und lachen über jeden Neuen. Wirtin Hilde zwinkert dir zu: „Willst du dir einen Namen machen? Das Städtchen hat Plagen genug. Fang im Garten an.“',
   outro: 'Der Drache trollt sich, das Städtchen atmet auf. Am Stammtisch ist plötzlich ein Stuhl für dich frei. Da ruft Hilde aus der Küche: „Das Bier ist alle! Und aus dem Keller kommen komische Geräusche …“',
   landmarks: [['Taverne', 50, 22], ['Garten', 80, 92], ['Hafen', 88, 312], ['Autobahnbrücke', 5, 548], ['Rathaus', 5, 604], ['Flohmarkt', 95, 604], ['Drachenhöhle', 95, 862]],
@@ -89,6 +89,12 @@ const WORLDS = [{
       reward: 'title:montagsheld', final: true}
   ]
 }];
+
+// Welten, die noch kommen: auf der Karte im Nebel zu erahnen (map = späteres Musely-Bild)
+const WORLDS_SOON = [
+  {id: 'w2', n: 2, name: 'Der Tavernenkeller', h: 330, map: null, teaser: [[50, 52], [27, 118], [70, 176]],
+    hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.', soon: 'Folgt bald: neue Karten, neue Gegner und ein Rattenkönig.'}
+];
 
 const STORY = (() => {
   let s = null;
