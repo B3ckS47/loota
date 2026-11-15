@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-2baf44edc6';
+const CACHE = 'loota-295b69d637';
 const FILES = [
 "./",
 "index.html",
@@ -168,8 +168,15 @@ const FILES = [
 "app-icons/maskable-192.png",
 "app-icons/maskable-512.png"
 ];
+// Jede Datei mit der Versionsnummer anfragen: So kann weder der Browser noch das Netz von GitHub
+// eine alte Fassung liefern, solange eine neue Version gerade erst verteilt wird.
+// Gespeichert wird unter dem normalen Namen, den die App auch anfragt.
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, {cache: 'reload'})))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f =>
+    fetch(new Request(f + (f.includes('?') ? '&' : '?') + 'v=' + CACHE, {cache: 'reload'})).then(r => {
+      if (!r.ok) throw new Error('Laden fehlgeschlagen: ' + f);
+      return c.put(new Request(f), r);
+    })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('loota-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
