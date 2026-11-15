@@ -100,7 +100,7 @@ const WORLDS = [{
 }, {
   id: 'w2', n: 2, name: 'Der Tavernenkeller', face: 'icons/portrait-hilde.png', deck: 'keller', table: 'keller', theme: 'keller', map: 'art/karte-welt2.webp', mapRatio: 768 / 1376,
   // solange Welt 1 offen ist: im Nebel zu erahnen (Punkte in Prozent der oberen 55 % des Bildes)
-  fog: {show: 0.55, teaser: [[50.1, 25.1], [20.8, 31.7], [43.6, 62.1]], hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.'},
+  fog: {show: 0.55, teaser: [[50, 25.5], [74, 29.1], [86, 60]], hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.'},
   intro: 'Das Bier ist alle, und aus dem Keller kommen seltsame Geräusche. Hilde drückt dir eine Laterne in die Hand: „Unten hat sich Rattenkönig Rüdiger zum Herrscher ausgerufen. Seitdem spielen alle da unten nach seinen Regeln. Hol mir mein Bier zurück!“ Am Stammtisch wetten Berta, Kalle und Uschi schon, ob du überhaupt wiederkommst.',
   outro: 'Rüdiger rückt seinen Kronkorken gerade und gibt sich geschlagen. Hilde bekommt ihr Bier, der Stammtisch zahlt die Wettschulden. Hinter dem Thron entdeckst du einen schmalen Tunnel. Es riecht nach Moos und Pilzen …',
   unlocks: ['das Keller-Deck', 'die Tischfläche „Kellergewölbe“', 'die Kellermusik'],
@@ -113,13 +113,13 @@ const WORLDS = [{
       scn: {fight: {mons: ['Staubmaus-Bande'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Kellerlaterne'], hand: ['Mausefalle', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
       extras: [{t: 'Mit nur einer Karte gewinnen', ok: st => st.played <= 1}, {t: 'Den Riesenböller behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Riesenböller')}],
       reward: 'title:kellerkind'},
-    {id: 'w2s2', luck: 0.35, face: 'icons/portrait-rosi.png', ax: 21, ay: 17, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
+    {id: 'w2s2', luck: 0.35, face: 'icons/portrait-rosi.png', ax: 74, ay: 16, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
       text: 'Zwischen den Fässern sitzt Ratte Rosi, Rüdigers vorlaute Nichte, und mischt Karten mit dem Schwanz. „Du willst zu meinem Onkel? Erst gegen mich. Und glaub ja nicht, dass ich dir jemals helfe.“',
       goal: '1 gegen 1 gegen Ratte Rosi, mit dem Keller-Deck: Erreiche Stufe 5 vor ihr.',
       scn: {target: 5, bots: ['Rosi'], diff: 'gemuetlich'},
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}],
       reward: 'frame:rattengrau'},
-    {id: 'w2s3', face: 'icons/portrait-fridolin.png', ax: 75, ay: 16, no: '3', type: 'event', name: 'Das sprechende Fass', place: 'Zapfstelle', req: ['w2s2'],
+    {id: 'w2s3', face: 'icons/portrait-fridolin.png', ax: 86, ay: 33, no: '3', type: 'event', name: 'Das sprechende Fass', place: 'Fasslager', req: ['w2s2'],
       text: 'Ein dickes Bierfass räuspert sich: „Fass Fridolin, sehr erfreut. Du willst in den Vorratsraum? Da spielen Rosi und ich heute Karten. Ich mach dir ein Angebot, unter Kellerleuten.“',
       goal: 'Nimm eines von Fridolins Angeboten an. Es wirkt sich auf die nächste Station aus.',
       choices: [
@@ -127,7 +127,7 @@ const WORLDS = [{
         {v: 'help', l: 'Fridolins Hilfe annehmen', d: 'Fridolin hilft dir in Station 4 einmal, ohne Schätze zu verlangen.'},
         {v: 'coins', l: 'Die 30 Münzen nehmen', d: 'Du bekommst 30 Münzen.', coins: 30}
       ]},
-    {id: 'w2s4', luck: 0.25, face: 'icons/portrait-fridolin.png', ax: 44, ay: 34, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
+    {id: 'w2s4', luck: 0.25, face: 'icons/portrait-fridolin.png', ax: 54, ay: 36, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
       text: 'Zwischen Kartoffelsäcken und Schatztruhen haben Rosi und Fridolin einen Tisch aus Kisten gebaut. „Wer zuerst Stufe 6 hat, kriegt die Truhe“, quiekt Rosi. Fridolin gluckert zustimmend.',
       goal: 'Gegen Rosi und Fridolin: Erreiche als Erster Stufe 6.',
       scn: story => ({target: 6, bots: ['Rosi', 'Fridolin'], diff: 'gemuetlich',
