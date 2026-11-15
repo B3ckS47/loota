@@ -427,7 +427,7 @@ async function humanTurn(p){
     log(`Du stößt die Tür auf: <b>${cardLabel(c)}</b>.`);
     if(c.k==='monster'){ ruleOnce('openmon','Ein offen aufgedecktes Monster musst du sofort bekämpfen.'); S.reveal=null; await combat(0,[c]); fought=true; }
     else if(c.k==='curse'){ ruleOnce('doorcurse','Einen Fluch, den du beim Aufstoßen der Tür aufdeckst, bekommst du selbst ab.'); await sleep(1100); S.reveal=null; await applyCurse(p,c,null); }
-    else { await sleep(1000); S.reveal=null; p.hand.push(c); log(`${c.n} kommt auf deine Hand.`); if(c.k==='race'||c.k==='class') ruleOnce('rcplay','Rassen und Klassen darfst du im eigenen Zug jederzeit ausspielen. Tippe die Karte in deiner Hand an.'); }
+    else { await sleep(1000); S.reveal=null; p.hand.push(c); log(`${c.n} kommt auf deine Hand.`); if(c.k==='race'||c.k==='class') ruleOnce('rcplay','Rassen und Klassen darfst du im eigenen Zug jederzeit ausspielen. Zieh die Karte aufs Spielfeld oder tippe sie an.'); }
   }
   if(S.winner!=null) return;
   if(!fought && !p.dead){
@@ -616,7 +616,7 @@ function combatPrompt(C){
   if(!r.win){
     const need=r.b-r.a+(r.tieWin?0:1);
     h.push(`Dir ${pl(need,'fehlt','fehlen')} ${need} ${pl(need,'Punkt','Punkte')}.`);
-    if(os.length) h.push(`Einmal-Gegenstände auf deiner Hand: ${os.map(c=>`${c.n} (+${c.b})`).join(', ')}. Antippen, dann „Für unsere Seite“.`);
+    if(os.length) h.push(`Einmal-Gegenstände auf deiner Hand: ${os.map(c=>`${c.n} (+${c.b})`).join(', ')}. Aufs Spielfeld ziehen oder antippen.`);
     const tiny=p.hand.find(c=>c.k==='enh' && c.v<0); if(tiny) h.push(`„${tiny.n}“ (${sign(tiny.v)}) darfst du auch auf dein eigenes Monster spielen.`);
     if(C.h==null) h.push('Du kannst einen Mitspieler um Hilfe bitten und Schätze anbieten.');
     h.push('Reicht nichts davon: aufgeben und weglaufen.');
@@ -703,7 +703,7 @@ function interferePrompt(C){
     p.hand.filter(c=>c.k==='oneshot' && c.b).forEach(c=>opts.push(`${c.n} für das Monster (+${c.b})`));
     if(p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster')) opts.push('Ungebetener Gast mit einem Monster von deiner Hand');
     if(p.hand.some(c=>c.k==='curse')) opts.push('ein Fluch auf '+f.name);
-    if(opts.length) h.push('Möglich: '+opts.join(', ')+'. Karte antippen.');
+    if(opts.length) h.push('Möglich: '+opts.join(', ')+'. Karte aufs Spielfeld ziehen oder antippen.');
     h.push('Eingreifen kostet Karten. Lohnt sich vor allem gegen den, der vorne liegt.');
   } else h.push(`${f.name} verliert gerade.`);
   const o=[{l: C.hchg ? 'Fertig, weiter' : 'Nicht eingreifen', v:'ok', kind:'primary'}];
@@ -1004,7 +1004,7 @@ function cardActions(c, where){
         else A.push({info:'Spiele diese Karte im Kampf eines Mitspielers, zusammen mit einem Monster von deiner Hand.'});
         break;
       }
-      case 'monster': A.push({info: myTurn && S.phase===2 && !C ? 'Nutze dafür den Button „Herausfordern“ unten.' : 'Monster von der Hand spielst du bei „Monster herausfordern“ oder mit „Ungebetener Gast“ in fremde Kämpfe.'}); break;
+      case 'monster': A.push({info: myTurn && S.phase===2 && !C ? 'Zieh das Monster aufs Spielfeld oder tippe unten auf „Monster herausfordern“.' : 'Monster von der Hand spielst du bei „Monster herausfordern“ oder mit „Ungebetener Gast“ in fremde Kämpfe.'}); break;
       case 'curse': {
         S.players.filter(x=>!x.human).forEach(t=>A.push({l:`Auf ${t.name} spielen`, fn:()=>playCurseOn(c,t)}));
         A.push({info:'Flüche von der Hand gehen jederzeit, auf jeden.'}); break;

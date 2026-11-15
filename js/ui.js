@@ -146,11 +146,12 @@ function cardNum(c) {
 }
 function cardMini(c, o = {}) {
   const t = TYPES[c.k], num = cardNum(c), art = ART[c.n];
-  const data = o.cname ? `data-cname="${esc(c.n)}"` : `data-uid="${c.uid}" data-where="${o.where || ''}"`;
-  return `<button type="button" class="mc k-${c.k}${o.size ? ' ' + o.size : ''}${o.extra ? ' ' + o.extra : ''}" ${data} aria-label="${esc(c.n)}">` +
+  const tag = o.inert ? 'span' : 'button';
+  const data = o.inert ? '' : o.cname ? `data-cname="${esc(c.n)}"` : `data-uid="${c.uid}" data-where="${o.where || ''}"`;
+  return `<${tag}${o.inert ? '' : ' type="button"'} class="mc k-${c.k}${o.size ? ' ' + o.size : ''}${o.extra ? ' ' + o.extra : ''}" ${data} aria-label="${esc(c.n)}">` +
     `<span class="mc-head"><span class="mc-type">${t.s || t.l}</span>${num !== '' ? `<span class="mc-num">${num}</span>` : ''}</span>` +
-    (art ? `<img class="mc-art" src="${art}" alt="" loading="lazy" decoding="async">` : `<img class="mc-art" src="${ICON.slot.race}" alt="" style="object-fit:contain;padding:8px">`) +
-    `<span class="mc-name">${esc(c.n)}</span></button>`;
+    (art ? `<img class="mc-art" src="${art}" alt="" loading="lazy" decoding="async" draggable="false">` : `<img class="mc-art" src="${ICON.slot.race}" alt="" draggable="false" style="object-fit:contain;padding:8px">`) +
+    `<span class="mc-name">${esc(c.n)}</span></${tag}>`;
 }
 function cardBig(c) {
   const t = TYPES[c.k], num = cardNum(c), human = c === HUMAN;
@@ -319,26 +320,76 @@ function adviceBox() {
   const can = a.opt !== undefined || a.uid || a.sell || (UI.sel && a.picks);
   return `<div class="adv${UI.advOpen ? ' open' : ''}" data-advtoggle><div class="t"><b>${linkify(esc(a.text))}</b><span class="why">${linkify(esc(a.why || ''))}</span></div>${can ? '<button type="button" class="btn" data-adv>Übernehmen</button>' : ''}</div>`;
 }
+/* Aktionsleiste: eine Zeile Kontext, darunter wenige kompakte Buttons */
+const SHORT_OPT = [
+  [/^Fertig: Monster besiegen$/, 'Monster besiegen'], [/^Aufgeben und weglaufen$/, 'Weglaufen'],
+  [/^Krieger: .*/, 'Krieger-Fähigkeit'], [/^Priester: .*/, 'Gegen Untote'], [/^Dieb: .*/, 'In den Rücken fallen'],
+  [/^(.+) \(Kampfstärke (\d+)\)$/, '$1 ($2)'], [/^Helfen \(für (\d+) (Schatz|Schätze)\)$/, 'Helfen: $1 $2'], [/^Glücksamulett einsetzen$/, 'Amulett einsetzen']
+];
+function shortOpt(l, ctx) {
+  if (ctx === 'helpOffer') { const m = l.match(/^(\d+) (Schatz|Schätze)$/); if (m) return m[1]; }
+  for (const [re, rep] of SHORT_OPT) if (re.test(l)) return l.replace(re, rep);
+  return l;
+}
+function promptCaption(q, ctx, data) {
+  const p = me();
+  switch (ctx) {
+    case 'kick': return q.text || q.title;
+    case 'trouble': return 'Kein Monster hinter der Tür';
+    case 'charity': { const over = p.hand.length - handLimit(p); return over > 0 ? `Almosen: ${over} ${pl(over, 'Karte', 'Karten')} zu viel` : 'Fertig? Dann Zug beenden'; }
+    case 'helpWho': return 'Wen bittest du um Hilfe?';
+    case 'helpOffer': return data && data.b ? `Wie viele Schätze bekommt ${data.b.name}?` : q.title;
+    case 'botHelp': return data && data.b ? `${data.b.name} bittet dich um Hilfe` : q.title;
+    case 'run': {
+      if (!data || !data.m) return q.title;
+      const need = 5 - (runBonus(p) + (data.m.c.run || 0));
+      return `Flucht vor ${data.m.c.n}: ` + (need <= 1 ? 'klappt sicher' : need > 6 ? 'nur mit Karten' : `ab einer ${need}`);
+    }
+    default: return q.title;
+  }
+}
+function dockButtons(q, ctx) {
+  const items = [];
+  const mons = ctx === 'trouble' ? q.opts.map((o, i) => [o, i]).filter(([o]) => /^m\d+$/.test(String(o.v))) : [];
+  q.opts.forEach((o, i) => { if (!mons.some(([, j]) => j === i)) items.push({type: 'opt', i, o}); });
+  if (mons.length) items.unshift({type: 'pick', o: {l: 'Herausfordern', kind: ''}, rec: UI.adv && mons.some(([o]) => o.v === UI.adv.opt)});
+  // Primäraktion zuerst, „Abbrechen“ zuletzt
+  items.sort((x, y) => (x.o.kind === 'primary' ? -1 : 0) - (y.o.kind === 'primary' ? -1 : 0) || (x.o.kind === 'ghost' ? 1 : 0) - (y.o.kind === 'ghost' ? 1 : 0));
+  const cancel = items.filter(it => it.o.kind === 'ghost');
+  let main = items.filter(it => it.o.kind !== 'ghost');
+  const allNum = main.every(it => it.type === 'opt' && /^\d+$/.test(shortOpt(it.o.l, ctx)));
+  if (main.length > 3 && !allNum) main = [...main.slice(0, 2), {type: 'more', o: {l: 'Mehr …', kind: ''}}];
+  return [...main, ...cancel];
+}
 function renderAct() {
   const el = $('#act');
-  let html;
+  let html, cls = 'act';
   if (S.winner != null) {
     const w = P(S.winner);
-    el.classList.add('your');
-    html = `<h3>${w.human ? 'Du hast gewonnen!' : esc(w.name) + ' gewinnt.'}</h3><div class="opts two"><button type="button" class="btn primary" data-go="again">Nochmal</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
+    cls += ' your';
+    html = `<div class="cap"><span class="ct">${w.human ? 'Du hast gewonnen!' : esc(w.name) + ' gewinnt.'}</span></div><div class="dbtns"><button type="button" class="btn primary" data-go="again">Nochmal</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
   } else if (UI.prompt) {
-    const q = UI.prompt.get(); UI.opts = q.opts;
-    el.classList.add('your');
-    const hints = UI.coach && q.hint && q.hint.length ? (UI.hintsOpen ? `<ul class="hints">${q.hint.map(x => `<li>${linkify(x)}</li>`).join('')}</ul><button type="button" class="hints-toggle" data-hints>Tipps ausblenden</button>` : `<button type="button" class="hints-toggle" data-hints>${q.hint.length} ${pl(q.hint.length, 'Tipp', 'Tipps')} anzeigen</button>`) : '';
-    const short = q.opts.length === 2 ? q.opts.every(o => o.l.length <= 24) : q.opts.length >= 2 && q.opts.every(o => o.l.length <= 18);
-    html = `<h3>${esc(q.title)}</h3>${q.text ? `<p class="atxt">${linkify(q.text)}</p>` : ''}${adviceBox()}${hints}` +
-      `<div class="opts${short ? ' two' : ''}">${q.opts.map((o, i) => `<button type="button" class="btn ${o.kind === 'primary' ? 'primary' : o.kind === 'danger' ? 'danger' : ''}${UI.adv && UI.adv.opt !== undefined && UI.adv.opt === o.v ? ' rec' : ''}" data-opt="${i}" ${o.dis ? 'disabled' : ''}>${esc(o.l)}</button>`).join('')}</div>`;
+    const q = UI.prompt.get(), ctx = UI.prompt.ctx, data = UI.prompt.data; UI.opts = q.opts;
+    cls += ' your';
+    const hasInfo = !!(q.text || (UI.coach && q.hint && q.hint.length) || UI.adv);
+    const tip = UI.adv ? '<span class="tipchip">Tipp</span>' : '';
+    const btns = dockButtons(q, ctx).map(it => {
+      const k = it.o.kind === 'primary' ? ' primary' : it.o.kind === 'danger' ? ' danger' : it.o.kind === 'ghost' ? ' ghost' : '';
+      const rec = (it.type === 'opt' && UI.adv && UI.adv.opt !== undefined && UI.adv.opt === it.o.v) || it.rec ? ' rec' : '';
+      const num = it.type === 'opt' && /^\d+$/.test(shortOpt(it.o.l, ctx)) ? ' num' : '';
+      const attr = it.type === 'opt' ? `data-opt="${it.i}"` : it.type === 'pick' ? 'data-dpick' : 'data-dmore';
+      if (it.o.kind === 'ghost' && /^Abbrechen$/.test(it.o.l)) return `<button type="button" class="btn ghost x" ${attr} aria-label="Abbrechen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button>`;
+      return `<button type="button" class="btn${k}${rec}${num}" ${attr} ${it.o.dis ? 'disabled' : ''}>${esc(it.type === 'opt' ? shortOpt(it.o.l, ctx) : it.o.l)}</button>`;
+    }).join('');
+    html = `<button type="button" class="cap${hasInfo ? ' info' : ''}" ${hasInfo ? 'data-dinfo' : 'disabled'}>${tip}<span class="ct">${esc(stripTags(promptCaption(q, ctx, data)))}</span>${hasInfo ? '<span class="ii" aria-label="Mehr Infos">i</span>' : ''}</button><div class="dbtns">${btns}</div>`;
   } else {
-    el.classList.remove('your');
-    const items = S.log.filter(e => (UI.coach || e.kind !== 'rule') && e.kind !== 'turn').slice(-3);
-    html = `<h3>${S.cur === 0 ? 'Einen Moment …' : esc(P(S.cur).name) + ' ist am Zug'}</h3><ul class="ticker">${items.map(e => `<li>${linkify(e.t)}</li>`).join('')}</ul>`;
+    cls += ' idle';
+    const last = S.log.slice().reverse().find(e => e.kind !== 'turn' && (UI.coach || e.kind !== 'rule'));
+    const who = P(S.cur);
+    const line = last ? stripTags(last.t) : (S.cur === 0 ? 'Einen Moment …' : `${who.name} ist am Zug`);
+    html = `<div class="cap"><img class="cpt" src="${portrait(who)}" alt=""><span class="ct">${esc(line)}</span></div>`;
   }
-  if (!UI.prompt && S.winner == null) el.classList.remove('your');
+  if (el.className !== cls) el.className = cls;
   patch(el, html);
 }
 function renderMe() {
@@ -361,6 +412,7 @@ function renderHand() {
     const cls = [];
     if (UI.adv && (UI.adv.uid === c.uid || (UI.adv.picks && UI.adv.picks.includes(c.uid)))) cls.push('rec');
     if (W.fresh.has(c.uid)) cls.push('new');
+    if (dragIntents(c).some(it => !it.dis)) cls.push('can');
     const html = cardMini(c, {where: 'hand', extra: cls.join(' ')});
     let node = existing.get(String(c.uid));
     if (!node || node.__h !== html) { const tmp = document.createElement('div'); tmp.innerHTML = html; const n = tmp.firstElementChild; n.__h = html; if (node) node.replaceWith(n); node = n; }
@@ -403,6 +455,27 @@ function renderSheet(fresh) {
 }
 const h3 = t => `<h3>${t}</h3>`;
 const SHEET_VIEWS = {
+  info() {
+    if (!UI.prompt) return null;
+    const q = UI.prompt.get();
+    const hints = UI.coach && q.hint && q.hint.length ? `<ul class="hints">${q.hint.map(x => `<li>${linkify(x)}</li>`).join('')}</ul>` : '';
+    return {head: h3(esc(q.title)), body: `${q.text ? `<p class="atxt">${linkify(q.text)}</p>` : ''}${adviceBox()}${hints}<div class="acts">${q.opts.map((o, i) => `<button type="button" class="btn ${o.kind === 'primary' ? 'primary' : o.kind === 'danger' ? 'danger' : ''}${UI.adv && UI.adv.opt !== undefined && UI.adv.opt === o.v ? ' rec' : ''}" data-opt="${i}" ${o.dis ? 'disabled' : ''}>${esc(o.l)}</button>`).join('')}</div>`};
+  },
+  pick() {
+    if (!UI.prompt || UI.prompt.ctx !== 'trouble') return null;
+    const q = UI.prompt.get(), p = me();
+    const items = q.opts.map((o, i) => [o, i]).filter(([o]) => /^m\d+$/.test(String(o.v))).map(([o, i]) => {
+      const c = findCard(+String(o.v).slice(1)); if (!c) return '';
+      const ok = power(p) > c.lvl;
+      return `<button type="button" class="pickbtn${UI.adv && UI.adv.opt === o.v ? ' rec' : ''}" data-opt="${i}">${cardMini(c, {inert: true, size: 'grid'})}<span class="pk ${ok ? 'good' : 'bad'}">Du ${power(p)} : ${c.lvl}</span></button>`;
+    }).join('');
+    return {head: h3('Welches Monster forderst du heraus?'), body: `<div class="sel-grid">${items}</div><p class="hint">Tipp: Du kannst ein Monster auch direkt aufs Spielfeld ziehen.</p>`};
+  },
+  more() {
+    if (!UI.prompt) return null;
+    const q = UI.prompt.get();
+    return {head: h3(esc(q.title)), body: `<div class="acts">${q.opts.map((o, i) => `<button type="button" class="btn ${o.kind === 'primary' ? 'primary' : o.kind === 'danger' ? 'danger' : ''}" data-opt="${i}" ${o.dis ? 'disabled' : ''}>${esc(o.l)}</button>`).join('')}</div>`};
+  },
   card(s) {
     let c = null;
     if (s.human) c = HUMAN; else if (s.cname) c = CATALOG[s.cname]; else c = findCard(s.uid);
@@ -618,6 +691,7 @@ function go(a) {
 }
 document.addEventListener('click', e => {
   const t = e.target;
+  if (performance.now() < Drag.noClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
   if (t.closest('.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art')) { Snd.sfx('tap'); buzz(8); }
   let el;
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
@@ -631,8 +705,11 @@ document.addEventListener('click', e => {
     }
     openSheet({id: 'card', uid, where}); return;
   }
-  if ((el = t.closest('[data-opt]'))) { const o = UI.opts[+el.dataset.opt]; if (o && !o.dis && UI.resolve) { UI.advOpen = false; UI.hintsOpen = false; UI.resolve(o.v); } return; }
-  if ((el = t.closest('[data-adv]'))) { applyAdvice(); render(); return; }
+  if ((el = t.closest('[data-opt]'))) { const o = UI.opts[+el.dataset.opt]; if (o && !o.dis && UI.resolve) { UI.advOpen = false; UI.hintsOpen = false; closeAllSheets(); UI.resolve(o.v); } return; }
+  if ((el = t.closest('[data-dpick]'))) { openSheet({id: 'pick'}); return; }
+  if ((el = t.closest('[data-dmore]'))) { openSheet({id: 'more'}); return; }
+  if ((el = t.closest('[data-dinfo]'))) { openSheet({id: 'info'}); return; }
+  if ((el = t.closest('[data-adv]'))) { closeAllSheets(); applyAdvice(); render(); return; }
   if ((el = t.closest('[data-advtoggle]'))) { UI.advOpen = !UI.advOpen; render(); return; }
   if ((el = t.closest('[data-hints]'))) { UI.hintsOpen = !UI.hintsOpen; render(); return; }
   if ((el = t.closest('[data-cact]'))) { const a = UI.cardActs[+el.dataset.cact]; if (a && a.fn && !a.dis) { popSheet(); try { a.fn(); } catch (err) { if (err !== STALE) console.error(err); } render(); } return; }
@@ -688,6 +765,155 @@ const ABIL={
   elf:['steigt beim Helfen auf'], zwerg:['6 Handkarten','beliebig viele Große'], halbling:['1× pro Zug doppelt verkaufen','Fluchtwurf wiederholen'],
   krieger:['gewinnt bei Gleichstand','Karten abwerfen: +1'], zauberer:['Fluchtzauber: Karten abwerfen'], dieb:['in den Rücken fallen: −2'], priester:['gegen Untote: +3 je Karte']
 };
+
+/* ================= Ziehen und Ablegen: Karten aufs Spielfeld ================= */
+function resolveOpt(v) { closeAllSheets(); UI.advOpen = false; if (UI.resolve) UI.resolve(v); }
+function dragIntents(c) {
+  const I = [];
+  if (!S || S.winner != null || !UI.prompt || UI.sel || !c) return I;
+  if (UI.prompt.ctx === 'trouble' && c.k === 'monster') {
+    const o = UI.prompt.get().opts.find(o => o.v === 'm' + c.uid);
+    if (o) I.push({zones: ['table'], label: `${c.n} herausfordern`, run: () => resolveOpt(o.v)});
+  }
+  if (!me().hand.includes(c)) return I;
+  const acts = cardActions(c, 'hand').filter(a => a.l && a.fn && !/^Verkaufen/.test(a.l));
+  const C = S.combat;
+  switch (c.k) {
+    case 'item': case 'race': case 'class': case 'levelup':
+      acts.forEach(a => I.push({zones: ['table', 'me'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis})); break;
+    case 'oneshot':
+      acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis}); }); break;
+    case 'enh':
+      if (C) acts.forEach((a, i) => { const m = C.mons[i]; if (!m) return; const z = ['art:' + m.c.uid]; if (C.mons.length === 1) z.push('table', 'monside'); I.push({zones: z, label: a.l.replace(' spielen', ''), run: a.fn, dis: a.dis}); });
+      break;
+    case 'wander':
+      if (acts.length === 1) I.push({zones: ['table'], label: acts[0].l, run: acts[0].fn});
+      else if (acts.length > 1) I.push({zones: ['table'], label: 'Monster wählen …', run: () => openSheet({id: 'card', uid: c.uid, where: 'hand'})});
+      break;
+    case 'monster': {
+      const w = me().hand.find(x => x.k === 'wander');
+      if (w) { const wa = cardActions(w, 'hand').find(a => a.fn && a.l.startsWith(`Mit ${c.n} (`)); if (wa) I.push({zones: ['table'], label: 'Mit Ungebetenem Gast dazuschicken', run: wa.fn}); }
+      break;
+    }
+    case 'curse':
+      acts.forEach(a => { const t = S.players.find(x => !x.human && a.l === `Auf ${x.name} spielen`); if (t) I.push({zones: ['opp:' + t.id], label: `Fluch auf ${t.name}`, run: a.fn}); });
+      break;
+  }
+  return I;
+}
+const Drag = (() => {
+  let st = null;
+  const TH = 10;
+  function zoneAt(x, y) {
+    const el = document.elementFromPoint(x, y); if (!el) return null;
+    let z;
+    if ((z = el.closest('.oc[data-opp]'))) return {key: 'opp:' + z.dataset.opp, el: z};
+    if ((z = el.closest('#table .side.me'))) return {key: 'fighter', el: z};
+    if ((z = el.closest('#table .side.mon'))) return {key: 'monside', el: z};
+    if ((z = el.closest('#table .art[data-uid]'))) return {key: 'art:' + z.dataset.uid, el: z, art: true};
+    if ((z = el.closest('#table'))) return {key: 'table', el: z};
+    if ((z = el.closest('#mebar'))) return {key: 'me', el: z};
+    return null;
+  }
+  function intentFor(zone) {
+    if (!zone || !st) return null;
+    let it = st.intents.find(i => i.zones.includes(zone.key));
+    if (!it && (zone.art || zone.key === 'fighter' || zone.key === 'monside')) it = st.intents.find(i => i.zones.includes('table'));
+    return it || null;
+  }
+  function zoneEls(key) {
+    if (key === 'table') return [$('#table')];
+    if (key === 'me') return [$('#mebar')];
+    if (key === 'fighter') return [$('#table .side.me')];
+    if (key === 'monside') return [$('#table .side.mon')];
+    if (key.startsWith('opp:')) return [$(`.oc[data-opp="${key.slice(4)}"]`)];
+    if (key.startsWith('art:')) return [$(`#table .art[data-uid="${key.slice(4)}"]`)];
+    return [];
+  }
+  function down(e) {
+    if (CUR !== 'game' || !S || (e.button != null && e.button > 0)) return;
+    const el = e.target.closest('#hand .mc[data-uid]'); if (!el || SHEETS.length || UI.sel) return;
+    st = {uid: +el.dataset.uid, el, x0: e.clientX, y0: e.clientY, id: e.pointerId, started: false};
+  }
+  function start(e) {
+    const c = findCard(st.uid); if (!c) { st = null; return; }
+    st.c = c; st.intents = dragIntents(c); st.started = true;
+    const r = st.el.getBoundingClientRect();
+    st.offX = st.x0 - r.left; st.offY = st.y0 - r.top;
+    const g = st.el.cloneNode(true);
+    g.classList.remove('new', 'can', 'rec'); g.classList.add('ghost'); g.removeAttribute('data-uid');
+    g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
+    const lab = document.createElement('span'); lab.className = 'dlabel'; g.appendChild(lab);
+    document.body.appendChild(g); st.g = g; st.lab = lab; st.r = r;
+    st.el.classList.add('lifted');
+    try { st.el.setPointerCapture(e.pointerId); } catch (err) {}
+    const keys = new Set(); st.intents.forEach(i => i.zones.forEach(z => keys.add(z)));
+    st.marked = [];
+    keys.forEach(k => zoneEls(k).forEach(z => { if (z) { z.classList.add('dz'); st.marked.push(z); } }));
+    Snd.sfx('deal', 0.6); buzz(10);
+  }
+  function move(x, y) {
+    const dx = x - st.x0;
+    st.g.style.transform = `translate(${x - st.offX}px, ${y - st.offY}px) rotate(${Math.max(-8, Math.min(8, dx / 25))}deg) scale(1.08)`;
+    const zone = zoneAt(x, y), it = intentFor(zone);
+    if (st.hover !== (zone && zone.el)) { if (st.hover) st.hover.classList.remove('dzh'); st.hover = zone && it ? zone.el : null; if (st.hover) st.hover.classList.add('dzh'); }
+    st.zone = zone; st.it = it;
+    const txt = it ? it.label : '';
+    if (st.lab.textContent !== txt) st.lab.textContent = txt;
+    st.lab.classList.toggle('show', !!txt);
+    st.lab.classList.toggle('no', !!(it && it.dis));
+  }
+  function cleanup() {
+    if (!st) return;
+    (st.marked || []).forEach(z => z.classList.remove('dz', 'dzh'));
+    if (st.el) st.el.classList.remove('lifted');
+  }
+  function flyBack(g, r) {
+    g.style.transition = 'transform .28s cubic-bezier(.3,.8,.3,1.1)';
+    g.style.transform = `translate(${r.left}px, ${r.top}px) rotate(0) scale(1)`;
+    setTimeout(() => g.remove(), 300);
+  }
+  function end(e) {
+    if (!st || (e && e.pointerId !== st.id)) return;
+    const s0 = st;
+    if (!s0.started) { st = null; return; }
+    Drag.noClickUntil = performance.now() + 400;
+    cleanup();
+    const it = s0.it, g = s0.g;
+    st = null;
+    if (e.type === 'pointercancel' || !it || it.dis) {
+      flyBack(g, s0.r);
+      if (e.type !== 'pointercancel' && s0.zone) {
+        if (it && it.dis) toast(esc(it.dis));
+        else { const info = cardActions(s0.c, 'hand').find(a => a.info); toast(info ? info.info : 'Diese Karte kannst du gerade nicht ausspielen.'); }
+        Snd.sfx('leveldown', 0.4); buzz(40);
+      }
+      return;
+    }
+    g.style.transition = 'transform .25s ease, opacity .25s ease';
+    g.style.transform = g.style.transform.replace(/scale\([^)]*\)/, 'scale(.5)');
+    g.style.opacity = '0';
+    setTimeout(() => g.remove(), 270);
+    Snd.sfx('play'); buzz(15);
+    try { it.run(); } catch (err) { if (err !== STALE) console.error(err); }
+    render();
+  }
+  document.addEventListener('pointerdown', down);
+  document.addEventListener('pointermove', e => {
+    if (!st || e.pointerId !== st.id) return;
+    if (!st.started) {
+      const dx = e.clientX - st.x0, dy = e.clientY - st.y0;
+      if (Math.abs(dx) > TH && Math.abs(dx) > Math.abs(dy)) { st = null; return; }
+      if (dy < -TH && Math.abs(dy) > Math.abs(dx) * 0.8) start(e); else return;
+      if (!st) return;
+    }
+    e.preventDefault();
+    move(e.clientX, e.clientY);
+  }, {passive: false});
+  document.addEventListener('pointerup', end);
+  document.addEventListener('pointercancel', end);
+  return {noClickUntil: 0, active: () => !!(st && st.started)};
+})();
 
 /* ================= Start ================= */
 let deferredInstall = null;
