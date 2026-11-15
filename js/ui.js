@@ -1275,8 +1275,8 @@ const Drag = (() => {
     const el = document.elementFromPoint(x, y); if (!el) return null;
     let z;
     if ((z = el.closest('.oc[data-opp]'))) return {key: 'opp:' + z.dataset.opp, el: z};
-    if ((z = el.closest('#table .side.me'))) return {key: 'fighter', el: z};
-    if ((z = el.closest('#table .side.mon'))) return {key: 'monside', el: z};
+    // Ohne geteiltes Feld gehören die beiden Stärke-Anzeigen unten einfach zum Spielfeld
+    if (el.closest('#table .side')) return {key: 'table', el: $('#table')};
     if ((z = el.closest('#table .art[data-uid]'))) return {key: 'art:' + z.dataset.uid, el: z, art: true};
     if ((z = el.closest('#table'))) return {key: 'table', el: z};
     return null;
@@ -1316,7 +1316,7 @@ const Drag = (() => {
     st.marked = [];
     st.split = !!(S.combat && keys.has('fighter') && keys.has('monside') && $('#table'));
     if (st.split) { st.ov = splitOverlay(st.intents); $('#table').classList.add('splitting'); }
-    else keys.forEach(k => zoneEls(k).forEach(z => { if (z) { z.classList.add('dz'); st.marked.push(z); } }));
+    else keys.forEach(k => { if (k === 'fighter' || k === 'monside') return; zoneEls(k).forEach(z => { if (z) { z.classList.add('dz'); st.marked.push(z); } }); });
     Snd.sfx('deal', 0.6); buzz(10);
   }
   function move(x, y) {

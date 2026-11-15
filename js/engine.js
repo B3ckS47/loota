@@ -344,6 +344,27 @@ function drawDoor(){
   if(!S.door.length){ if(!S.doorDisc.length) return null; S.door=shuffle(S.doorDisc); S.doorDisc=[]; log('Der Türstapel ist leer. Die Ablage wird neu gemischt.','sys'); }
   return S.door.pop();
 }
+/* Glück im Storymodus (SCN.luck, 0 bis 1): In frühen Stationen und nach Niederlagen zieht der Spieler
+   beim Türaufstoßen öfter etwas Gutes und bekommt bessere Schätze, die Bots öfter etwas Unangenehmes.
+   Die Karten kommen nur aus den obersten des Stapels, ein Boss bleibt immer, wo er liegt. */
+const LUCK = () => (SCN && SCN.luck) || 0;
+function luckyDoor(p){
+  const L=LUCK(); if(!L || !p || S.door.length<2) return drawDoor();
+  if(Math.random() >= (p.human ? L : L*0.6)) return drawDoor();
+  const pw=power(p), n=Math.min(6,S.door.length);
+  const score=c=>{ if(c.boss) return null;
+    if(c.k==='monster') return c.lvl<pw ? 10+(c.tr||1) : c.lvl===pw ? 3 : 1;
+    return c.k==='curse' ? 0 : 5; };
+  let bi=-1, bv=0;
+  for(let i=S.door.length-n;i<S.door.length;i++){ const sc=score(S.door[i]); if(sc==null) continue; const v=p.human ? sc : -sc; if(bi<0 || v>bv){ bi=i; bv=v; } }
+  return bi<0 ? drawDoor() : S.door.splice(bi,1)[0];
+}
+function luckyTr(){
+  const L=LUCK(); if(!L || S.tr.length<2 || Math.random()>=L) return drawTr();
+  const n=Math.min(4,S.tr.length); let bi=S.tr.length-1, bv=-1;
+  for(let i=S.tr.length-n;i<S.tr.length;i++){ const c=S.tr[i], v=c.k==='levelup' ? 9 : (c.b||0)*2+(c.k==='oneshot'?3:0)+(c.g||0)/200; if(v>bv){ bv=v; bi=i; } }
+  return S.tr.splice(bi,1)[0];
+}
 function drawTr(){
   if(!S.tr.length){ if(!S.trDisc.length) return null; S.tr=shuffle(S.trDisc); S.trDisc=[]; log('Der Schatzstapel ist leer. Die Ablage wird neu gemischt.','sys'); }
   return S.tr.pop();
@@ -567,7 +588,7 @@ async function humanTurn(p){
   fx('turn',{p});
   if(CHECKPOINT_HANDLER){ try{ CHECKPOINT_HANDLER(); }catch(e){} }
   await ask(()=>({title:'Phase 1 · Tür aufstoßen', text:'Bereite dich vor, dann stoß die Tür auf.', hint:hintStart(p), opts:[{l:'Tür aufstoßen',v:'kick',kind:'primary'}]}), 'kick');
-  const c=drawDoor();
+  const c=luckyDoor(p);
   let fought=false;
   if(c){
     S.reveal=c;
@@ -697,7 +718,8 @@ function curseHits(t,c){
   return true;
 }
 function pickCurseTarget(p,c){
-  const others=S.players.filter(o=>o.id!==p.id && !o.dead && curseHits(o,c));
+  const spare=Math.random()<LUCK();   // Glück: diesmal bleibst du verschont
+  const others=S.players.filter(o=>o.id!==p.id && !o.dead && curseHits(o,c) && !(spare && o.human));
   if(!others.length) return null;
   const max=Math.max(...others.map(o=>o.lvl));
   if(max<p.lvl - (styleOf(p).spite?1:0)) return null;
@@ -718,7 +740,7 @@ async function botTurn(p){
   await botManage(p);
   if(S.winner!=null) return;
   await sleep(spd(0.5));
-  const c=drawDoor(); let fought=false;
+  const c=luckyDoor(p); let fought=false;
   if(c){
     S.reveal=c; log(`${p.name} stößt die Tür auf: <b>${cardLabel(c)}</b>.`); await sleep(spd());
     if(c.k==='monster'){ S.reveal=null; await combat(p.id,[c]); fought=true; }
@@ -963,7 +985,8 @@ async function botsInterfere(C){
     if((C.intf[b.id]||0) >= (threat?2:1)) continue;
     const others=S.players.filter(x=>x.id!==f.id);
     const leading=f.lvl>=Math.max(...others.map(x=>x.lvl));
-    const chance=threat?1:Math.min(1,(leading?0.45:0.15)*diffF()*(styleOf(b).intf||1));
+    const mine=C.f===0 || C.h===0;
+    const chance=(threat?1:Math.min(1,(leading?0.45:0.15)*diffF()*(styleOf(b).intf||1))) * (mine ? 1-LUCK()*0.7 : 1);
     if(Math.random()>chance) continue;
     if(botPlayAgainst(b,C,threat)){ C.intf[b.id]=(C.intf[b.id]||0)+1; any=true; await sleep(spd()); }
   }
@@ -1004,7 +1027,7 @@ async function winCombat(C){
   if(f.lvl>=WINLVL()){ f.lvl=WINLVL(); S.winner=f.id; log(f.human ? `Stufe ${WINLVL()}! Du hast gewonnen!` : `${f.name} erreicht Stufe ${WINLVL()} und gewinnt das Spiel.`, f.human?'good':'bad'); render(); return; }
   if(h && hasRace(h,'elf')){ const g=Math.min(C.mons.length,Math.max(0,WINLVL()-1-h.lvl)); if(g>0){ h.lvl+=g; log(`${nm(h)} ${V(h,'steigst','steigt')} als Elf-Helfer auf: Stufe ${h.lvl}.`,'good'); ruleOnce('elfhelp','Elfen steigen auf, wenn sie jemandem helfen, ein Monster zu besiegen.'); } }
   const n=treasuresOf(C), drawn=[];
-  for(let i=0;i<n;i++){ const t=drawTr(); if(t) drawn.push(t); }
+  for(let i=0;i<n;i++){ const t=(f.human || (h && h.human)) ? luckyTr() : drawTr(); if(t) drawn.push(t); }
   if(h){
     shuffle(drawn);
     const give=drawn.splice(0,Math.min(C.deal,drawn.length));

@@ -48,7 +48,7 @@ const WORLDS = [{
       scn: {fight: {mons: ['Wütender Gartenzwerg'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Gusseiserne Bratpfanne'], hand: ['Winzig', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
       extras: [{t: 'Mit nur einer Karte gewinnen', ok: st => st.played <= 1}, {t: 'Den Riesenböller behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Riesenböller')}],
       reward: 'title:stammgast'},
-    {id: 'w1s2', face: 'icons/portrait-kalle.png', ax: 48.2, ay: 11.6, no: '2', x: 28, y: 200, type: 'duel', name: 'Kalle prahlt', place: 'Stammtisch', req: ['w1s1'],
+    {id: 'w1s2', luck: 0.55, face: 'icons/portrait-kalle.png', ax: 48.2, ay: 11.6, no: '2', x: 28, y: 200, type: 'duel', name: 'Kalle prahlt', place: 'Stammtisch', req: ['w1s1'],
       text: 'Kalle lehnt sich zurück: „Eine Runde, du und ich. Wer zuerst Stufe 5 hat, zahlt die Zeche nicht.“ Er grinst, als hätte er schon gewonnen.',
       goal: '1 gegen 1 gegen Kalle: Erreiche Stufe 5 vor ihm.',
       scn: {target: 5, bots: ['Kalle'], diff: 'gemuetlich'},
@@ -62,7 +62,7 @@ const WORLDS = [{
         {v: 'keep', l: 'Den Hörnerhelm behalten', d: 'Du startest Station 4 mit dem Hörnerhelm (+2).'},
         {v: 'sell', l: 'Den Helm verkaufen', d: 'Du bekommst 30 Münzen.', coins: 30}
       ]},
-    {id: 'w1s4', face: 'icons/portrait-uschi.png', ax: 21.5, ay: 33.1, no: '4', x: 34, y: 420, type: 'duel', name: 'Kartenrunde am Ufer', place: 'Seeufer', req: ['w1s3'],
+    {id: 'w1s4', luck: 0.3, face: 'icons/portrait-uschi.png', ax: 21.5, ay: 33.1, no: '4', x: 34, y: 420, type: 'duel', name: 'Kartenrunde am Ufer', place: 'Seeufer', req: ['w1s3'],
       text: 'Am Seeufer haben Berta und Uschi einen Klapptisch aufgestellt. „Mal sehen, ob du auch gegen zwei bestehst“, sagt Uschi und mischt verdächtig gut.',
       goal: 'Gegen Berta und Uschi: Erreiche vor den beiden Stufe 6.',
       scn: story => ({target: 6, bots: ['Berta', 'Uschi'], diff: 'gemuetlich',
@@ -75,12 +75,12 @@ const WORLDS = [{
       scn: {fight: {mons: ['Troll unter der Autobahnbrücke']}, start: {lvl: 5, race: 'Zwerg', eq: ['Stahlkappenstiefel', 'Hellebarde mit Wimpel'], hand: ['Trank der Tapferkeit', 'Stinkbombe', 'Krieger'], deal: false}, bots: []},
       extras: [{t: 'Ohne Einmal-Gegenstand', ok: st => !st.os}, {t: 'Ohne eine Karte auszuspielen', ok: st => !st.played}],
       reward: 'title:brueckenbezwinger'},
-    {id: 'w1s6a', face: 'art/monster-buerokratie-golem.webp', ax: 22.8, ay: 64.0, no: '6a', x: 25, y: 650, type: 'duel', name: 'Ein Tag im Amt', place: 'Rathaus', hard: true, req: ['w1s5'],
+    {id: 'w1s6a', luck: 0.2, face: 'art/monster-buerokratie-golem.webp', ax: 22.8, ay: 64.0, no: '6a', x: 25, y: 650, type: 'duel', name: 'Ein Tag im Amt', place: 'Rathaus', hard: true, req: ['w1s5'],
       text: 'Im Rathaus stapeln sich die Formulare bis unter die Decke. Bürokratie-Golem und Steuerprüfer-Gespenst warten schon, und Berta, Kalle und Uschi wollen auch einen Stempel.',
       goal: 'Gegen alle drei, mit doppelt so vielen Flüchen im Deck: Erreiche Stufe 7. Hier gibt es doppelte Münzen.',
       scn: {target: 7, bots: ['Berta', 'Kalle', 'Uschi'], variant: 'fluchchaos', diff: 'normal'}, coinMul: 2,
       extras: [{t: 'In weniger als 15 Runden', ok: (st, S) => S.turn < 15}, {t: 'Höchstens 2 Flüche abbekommen', ok: st => st.curses <= 2}]},
-    {id: 'w1s6b', face: 'icons/portrait-kalle.png', ax: 79.4, ay: 62.5, no: '6b', x: 75, y: 650, type: 'duel', name: 'Flohmarkt', place: 'Flohmarkt', easy: true, req: ['w1s5'],
+    {id: 'w1s6b', luck: 0.3, face: 'icons/portrait-kalle.png', ax: 79.4, ay: 62.5, no: '6b', x: 75, y: 650, type: 'duel', name: 'Flohmarkt', place: 'Flohmarkt', easy: true, req: ['w1s5'],
       text: 'Auf dem Flohmarkt verkauft Kalle angeblich echte Heldenausrüstung. Ihr spielt um seinen Stand.',
       goal: 'Gegen Kalle: Erreiche Stufe 6.',
       scn: {target: 6, bots: ['Kalle'], diff: 'gemuetlich'},
@@ -89,7 +89,7 @@ const WORLDS = [{
       text: 'Kurz vor der Drachenhöhle steht ein kleiner Gasthof. Der Wirt zeigt auf ein Regal voller Kram: „Für ein paar Münzen ist alles zu haben. Wer weiß, ob du wiederkommst.“',
       goal: 'Tausche Münzen gegen Rahmen und Porträts. Danach geht es zum Drachen.',
       shop: [{id: 'frame:moewenfeder', price: 30}, {id: 'portrait:gartenzwerg', price: 40}, {id: 'portrait:rentner', price: 40}], onward: 'Weiter zum Drachen'},
-    {id: 'w1s8', face: 'art/monster-drache-des-montagmorgens.webp', ax: 80.7, ay: 90.8, no: '8', x: 50, y: 895, type: 'boss', name: 'Der Drache des Montagmorgens', place: 'Drachenhöhle', req: ['w1s7'],
+    {id: 'w1s8', luck: 0.25, face: 'art/monster-drache-des-montagmorgens.webp', ax: 80.7, ay: 90.8, no: '8', x: 50, y: 895, type: 'boss', name: 'Der Drache des Montagmorgens', place: 'Drachenhöhle', req: ['w1s7'],
       text: 'Jeden Montag legt der Drache das Städtchen lahm: kein Kaffee, keine Laune, kein Durchkommen. Heute stellst du dich ihm. Die drei vom Stammtisch wollen den Ruhm natürlich selbst.',
       goal: 'Gegen Berta, Kalle und Uschi. Der Drache steckt in der unteren Hälfte des Türstapels und ist montags noch nicht ganz wach: Stufe 13 statt 16. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
       scn: {target: 10, bots: ['Berta', 'Kalle', 'Uschi'], boss: 'Drache des Montagmorgens', bossLvl: 13, diff: 'normal'},
@@ -113,7 +113,7 @@ const WORLDS = [{
       scn: {fight: {mons: ['Staubmaus-Bande'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Kellerlaterne'], hand: ['Mausefalle', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
       extras: [{t: 'Mit nur einer Karte gewinnen', ok: st => st.played <= 1}, {t: 'Den Riesenböller behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Riesenböller')}],
       reward: 'title:kellerkind'},
-    {id: 'w2s2', face: 'icons/portrait-rosi.png', ax: 21, ay: 17, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
+    {id: 'w2s2', luck: 0.35, face: 'icons/portrait-rosi.png', ax: 21, ay: 17, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
       text: 'Zwischen den Fässern sitzt Ratte Rosi, Rüdigers vorlaute Nichte, und mischt Karten mit dem Schwanz. „Du willst zu meinem Onkel? Erst gegen mich. Und glaub ja nicht, dass ich dir jemals helfe.“',
       goal: '1 gegen 1 gegen Ratte Rosi, mit dem Keller-Deck: Erreiche Stufe 5 vor ihr.',
       scn: {target: 5, bots: ['Rosi'], diff: 'gemuetlich'},
@@ -127,7 +127,7 @@ const WORLDS = [{
         {v: 'help', l: 'Fridolins Hilfe annehmen', d: 'Fridolin hilft dir in Station 4 einmal, ohne Schätze zu verlangen.'},
         {v: 'coins', l: 'Die 30 Münzen nehmen', d: 'Du bekommst 30 Münzen.', coins: 30}
       ]},
-    {id: 'w2s4', face: 'icons/portrait-fridolin.png', ax: 44, ay: 34, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
+    {id: 'w2s4', luck: 0.25, face: 'icons/portrait-fridolin.png', ax: 44, ay: 34, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
       text: 'Zwischen Kartoffelsäcken und Schatztruhen haben Rosi und Fridolin einen Tisch aus Kisten gebaut. „Wer zuerst Stufe 6 hat, kriegt die Truhe“, quiekt Rosi. Fridolin gluckert zustimmend.',
       goal: 'Gegen Rosi und Fridolin: Erreiche als Erster Stufe 6.',
       scn: story => ({target: 6, bots: ['Rosi', 'Fridolin'], diff: 'gemuetlich',
@@ -140,12 +140,12 @@ const WORLDS = [{
       scn: {fight: {mons: ['Korkgeist', 'Steuerprüfer-Gespenst'], enh: ['Stinksauer']}, start: {lvl: 4, cls: 'Priester', eq: ['Fassdeckel-Schild'], hand: ['Knoblauchzopf', 'Trank der Tapferkeit', 'Winzig', 'Gummihuhn mit Quietsch', 'Ahnenforschung'], deal: false}, bots: []},
       extras: [{t: 'Den Knoblauchzopf behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Knoblauchzopf')}, {t: 'Keine Karten abwerfen', ok: st => !st.discarded}],
       reward: 'title:geisterjaeger'},
-    {id: 'w2s6a', face: 'icons/portrait-gustav.png', ax: 62, ay: 52, no: '6a', type: 'duel', name: 'Weinkeller', place: 'Weinkeller', hard: true, req: ['w2s5'],
+    {id: 'w2s6a', luck: 0.1, face: 'icons/portrait-gustav.png', ax: 62, ay: 52, no: '6a', type: 'duel', name: 'Weinkeller', place: 'Weinkeller', hard: true, req: ['w2s5'],
       text: 'Tiefer im Weinkeller ist es kalt, und die Flaschen flüstern. Rosi und Gustav spielen hier ihre Lieblingsvariante, mit doppelt so vielen Flüchen. „Ich liebe Flüche“, kichert Rosi.',
       goal: 'Gegen Rosi und Gustav, mit doppelt so vielen Flüchen im Deck: Erreiche Stufe 7. Hier gibt es doppelte Münzen.',
       scn: {target: 7, bots: ['Rosi', 'Gustav'], variant: 'fluchchaos', diff: 'normal'}, coinMul: 2,
       extras: [{t: 'In weniger als 15 Runden', ok: (st, S) => S.turn < 15}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
-    {id: 'w2s6b', face: 'icons/portrait-fridolin.png', ax: 45, ay: 74, no: '6b', type: 'duel', name: 'Kartoffelkeller', place: 'Kartoffelkeller', easy: true, req: ['w2s5'],
+    {id: 'w2s6b', luck: 0.3, face: 'icons/portrait-fridolin.png', ax: 45, ay: 74, no: '6b', type: 'duel', name: 'Kartoffelkeller', place: 'Kartoffelkeller', easy: true, req: ['w2s5'],
       text: 'Im Kartoffelkeller riecht es nach Erde. Fridolin hat sich gemütlich zwischen die Säcke gerollt: „Eine ruhige Runde, nur wir zwei? Ich helfe dir sogar, gegen eine kleine Gebühr.“',
       goal: 'Gegen Fridolin: Erreiche Stufe 6.',
       scn: {target: 6, bots: ['Fridolin'], diff: 'gemuetlich'},
@@ -154,7 +154,7 @@ const WORLDS = [{
       text: 'Kurz vor dem Thronsaal hat der alte Kellermeister seinen Stand: Kerzenstummel, Korken und allerlei Krimskrams. „Für ein paar Münzen ist alles zu haben. Rüdiger zahlt ja nie.“',
       goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Rüdiger.',
       shop: [{id: 'title:fassfluesterer', price: 30}, {id: 'frame:kerzenwachs', price: 40}, {id: 'portrait:rosi', price: 60}], onward: 'Weiter zu Rüdiger'},
-    {id: 'w2s8', face: 'art/monster-rattenkoenig-ruediger.webp', ax: 50, ay: 92, no: '8', type: 'boss', name: 'Rüdigers Thronsaal', place: 'Thronsaal', req: ['w2s7'],
+    {id: 'w2s8', luck: 0.25, face: 'art/monster-rattenkoenig-ruediger.webp', ax: 50, ay: 92, no: '8', type: 'boss', name: 'Rüdigers Thronsaal', place: 'Thronsaal', req: ['w2s7'],
       text: 'Auf einem Thron aus Pfandkisten sitzt Rattenkönig Rüdiger, den Kronkorken schief auf dem Kopf. Rosi, Fridolin und Gustav sitzen schon am Tisch. „Wer mich besiegt, kriegt das Bier“, piepst Rüdiger. „Aber das schafft eh keiner.“',
       goal: 'Gegen Rosi, Fridolin und Gustav. Rüdiger steckt in der unteren Hälfte des Türstapels und ist nach dem Festmahl etwas träge: Stufe 13 statt 14. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
       scn: {target: 10, bots: ['Rosi', 'Fridolin', 'Gustav'], boss: 'Rattenkönig Rüdiger', bossLvl: 13, diff: 'normal'},
@@ -182,7 +182,7 @@ function fogWorld() {
 const STORY = (() => {
   let s = null;
   try { if (typeof localStorage !== 'undefined') s = JSON.parse(localStorage.getItem(K_STORY)); } catch (e) {}
-  const base = {v: 1, done: {}, stars: {}, coins: 0, owned: [], choice: {}, worlds: {}, intro: {}};
+  const base = {v: 1, done: {}, stars: {}, coins: 0, owned: [], choice: {}, worlds: {}, intro: {}, fails: {}};
   return Object.assign(base, s || {});
 })();
 function saveStory() { try { localStorage.setItem(K_STORY, JSON.stringify(STORY)); } catch (e) {} }
@@ -208,6 +208,9 @@ function scenarioFor(st) {
   const raw = typeof st.scn === 'function' ? st.scn(STORY) : st.scn;
   const scn = Object.assign({id: st.id}, raw);
   Object.keys(scn).forEach(k => scn[k] === undefined && delete scn[k]);
+  // Verstecktes Glück: Grundwert der Station, dazu +0,1 je Niederlage dort (höchstens +0,4)
+  const fails = Math.min(4, (STORY.fails || {})[st.id] || 0);
+  if (st.luck || fails) scn.luck = Math.min(0.9, (st.luck || 0) + 0.1 * fails);
   return scn;
 }
 
@@ -226,6 +229,8 @@ function finishStation(st, S) {
   starReward(st.world, rewards);
   let worldDone = false;
   if (w) STORY.done[st.id] = true;
+  STORY.fails = STORY.fails || {};
+  if (!w && !STORY.done[st.id]) STORY.fails[st.id] = (STORY.fails[st.id] || 0) + 1;
   if (w && st.final && !STORY.worlds[st.world]) { STORY.worlds[st.world] = true; worldDone = true; }
   STORY.stars[st.id] = merged;
   STORY.coins += coins;
