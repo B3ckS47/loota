@@ -23,8 +23,8 @@ const COSMETICS = {
     goldkronkorken: {n: 'Goldener Kronkorken', c: '#e8b923'}
   },
   portrait: {
-    gartenzwerg: {n: 'Gartenzwerg', src: 'art/monster-wuetender-gartenzwerg.webp'},
-    rentner: {n: 'Rentner-Ritter', src: 'art/monster-rentner-ritter.webp'},
+    gartenzwerg: {n: 'Gartenzwerg', src: 'icons/portrait-gartenzwerg.png'},
+    rentner: {n: 'Rentner-Ritter', src: 'icons/portrait-rentner.png'},
     rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'}
   }
 };

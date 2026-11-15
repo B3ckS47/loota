@@ -182,8 +182,8 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .decks{display:flex;gap:18px}
 .deck{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--on-wood-muted)}
 .back{width:56px;height:80px;border-radius:7px;border:2px solid var(--wood-dark);display:grid;place-items:center;font:700 14px var(--display);box-shadow:0 4px 0 rgba(0,0,0,.35)}
-.back.door{background:linear-gradient(180deg,rgba(0,0,0,0) 0 15%,#2f2a27 15% 21%,rgba(0,0,0,0) 21% 79%,#2f2a27 79% 85%,rgba(0,0,0,0) 85%),repeating-linear-gradient(90deg,#7a4e2c 0 9px,#5f3c21 9px 10px);color:#f1e3c4;text-shadow:0 1px 0 #000}
-.back.treas{background:radial-gradient(circle at 40% 32%, #f6d679, #b8862f 72%);color:#3b2a1c}
+.back.door{background:#3a2616 url(../art/ruecken-tuer.webp) center/cover no-repeat}
+.back.treas{background:#3a0e14 url(../art/ruecken-schatz.webp) center/cover no-repeat}
 .idle-txt{font:400 17px/1.3 var(--hand);color:var(--on-wood-muted);max-width:28ch}
 /* Spielfeld-Arena: große Kartengrafik mit Overlays */
 .arena{position:absolute;inset:0;perspective:1000px}
@@ -779,3 +779,11 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .foe small{font-size:12.5px;font-weight:600;color:var(--muted)}
 .foes .btn.small{align-self:flex-start;margin-top:2px}
 .opp-style{display:block;margin-top:2px;font:600 13px/1.25 var(--body);color:var(--muted)}
+
+/* Musely-Symbole in den Stations-Medaillen */
+.sn-medal img.mi{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 1px 0 rgba(0,0,0,.3))}
+.t-boss .sn-medal img.mi{width:48px;height:48px}
+.smap-in.pic .sn-medal img.mi{width:31px;height:31px}
+.smap-in.pic .t-boss .sn-medal img.mi{width:40px;height:40px}
+.fog-label .sn-medal img.mi{width:32px;height:32px}
+img.star{object-fit:contain}

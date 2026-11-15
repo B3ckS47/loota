@@ -19,14 +19,15 @@ const portrait = p => p.human ? myPortrait() : (p.face || ICON.portrait[p.name] 
 /* ================= Profil: Name, Porträt, Rahmen ================= */
 const K_PROFILE = 'loota.profile';
 const PORTRAITS = [
-  ['du', 'Abenteurer', 'icons/portrait-du.png'], ['elf', 'Elfe', 'art/rasse-elf.webp'], ['zwerg', 'Zwerg', 'art/rasse-zwerg.webp'],
-  ['halbling', 'Halbling', 'art/rasse-halbling.webp'], ['krieger', 'Krieger', 'art/klasse-krieger.webp'], ['zauberer', 'Zauberer', 'art/klasse-zauberer.webp'],
-  ['dieb', 'Dieb', 'art/klasse-dieb.webp'], ['priester', 'Priester', 'art/klasse-priester.webp']
+  ['du', 'Abenteurer', 'icons/portrait-du.png'], ['abenteurerin', 'Abenteurerin', 'icons/portrait-abenteurerin.png'], ['elf', 'Elfe', 'icons/portrait-elfe.png'],
+  ['zwerg', 'Zwerg', 'icons/portrait-zwerg.png'], ['halbling', 'Halblingsfrau', 'icons/portrait-halblingsfrau.png'], ['krieger', 'Kriegerin', 'icons/portrait-kriegerin.png'],
+  ['zauberer', 'Zauberer', 'icons/portrait-zauberer.png'], ['dieb', 'Diebin', 'icons/portrait-diebin.png'], ['priester', 'Priester', 'icons/portrait-priester.png']
 ];
 // Zufällige Gegner im freien Spiel: ein Profilbild (nicht deins), ein Name, der zum Bild passt, und eine Spielweise
 const BOT_NAMES = {
-  du: ['Alrik', 'Jorin', 'Torben', 'Lasse', 'Hennes'], elf: ['Elwira', 'Ilvana', 'Sirana', 'Lyria', 'Faelis'], zwerg: ['Grimbart', 'Brokk', 'Gundolf', 'Barthel', 'Ragnar'],
-  halbling: ['Fiete', 'Hinnerk', 'Tobbe', 'Wilm', 'Ole'], krieger: ['Hagen', 'Gunnar', 'Ulfried', 'Bruno', 'Sigurd'], zauberer: ['Wendelin', 'Ottokar', 'Balduin', 'Eusebius', 'Mirko'],
+  du: ['Alrik', 'Jorin', 'Torben', 'Lasse', 'Hennes'], abenteurerin: ['Linnea', 'Merle', 'Ylva', 'Smilla', 'Frieda'], elf: ['Elwira', 'Ilvana', 'Sirana', 'Lyria', 'Faelis'],
+  zwerg: ['Grimbart', 'Brokk', 'Gundolf', 'Barthel', 'Ragnar'], halbling: ['Rosalie', 'Tilda', 'Hanne', 'Mirabell', 'Fenna'], krieger: ['Brunhilde', 'Gunhild', 'Kriemhild', 'Walburga', 'Svea'],
+  zauberer: ['Wendelin', 'Ottokar', 'Balduin', 'Eusebius', 'Mirko'],
   dieb: ['Fenja', 'Nyra', 'Kira', 'Elster', 'Mara'], priester: ['Bonifaz', 'Kunibert', 'Anselm', 'Benno', 'Gregor']
 };
 const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -525,7 +526,7 @@ function renderTable() {
     arts.dataset.n = C.mons.length;
     paintHud(el.querySelector('.hud'), C);
   } else if (!R) {
-    patch(el.querySelector('.idle'), `<div class="decks"><div class="deck"><div class="back door">Tür</div>${S.door.length} · Ablage ${S.doorDisc.length}</div><div class="deck"><div class="back treas">Schatz</div>${S.tr.length} · Ablage ${S.trDisc.length}</div></div><div class="idle-txt">${S.winner != null ? 'Das Spiel ist vorbei.' : S.cur === 0 ? 'Die Tür ist noch zu. Was wohl dahinter lauert?' : esc(P(S.cur).name) + ' ist am Zug.'}</div>`);
+    patch(el.querySelector('.idle'), `<div class="decks"><div class="deck"><div class="back door" role="img" aria-label="Türstapel"></div>Tür ${S.door.length} · Ablage ${S.doorDisc.length}</div><div class="deck"><div class="back treas" role="img" aria-label="Schatzstapel"></div>Schatz ${S.tr.length} · Ablage ${S.trDisc.length}</div></div><div class="idle-txt">${S.winner != null ? 'Das Spiel ist vorbei.' : S.cur === 0 ? 'Die Tür ist noch zu. Was wohl dahinter lauert?' : esc(P(S.cur).name) + ' ist am Zug.'}</div>`);
   }
 }
 const stripTags = h => String(h).replace(/<[^>]+>/g, '');
@@ -941,7 +942,10 @@ const ST_ICON = {
   shop: '<path d="M6 9h12l-1.2 11H7.2z M9 9a3 3 0 0 1 6 0" />',
   boss: '<path d="M4 18l1.8-10 4.2 5 2-7 2 7 4.2-5L20 18z M4 21h16" />'
 };
-const starSvg = on => `<svg class="star${on ? ' on' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6L12 16.8l-5.3 2.9 1.1-6-4.4-4.2 6-.8z" /></svg>`;
+const starSvg = on => `<img class="star${on ? ' on' : ''}" src="icons/stern-${on ? 'voll' : 'leer'}.png" alt="" aria-hidden="true">`;
+// Medaillen der Stationen: Musely-Symbole, solange eins fehlt das gezeichnete
+const ST_IMG = {puzzle: 'icons/st-puzzle.png', duel: 'icons/st-duel.png', event: 'icons/st-event.png', boss: 'icons/st-boss.png', lock: 'icons/st-lock.png'};
+const medalIcon = t => ST_IMG[t] ? `<img class="mi" src="${ST_IMG[t]}" alt="">` : `<svg viewBox="0 0 24 24">${ST_ICON[t] || LOCK_PATH}</svg>`;
 const coinImg = '<img src="icons/muenze-voll.png" alt="">';
 function renderStory() {
   const open = openWorlds(), cw = open[open.length - 1];
@@ -969,7 +973,7 @@ function worldMapHTML(w, next) {
     const un = stationUnlocked(st), dn = !!STORY.done[st.id], s = starsOf(st.id), mx = maxStars(st);
     const stars = mx ? `<span class="sn-stars">${Array.from({length: mx}, (_, i) => starSvg(!!s[i])).join('')}</span>` : '';
     return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}" data-station="${st.id}" style="left:${X(st)}%;top:${Y(st)}${art ? '%' : 'px'}" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
-      `<span class="sn-medal"><svg viewBox="0 0 24 24">${un ? ST_ICON[st.type] : LOCK_PATH}</svg><i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${stars}</button>`;
+      `<span class="sn-medal">${medalIcon(un ? st.type : 'lock')}<i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${stars}</button>`;
   }).join('');
   const last = w.stations[w.stations.length - 1];
   if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
@@ -982,7 +986,7 @@ function fogHTML(f, open) {
   const dots = f.teaser.map(([x, y]) => `<span class="fog-node" style="left:${x}%;top:${y}%"><span class="sn-medal"><svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8v.5 M12 17h.01" /></svg></span></span>`).join('');
   return `<div class="st-link" aria-hidden="true"></div><div class="st-fog${open ? ' near' : ''}" style="aspect-ratio:${(f.ratio / f.show).toFixed(4)}"><div class="fog-map${f.map ? ' pic' : ''}"${f.map ? ` style="background-image:url(${f.map})"` : ''}><svg class="st-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${seg}</svg>${dots}</div>` +
     `<div class="fog-layer" aria-hidden="true"></div><div class="fog-drift d1" aria-hidden="true"></div><div class="fog-drift d2" aria-hidden="true"></div>` +
-    `<div class="fog-label"><span class="sn-medal"><svg viewBox="0 0 24 24">${LOCK_PATH}</svg></span><span class="fog-world">Welt ${f.n}</span><b>${esc(f.name)}</b><small>${open ? esc(f.soon) : esc(f.hint)}</small></div></div>`;
+    `<div class="fog-label"><span class="sn-medal">${medalIcon('lock')}</span><span class="fog-world">Welt ${f.n}</span><b>${esc(f.name)}</b><small>${open ? esc(f.soon) : esc(f.hint)}</small></div></div>`;
 }
 function openStation(id) {
   const st = stationById(id); if (!st) return;
