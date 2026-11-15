@@ -32,6 +32,41 @@ const CURSES = [
   {n:'Ahnenforschung',eff:{t:'race'},txt:'Verliere deine Rasse. Du bist wieder Mensch.'},
   {n:'Taschendieb-Gnom',eff:{t:'hand',n:2},txt:'Wirf 2 zufällige Handkarten ab.'}
 ];
+/* Welt 2 (Tavernenkeller): nur im Keller-Deck. w = Welt, x = Stückzahl dort */
+const MONSTERS_W2 = [
+  {n:'Staubmaus-Bande',lvl:1,tr:1,x:2,nager:true,bad:{t:'hand',n:1},txt:'Nager. Zu dritt unterm Regal.',badTxt:'Wirf 1 zufällige Handkarte ab.'},
+  {n:'Spinne mit Strickzeug',lvl:2,tr:1,run:-1,bad:{t:'slot',s:'schuhe'},txt:'Du klebst im Netz: Weglaufen −1.',badTxt:'Verliere dein Schuhwerk.'},
+  {n:'Kerzenwachs-Golem',lvl:3,tr:1,vs:{race:'zwerg',val:2},bad:{t:'slot',s:'ruestung'},txt:'Verklebt Bärte: +2 gegen Zwerge.',badTxt:'Verliere deine Rüstung.'},
+  {n:'Korkgeist',lvl:4,tr:2,undead:true,bad:{t:'lvl',n:1},txt:'Untot. Spukt in jeder Flasche mit Korken.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Schimmel-Schleim',lvl:5,tr:2,run:1,bad:{t:'best'},txt:'Sehr langsam: Weglaufen +1.',badTxt:'Verliere deinen besten Gegenstand.'},
+  {n:'Rollendes Riesenfass',lvl:7,tr:2,run:-2,bad:{t:'multi',l:[{t:'lvl',n:1},{t:'slot',s:'schuhe'}]},txt:'Rollt dir hinterher: Weglaufen −2.',badTxt:'Verliere 1 Stufe und dein Schuhwerk.'},
+  {n:'Pfandflaschen-Golem',lvl:10,tr:3,bad:{t:'lvl',n:2},txt:'Klirrt bedrohlich.',badTxt:'Verliere 2 Stufen.'},
+  {n:'Ratten-Leibgarde',lvl:12,tr:3,nager:true,np:3,bad:{t:'multi',l:[{t:'slot',s:'kopf'},{t:'lvl',n:1}]},txt:'Nager. Bewacht den Thron. Verfolgt niemanden bis Stufe 3.',badTxt:'Verliere deine Kopfbedeckung und 1 Stufe.'},
+  {n:'Rattenkönig Rüdiger',lvl:14,tr:4,up:2,nager:true,np:4,bad:{t:'multi',l:[{t:'lvl',n:2},{t:'best'}]},txt:'Nager. Trägt einen Kronkorken als Krone. Bringt 2 Stufen. Verfolgt niemanden bis Stufe 4.',badTxt:'Verliere 2 Stufen und deinen besten Gegenstand.'}
+].map(m=>Object.assign({w:2},m));
+const CURSES_W2 = [
+  {n:'Kellerkälte',w:2,x:2,eff:{t:'chill',n:2},txt:'Im nächsten Kampf −2.'},
+  {n:'Licht aus!',w:2,eff:{t:'slot',s:'hand'},txt:'Verliere einen Gegenstand in der Hand.'}
+];
+const ITEMS_W2 = [
+  {n:'Kellerlaterne',w:2,slot:'hand',hands:1,b:1,g:300,run:1},
+  {n:'Fassdeckel-Schild',w:2,slot:'hand',hands:1,b:2,g:400,und:4},
+  {n:'Kartoffelsack-Rüstung',w:2,slot:'ruestung',b:1,g:100,flv:'Riecht nach Keller.'},
+  {n:'Kronkorken-Krone',w:2,slot:'kopf',b:2,g:500,flv:'Nur echt mit Zacken.'}
+];
+const ONESHOTS_W2 = [
+  {n:'Mausefalle',w:2,b:2,g:200,pOnly:true,vs:{tag:'nager',val:6},txt:'Gegen Nager +6, sonst +2. Nur für die kämpfende Seite.'},
+  {n:'Knoblauchzopf',w:2,b:1,g:200,pOnly:true,vs:{tag:'undead',val:5},txt:'Gegen Untote +5, sonst +1. Nur für die kämpfende Seite.'}
+];
+const LEVELUPS_W2 = ['Bier aus dem Keller geholt'];
+// Was aus dem Grunddeck mit in den Keller darf (Name -> Stückzahl); Schätze kommen alle mit
+const KELLER_GRUND = {'Wütender Gartenzwerg':1,'Schleimige Socke':2,'Kellerassel XXL':1,'Steuerprüfer-Gespenst':1,'Pilzkönig':1,'Vampir-Kaninchen':1,'Riesen-Nacktschnecke':1,'Zombie-Hausmeister':1,'Bürokratie-Golem':1,'Falsche Schatztruhe':1,
+  'Pechsträhne':2,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
+// Stückzahl einer Pool-Karte im Keller-Deck
+function kellerCount(p){ if(p.tpl.w===2) return p.wdef; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return KELLER_GRUND[p.tpl.n]||0; return p.def; }
+// Einmal-Karten: Wert für die kämpfende Seite (gegen Nager/Untote teils mehr) und für das Monster
+const osP = (c, C) => !c.b ? 0 : (c.vs && C && C.mons.some(m => m.c[c.vs.tag])) ? c.vs.val : c.b;
+const osM = c => c.pOnly ? 0 : (c.b || 0);
 const RACES = {
   elf:{n:'Elf',txt:'+1 beim Weglaufen. Hilfst du bei einem Sieg, steigst du 1 Stufe auf.'},
   zwerg:{n:'Zwerg',txt:'Beliebig viele Große Gegenstände. Du darfst 6 Handkarten halten.'},
@@ -158,7 +193,25 @@ const ART = {
   "Würfel angehaucht":"art/stufe-wuerfel-angehaucht.webp",
   "Riesenhaft":"art/verstaerker-riesenhaft.webp",
   "Stinksauer":"art/verstaerker-stinksauer.webp",
-  "Winzig":"art/verstaerker-winzig.webp"
+  "Winzig":"art/verstaerker-winzig.webp",
+  "Staubmaus-Bande":"art/monster-staubmaus-bande.webp",
+  "Spinne mit Strickzeug":"art/monster-spinne-mit-strickzeug.webp",
+  "Kerzenwachs-Golem":"art/monster-kerzenwachs-golem.webp",
+  "Korkgeist":"art/monster-korkgeist.webp",
+  "Schimmel-Schleim":"art/monster-schimmel-schleim.webp",
+  "Rollendes Riesenfass":"art/monster-rollendes-riesenfass.webp",
+  "Pfandflaschen-Golem":"art/monster-pfandflaschen-golem.webp",
+  "Ratten-Leibgarde":"art/monster-ratten-leibgarde.webp",
+  "Rattenkönig Rüdiger":"art/monster-rattenkoenig-ruediger.webp",
+  "Kellerkälte":"art/fluch-kellerkaelte.webp",
+  "Licht aus!":"art/fluch-licht-aus.webp",
+  "Kellerlaterne":"art/gegenstand-kellerlaterne.webp",
+  "Fassdeckel-Schild":"art/gegenstand-fassdeckel-schild.webp",
+  "Kartoffelsack-Rüstung":"art/gegenstand-kartoffelsack-ruestung.webp",
+  "Kronkorken-Krone":"art/gegenstand-kronkorken-krone.webp",
+  "Mausefalle":"art/einmal-mausefalle.webp",
+  "Knoblauchzopf":"art/einmal-knoblauchzopf.webp",
+  "Bier aus dem Keller geholt":"art/stufe-bier-aus-dem-keller-geholt.webp"
 };
 function artKey(c){ if(c.k==='item') return c.slot; return {monster:'monster',curse:'curse',race:'race',class:'cls',enh:'enh',wander:'wander',oneshot:'potion',levelup:'levelup',amulet:'none'}[c.k]; }
 
@@ -195,7 +248,11 @@ const WINLVL = () => (SCN && SCN.target) || 10;
 const STYLES = {
   Berta: {help:1.35, curse:0.6, intf:0.8, fair:true},
   Kalle: {help:0.6, curse:1, intf:1.1, seek:0.35},
-  Uschi: {help:0.9, curse:1.5, intf:1.3, spite:true}
+  Uschi: {help:0.9, curse:1.5, intf:1.3, spite:true},
+  // Welt 2: Kellerbewohner
+  Rosi: {help:0, curse:1.8, intf:1, spite:true, noHelp:true},
+  Fridolin: {help:1.4, curse:0.5, intf:0.7, greedy:true, seek:0.5},
+  Gustav: {help:0.8, curse:0.9, intf:1.7}
 };
 const styleOf = p => (p && STYLES[p.name]) || {};
 function stat(k, n=1){ if(S && S.stats) S.stats[k]=(S.stats[k]||0)+n; }
@@ -252,6 +309,13 @@ function cardPool(){
   ONESHOTS.forEach(o=>add(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS.forEach(n=>add({k:'levelup',n,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   add({k:'amulet',n:'Glücksamulett',txt:'Spiele diese Karte, wenn dich ein Fluch trifft: Er wirkt nicht.'},'tr',2);
+  // Weltkarten: im Grundspiel 0, ihre Stückzahl im Weltdeck steht in wdef
+  const addW=(tpl,deck,n)=>P.push({tpl,deck,def:0,wdef:n});
+  MONSTERS_W2.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
+  CURSES_W2.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
+  ITEMS_W2.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ONESHOTS_W2.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
+  LEVELUPS_W2.forEach(n=>addW({k:'levelup',n,w:2,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   return P;
 }
 // Stückzahlen pro Kartenname; null = Empfehlung. Wird von der Oberfläche vor einem neuen Spiel gesetzt.
@@ -350,6 +414,7 @@ function sideStrength(C){
   const f=P(C.f); let s=power(f);
   const parts=[{l:`${f.human?'Deine':f.name+'s'} Stufe`,v:f.lvl,keep:true},{l:`${f.human?'Deine':f.name+'s'} Gegenstände`,v:itemBonus(f)}];
   if(C.h!=null){ const h=P(C.h); s+=power(h); parts.push({l:`Helfer: ${h.human?'du':h.name} (Stufe ${h.lvl} + Gegenst.)`,v:power(h)}); }
+  if(C.mons.some(m=>m.c.undead)) [f, C.h!=null?P(C.h):null].forEach(q=>q && q.eq.forEach(i=>{ if(i.und && usable(q,i)){ const v=i.und-(i.b||0); s+=v; parts.push({l:`${i.n} gegen Untote`,v}); } }));
   C.pB.forEach(b=>{ s+=b.v; parts.push(b); });
   return {s, parts};
 }
@@ -615,6 +680,7 @@ function curseHits(t,c){
   if(e.t==='race') return !!t.race;
   if(e.t==='hand') return t.hand.length>0;
   if(e.t==='lvl') return t.lvl>1;
+  if(e.t==='chill') return !t.chill;
   return true;
 }
 function pickCurseTarget(p,c){
@@ -666,6 +732,7 @@ async function combat(fid, cards, preEnh){
   const C=S.combat={f:fid, h:null, deal:0, mons:cards.map((c,i)=>({c,enh: i===0 && preEnh ? preEnh : []})), pB:[], mB:[], used:[], berserk:0, turning:0, stabbed:{}, intf:{}, asked:{}, resolved:false, hchg:false};
   const f=P(fid);
   log(`Kampf: ${nm(f)} gegen <b>${monNames(C)}</b> (Stufe ${C.mons[0].c.lvl}).`);
+  if(f.chill){ C.pB.push({l:`Kellerkälte (${nm(f)})`,v:-f.chill}); log(`Kellerkälte: ${nm(f)} ${V(f,'zitterst','zittert')} und ${V(f,'kämpfst','kämpft')} mit −${f.chill}.`,'bad'); f.chill=0; }
   ruleOnce('power','Kampfstärke = Stufe + Boni der ausgerüsteten Gegenstände. Sie muss höher sein als die Monsterstufe. Gleichstand verliert, außer für Krieger.');
   render();
   if(f.human) await humanFight(C); else await botFight(C);
@@ -689,7 +756,7 @@ function combatPrompt(C){
   if(!r.win){
     const need=r.b-r.a+(r.tieWin?0:1);
     h.push(`Dir ${pl(need,'fehlt','fehlen')} ${need} ${pl(need,'Punkt','Punkte')}.`);
-    if(os.length) h.push(`Einmal-Gegenstände auf deiner Hand: ${os.map(c=>`${c.n} (+${c.b})`).join(', ')}. Aufs Spielfeld ziehen oder antippen.`);
+    if(os.length) h.push(`Einmal-Gegenstände auf deiner Hand: ${os.map(c=>`${c.n} (+${osP(c,C)})`).join(', ')}. Aufs Spielfeld ziehen oder antippen.`);
     const tiny=p.hand.find(c=>c.k==='enh' && c.v<0); if(tiny) h.push(`„${tiny.n}“ (${sign(tiny.v)}) darfst du auch auf dein eigenes Monster spielen.`);
     if(C.h==null) h.push('Du kannst einen Mitspieler um Hilfe bitten und Schätze anbieten.');
     h.push('Reicht nichts davon: aufgeben und weglaufen.');
@@ -714,7 +781,7 @@ async function humanFight(C){
     if(v==='berserk' || v==='turn'){
       const used = v==='berserk' ? C.berserk : C.turning, per = v==='berserk'?1:3, max=Math.min(3-used,p.hand.length);
       const sel=await selectCards({ctx:v, title: v==='berserk'?'Krieger-Fähigkeit':'Priester gegen Untote', text:`Wirf bis zu ${max} ${pl(max,'Karte','Karten')} ab. Jede bringt +${per}.`, min:1, max, cancel:true, filter:(c,w)=>w==='hand', confirm:cs=>`${cs.length} abwerfen (+${cs.length*per})`});
-      if(sel && sel.length){ sel.map(findCard).forEach(c=>{ take(p,c); discard(c); });
+      if(sel && sel.length){ sel.map(findCard).forEach(c=>{ take(p,c); discard(c); }); stat('discarded', sel.length);
         if(v==='berserk'){ C.berserk+=sel.length; C.pB.push({l:`Krieger-Fähigkeit (${sel.length} ${pl(sel.length,'Karte','Karten')})`,v:sel.length}); }
         else { C.turning+=sel.length; C.pB.push({l:`Priester gegen Untote (${sel.length} ${pl(sel.length,'Karte','Karten')})`,v:3*sel.length}); }
         log(`Du wirfst ${sel.length} ${pl(sel.length,'Karte','Karten')} ab und bekommst +${sel.length*per}.`); }
@@ -752,9 +819,14 @@ async function humanAskHelp(C){
 function botAcceptHelp(b,C,offer){
   const f=P(C.f), total=treasuresOf(C), st=styleOf(b);
   if(!wouldWinWith(C,b)) return {yes:false, why:'Selbst mit mir reicht das nicht.'};
-  if(SCN && SCN.perks && SCN.perks.freeHelp===b.name && f.human && !S.stats.perkUsed){ S.stats.perkUsed=true; return {yes:true, why:'Du hast mir meinen Helm zurückgebracht. Ehrensache!'}; }
+  if(SCN && SCN.perks && SCN.perks.freeHelp===b.name && f.human && !S.stats.perkUsed){ S.stats.perkUsed=true; return {yes:true, why:SCN.perks.why||'Ehrensache!'}; }
   if(f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss)) return {yes:false, why:'Damit du gewinnst? Sicher nicht!'};
+  if(st.noHelp) return {yes:false, why:'Helfen? Ich? Pfoten weg von meinen Schätzen!'};
   if(hasRace(b,'elf') && b.lvl<WINLVL()-1) return {yes:true, why:'Als Elf steige ich dabei selbst auf. Gern!'};
+  if(st.greedy){ const all=Math.max(1,total);
+    if(offer>=all) return {yes:true, why:'Alle Schätze? Prost, abgemacht!'};
+    if(offer>=Math.ceil(all*0.75) && Math.random()<0.45) return {yes:true, why:'Na gut, fast alles ist auch was.'};
+    return {yes:false, why: offer===0 ? 'Für nichts? Da bleibt mein Spundloch zu.' : `Unter ${all} ${pl(all,'Schatz','Schätzen')} rolle ich nicht los.`}; }
   const leaderGap=f.lvl - Math.max(...S.players.filter(x=>x.id!==f.id).map(x=>x.lvl));
   let chance = offer===0 ? 0.2 : (total>0 && offer/total>=0.5 ? 0.9 : 0.65);
   if(leaderGap>=2) chance-=0.35;
@@ -765,7 +837,7 @@ function botAcceptHelp(b,C,offer){
 }
 function humanCanInterfere(C){
   const p=me(); if(!p.human || p.dead) return false;
-  return p.hand.some(c=>(c.k==='enh') || (c.k==='oneshot' && c.b) || c.k==='curse') ||
+  return p.hand.some(c=>(c.k==='enh') || (c.k==='oneshot' && osM(c)) || c.k==='curse') ||
     (p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster')) ||
     (hasCls(p,'dieb') && !C.stabbed[0] && p.hand.length>0);
 }
@@ -776,7 +848,7 @@ function interferePrompt(C){
     if(f.lvl+levelsGained(C)>=WINLVL()) h.push(`Achtung: Gewinnt ${f.name} diesen Kampf, ist das Spiel vorbei!`);
     const opts=[];
     p.hand.filter(c=>c.k==='enh' && c.v>0).forEach(c=>opts.push(`„${c.n}“ (${sign(c.v)})`));
-    p.hand.filter(c=>c.k==='oneshot' && c.b).forEach(c=>opts.push(`${c.n} für das Monster (+${c.b})`));
+    p.hand.filter(c=>c.k==='oneshot' && osM(c)).forEach(c=>opts.push(`${c.n} für das Monster (+${osM(c)})`));
     if(p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster')) opts.push('Ungebetener Gast mit einem Monster von deiner Hand');
     if(p.hand.some(c=>c.k==='curse')) opts.push('ein Fluch auf '+f.name);
     if(opts.length) h.push('Möglich: '+opts.join(', ')+'. Karte aufs Spielfeld ziehen oder antippen.');
@@ -826,7 +898,7 @@ function botBoost(b,C){
   const res=[];
   const sides=[b]; if(C.h!=null && !P(C.h).human) sides.push(P(C.h));
   sides.forEach(q=>q.hand.forEach(c=>{
-    if(c.k==='oneshot' && c.b) res.push({v:c.b, use:()=>{ take(q,c); C.used.push(c); C.pB.push({l:`${c.n} (${q.name})`,v:c.b}); log(`${q.name} setzt ${c.n} ein (+${c.b}).`); }});
+    if(c.k==='oneshot' && c.b){ const v=osP(c,C); res.push({v, use:()=>{ take(q,c); C.used.push(c); C.pB.push({l:`${c.n} (${q.name})`,v}); log(`${q.name} setzt ${c.n} ein (+${v}).`); }}); }
     if(c.k==='enh' && c.v<0) res.push({v:-c.v, use:()=>{ take(q,c); const m=strongestMon(C); m.enh.push(c); log(`${q.name} spielt „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`); }});
   }));
   const spare=b.hand.filter(c=>keepValue(b,c)<5 && c.k!=='oneshot' && !(c.k==='enh' && c.v<0)).sort((x,y)=>keepValue(b,x)-keepValue(b,y));
@@ -886,7 +958,7 @@ async function botsInterfere(C){
 }
 function botPlayAgainst(b,C,threat){
   const opts=[];
-  b.hand.forEach(c=>{ if(c.k==='enh' && c.v>0) opts.push({c,v:c.v,kind:'enh'}); if(c.k==='oneshot' && c.b) opts.push({c,v:c.b,kind:'os'}); });
+  b.hand.forEach(c=>{ if(c.k==='enh' && c.v>0) opts.push({c,v:c.v,kind:'enh'}); if(c.k==='oneshot' && osM(c)) opts.push({c,v:osM(c),kind:'os'}); });
   const w=b.hand.find(c=>c.k==='wander'), wm=b.hand.filter(c=>c.k==='monster').sort((x,y)=>y.lvl-x.lvl)[0];
   if(w && wm) opts.push({c:w,m:wm,v:wm.lvl,kind:'wander'});
   if(hasCls(b,'dieb') && !C.stabbed[b.id] && b.hand.length) opts.push({v:2,kind:'stab'});
@@ -899,7 +971,7 @@ function botPlayAgainst(b,C,threat){
   const f=P(C.f);
   fx('interfere',{by:b, kind:pick.kind});
   if(pick.kind==='enh'){ take(b,pick.c); const m=strongestMon(C); m.enh.push(pick.c); log(`${b.name} spielt „${pick.c.n}“ (${sign(pick.c.v)}) auf ${m.c.n}!`,'bad'); ruleOnce('enh','Monsterverstärker darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.'); }
-  else if(pick.kind==='os'){ take(b,pick.c); C.used.push(pick.c); C.mB.push({l:`${pick.c.n} (von ${b.name})`,v:pick.c.b}); log(`${b.name} setzt ${pick.c.n} für das Monster ein (+${pick.c.b})!`,'bad'); ruleOnce('osmon','Einmal-Gegenstände dürfen auch für das Monster gespielt werden, direkt von der Hand.'); }
+  else if(pick.kind==='os'){ take(b,pick.c); C.used.push(pick.c); C.mB.push({l:`${pick.c.n} (von ${b.name})`,v:pick.v}); log(`${b.name} setzt ${pick.c.n} für das Monster ein (+${pick.v})!`,'bad'); ruleOnce('osmon','Einmal-Gegenstände dürfen auch für das Monster gespielt werden, direkt von der Hand.'); }
   else if(pick.kind==='wander'){ take(b,pick.c); take(b,pick.m); discard(pick.c); C.mons.push({c:pick.m,enh:[]}); log(`${b.name} spielt „Ungebetener Gast“: <b>${pick.m.n}</b> (Stufe ${pick.m.lvl}) mischt mit!`,'bad'); ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.'); }
   else if(pick.kind==='stab'){ const c=b.hand.slice().sort((x,y)=>keepValue(b,x)-keepValue(b,y))[0]; take(b,c); discard(c); C.stabbed[b.id]=true; C.pB.push({l:`${b.name} fällt in den Rücken (Dieb)`,v:-2}); log(`${b.name} fällt ${nmD(f)} als Dieb in den Rücken: −2!`,'bad'); }
   return true;
@@ -1005,7 +1077,12 @@ async function applyCurse(t,c,by){
 function applyBad(p,eff){
   switch(eff.t){
     case 'lvl': { const b=p.lvl; p.lvl=Math.max(1,p.lvl-eff.n); if(p.human) stat('lvlLost',b-p.lvl); if(b===p.lvl){ log(`${nm(p)} ${V(p,'bist','ist')} schon auf Stufe 1. Tiefer geht es nicht.`); ruleOnce('min1','Unter Stufe 1 kann niemand fallen.'); } else log(`${nm(p)} ${V(p,'verlierst','verliert')} ${b-p.lvl} ${pl(b-p.lvl,'Stufe','Stufen')}: jetzt Stufe ${p.lvl}.`,'bad'); break; }
-    case 'slot': { const it=p.eq.find(i=>i.slot===eff.s); if(it){ take(p,it); discard(it); log(`${nm(p)} ${V(p,'verlierst','verliert')} ${it.n}.`,'bad'); } else { log(`${nm(p)} ${V(p,'trägst','trägt')} keine ${SLOTN[eff.s]}. Glück gehabt!`); ruleOnce('nothing','Betrifft ein Fluch oder eine Niederlage etwas, das du nicht hast, passiert einfach nichts.'); } break; }
+    case 'chill': { const C=S.combat;
+      if(C && !C.resolved && (C.f===p.id || C.h===p.id)){ C.pB.push({l:`Kellerkälte (${nm(p)})`,v:-eff.n}); log(`Die Kellerkälte wirkt sofort: −${eff.n} in diesem Kampf.`,'bad'); }
+      else { p.chill=eff.n; log(`${nm(p)} ${V(p,'frierst','friert')}: Im nächsten Kampf −${eff.n}.`,'bad'); }
+      break; }
+    case 'slot': if(eff.s==='hand'){ const it=p.eq.filter(i=>i.slot==='hand').sort((a,b)=>(b.b||0)-(a.b||0))[0]; if(it){ take(p,it); discard(it); log(`${nm(p)} ${V(p,'verlierst','verliert')} ${it.n}.`,'bad'); } else log(`${nm(p)} ${V(p,'hältst','hält')} nichts in der Hand. Glück gehabt!`); break; }
+    { const it=p.eq.find(i=>i.slot===eff.s); if(it){ take(p,it); discard(it); log(`${nm(p)} ${V(p,'verlierst','verliert')} ${it.n}.`,'bad'); } else { log(`${nm(p)} ${V(p,'trägst','trägt')} keine ${SLOTN[eff.s]}. Glück gehabt!`); ruleOnce('nothing','Betrifft ein Fluch oder eine Niederlage etwas, das du nicht hast, passiert einfach nichts.'); } break; }
     case 'best': { const all=[...p.eq,...p.pack].sort((a,b)=>(b.b||0)-(a.b||0)||(b.g-a.g)); if(all.length){ take(p,all[0]); discard(all[0]); log(`${nm(p)} ${V(p,'verlierst','verliert')} ${all[0].n}.`,'bad'); } else log(`${nm(p)} ${V(p,'hast','hat')} keine Gegenstände zu verlieren.`); break; }
     case 'hand': { const n=Math.min(eff.n,p.hand.length), lost=[]; for(let i=0;i<n;i++){ const c=p.hand.splice(rnd(p.hand.length),1)[0]; lost.push(c); discard(c); }
       log(n ? `${nm(p)} ${V(p,'wirfst','wirft')} ${eff.n>=99?'die ganze Hand':n+' '+pl(n,'Handkarte','Handkarten')} ab: ${lost.map(c=>`<b>${cardLabel(c)}</b>`).join(', ')}.` : `${nm(p)} ${V(p,'hast','hat')} keine Handkarten.`,'bad');
@@ -1072,9 +1149,10 @@ function cardActions(c, where){
       }
       case 'oneshot': {
         if(live && c.b){
-          if(inMine) A.push({l:`Für unsere Seite (+${c.b})`, fn:()=>playOneShot(c,'p'), kind:'primary'});
-          else A.push({l:`Für ${P(C.f).name} (+${c.b})`, fn:()=>playOneShot(c,'p')});
-          A.push({l:`Für das Monster (+${c.b})`, fn:()=>playOneShot(c,'m'), kind: inMine?'':'primary'});
+          const vp=osP(c,C);
+          if(inMine) A.push({l:`Für unsere Seite (+${vp})`, fn:()=>playOneShot(c,'p'), kind:'primary'});
+          else A.push({l:`Für ${P(C.f).name} (+${vp})`, fn:()=>playOneShot(c,'p'), kind: c.pOnly?'primary':''});
+          if(!c.pOnly) A.push({l:`Für das Monster (+${c.b})`, fn:()=>playOneShot(c,'m'), kind: inMine?'':'primary'});
         } else if(c.escape) A.push({info:'Nebelpulver bietet dir das Spiel beim Weglaufen an.'});
         else A.push({info:'Einmal-Gegenstände spielst du während eines Kampfes, auch in fremden.'});
         sellAct(); break;
@@ -1125,7 +1203,7 @@ function playRC(c){
 function markIntf(){ const C=S.combat; if(C && C.f!==0){ C.hchg=true; } fx('play',{}); }
 function playOneShot(c,side){
   const p=me(), C=S.combat; take(p,c); C.used.push(c); stat('played'); stat('os');
-  if(side==='p'){ C.pB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für ${C.f===0||C.h===0?'eure Seite':P(C.f).name} ein (+${c.b}).`,'good'); }
+  if(side==='p'){ const v=osP(c,C); C.pB.push({l:`${c.n} (von dir)`,v}); log(`Du setzt ${c.n} für ${C.f===0||C.h===0?'eure Seite':P(C.f).name} ein (+${v}).`,'good'); }
   else { C.mB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für das Monster ein (+${c.b}).`); if(C.f!==0 && C.h!==0) C.asked[0]=true; }
   markIntf();
 }
@@ -1207,6 +1285,8 @@ function curseTargetAdv(p,c,charity){
 }
 function curseLoss(f,c){
   const e=c.eff;
+  if(e.t==='chill') return 2;
+  if(e.t==='slot' && e.s==='hand'){ const it=f.eq.filter(i=>i.slot==='hand' && usable(f,i)).sort((a,b)=>(b.b||0)-(a.b||0))[0]; return it ? (it.b||0) : 0; }
   if(e.t==='slot'){ const it=f.eq.find(i=>i.slot===e.s); return it && usable(f,it) ? (it.b||0) : 0; }
   if(e.t==='lvl') return Math.min(e.n, f.lvl-1);
   if(e.t==='class'){ if(!f.cls) return f.lvl>1?1:0; return f.eq.filter(i=>i.req && i.req.cls===f.cls.c).reduce((s,i)=>s+i.b,0); }
@@ -1263,7 +1343,7 @@ function adviseFight(p,C){
   const need=r.b-r.a+(r.tieWin?0:1);
   const res=[];
   p.hand.forEach(c=>{
-    if(c.k==='oneshot' && c.b) res.push({c,v:c.b,act:'Für unsere Seite',lbl:`${c.n} (+${c.b})`});
+    if(c.k==='oneshot' && c.b) res.push({c,v:osP(c,C),act:'Für unsere Seite',lbl:`${c.n} (+${osP(c,C)})`});
     if(c.k==='enh' && c.v<0) res.push({c,v:-c.v,act:'Auf ',lbl:`„${c.n}“ (${sign(c.v)}) auf das Monster`});
   });
   const spare=p.hand.length-res.length;
@@ -1297,7 +1377,7 @@ function adviseBotHelp(p,C,d){
 function adviseInterfere(p,C){
   const f=P(C.f), r=evalCombat(C);
   if(C.h===0){
-    if(!r.win){ const need=r.b-r.a+(r.tieWin?0:1), os=p.hand.filter(c=>c.k==='oneshot' && c.b).sort((a,b)=>a.b-b.b), pick=os.find(c=>c.b>=need)||os[os.length-1];
+    if(!r.win){ const need=r.b-r.a+(r.tieWin?0:1), os=p.hand.filter(c=>c.k==='oneshot' && c.b).sort((a,b)=>osP(a,C)-osP(b,C)), pick=os.find(c=>osP(c,C)>=need)||os[os.length-1];
       if(pick) return {uid:pick.uid, act:'Für unsere Seite', text:`Spiel ${pick.n} für eure Seite.`, why:`Ihr liegt ${need} zurück. Verliert ihr, musst du auch weglaufen und bekommst keine Schätze.`}; }
     return {opt:'ok', text:'Weiter.', why: r.win ? 'Ihr gewinnt bereits. Spar dir deine Karten.' : 'Du hast nichts, was hilft.'};
   }
@@ -1309,7 +1389,7 @@ function adviseInterfere(p,C){
   const need=r.a-r.b+(r.tieWin?1:0), opts=[];
   p.hand.forEach(c=>{
     if(c.k==='enh' && c.v>0) opts.push({c,v:c.v,act:'Auf ',lbl:`„${c.n}“ (${sign(c.v)}) auf das Monster`});
-    if(c.k==='oneshot' && c.b) opts.push({c,v:c.b,act:'Für das Monster',lbl:`${c.n} für das Monster (+${c.b})`});
+    if(c.k==='oneshot' && osM(c)) opts.push({c,v:osM(c),act:'Für das Monster',lbl:`${c.n} für das Monster (+${osM(c)})`});
     if(c.k==='curse'){ const l=curseLoss(f,c); if(l>0) opts.push({c,v:l,act:`Auf ${f.name}`,lbl:`den Fluch „${c.n}“ auf ${f.name} (−${l})`}); }
   });
   const w=p.hand.find(c=>c.k==='wander'), wm=p.hand.filter(c=>c.k==='monster').sort((a,b)=>b.lvl-a.lvl)[0];
@@ -1415,13 +1495,15 @@ function cardMeaning(c){
       const slot = c.slot==='hand' ? (c.hands===2?'beide Hände':'eine Hand') : c.slot==='none' ? 'keinen Slot' : `den Slot ${SLOTN[c.slot]}`;
       let t = c.b ? `Gibt +${c.b} Kampfstärke, solange er ausgerüstet ist` : 'Gibt keinen Kampfbonus';
       if(c.run) t += `, dazu +${c.run} beim Weglaufen`;
+      if(c.und) t += `, gegen Untote sogar +${c.und}`;
       t += `. Belegt ${slot}.`;
       if(c.req) t += ` Wirkt nur für ${reqName(c)}.`;
       if(c.big) t += ' Großer Gegenstand: davon darf man nur einen haben, Zwerge beliebig viele.';
       return t + ` Verkaufswert ${fmt(c.g)} Gold.`;
     }
-    case 'oneshot': return c.escape ? 'Einmal einsetzbar: Beim Weglaufen entkommt man damit ohne Würfeln, auch bei mehreren Monstern vor allen auf einmal. Danach wird die Karte abgelegt.' : `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, für jede Seite, auch für das Monster. +${c.b}, danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
-    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}. Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
+    case 'oneshot': if(c.pOnly) return `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, aber nur für die kämpfende Seite, nicht für das Monster. ${c.txt} Danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
+      return c.escape ? 'Einmal einsetzbar: Beim Weglaufen entkommt man damit ohne Würfeln, auch bei mehreren Monstern vor allen auf einmal. Danach wird die Karte abgelegt.' : `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, für jede Seite, auch für das Monster. +${c.b}, danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
+    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}. Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
     case 'curse': return 'Fluch. Beim Aufstoßen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen.';
     case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
@@ -1456,7 +1538,9 @@ function itemTxt(c){
   if(c.req) t.push(`Nur für ${reqName(c)}.`);
   if(c.run) t.push(`+${c.run} beim Weglaufen.`);
   if(c.big) t.push('Großer Gegenstand.');
+  if(c.und) t.push(`Gegen Untote +${c.und} statt +${c.b}.`);
   if(c.slot==='none') t.push('Belegt keinen Slot.');
+  if(c.flv) t.push(c.flv);
   return t.join(' ');
 }
 function slotTxt(c){ if(c.slot==='hand') return c.hands===2?'2 Hände':'1 Hand'; return SLOTN[c.slot]; }

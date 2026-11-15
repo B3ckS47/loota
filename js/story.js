@@ -9,15 +9,23 @@ const COSMETICS = {
   title: {
     stammgast: 'Stammgast',
     brueckenbezwinger: 'Brückenbezwinger',
-    montagsheld: 'Montagsheld'
+    montagsheld: 'Montagsheld',
+    kellerkind: 'Kellerkind',
+    geisterjaeger: 'Geisterjäger',
+    fassfluesterer: 'Fassflüsterer',
+    rattenschreck: 'Rattenschreck'
   },
   frame: {
     kupferkessel: {n: 'Kupferkessel', c: '#c8773a'},
-    moewenfeder: {n: 'Möwenfeder', c: '#e9eef2'}
+    moewenfeder: {n: 'Möwenfeder', c: '#e9eef2'},
+    rattengrau: {n: 'Rattengrau', c: '#8b9096'},
+    kerzenwachs: {n: 'Kerzenwachs', c: '#f1e2b8'},
+    goldkronkorken: {n: 'Goldener Kronkorken', c: '#e8b923'}
   },
   portrait: {
     gartenzwerg: {n: 'Gartenzwerg', src: 'art/monster-wuetender-gartenzwerg.webp'},
-    rentner: {n: 'Rentner-Ritter', src: 'art/monster-rentner-ritter.webp'}
+    rentner: {n: 'Rentner-Ritter', src: 'art/monster-rentner-ritter.webp'},
+    rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'}
   }
 };
 function cosmeticName(id) {
@@ -59,7 +67,7 @@ const WORLDS = [{
       goal: 'Gegen Berta und Uschi: Erreiche vor den beiden Stufe 6.',
       scn: story => ({target: 6, bots: ['Berta', 'Uschi'], diff: 'gemuetlich',
         start: story.choice.w1s3 === 'keep' ? {eq: ['Hörnerhelm']} : undefined,
-        perks: story.choice.w1s3 === 'return' ? {freeHelp: 'Berta'} : undefined}),
+        perks: story.choice.w1s3 === 'return' ? {freeHelp: 'Berta', why: 'Du hast mir meinen Helm zurückgebracht. Ehrensache!'} : undefined}),
       extras: [{t: 'Nie Hilfe annehmen', ok: st => !st.help}, {t: 'Höchstens 1 Fluch abbekommen', ok: st => st.curses <= 1}]},
     {id: 'w1s5', face: 'art/monster-troll-unter-der-autobahnbruecke.webp', ax: 50.8, ay: 44.0, no: '5', x: 68, y: 530, type: 'puzzle', name: 'Maut unter der Brücke', place: 'Autobahnbrücke', req: ['w1s4'],
       text: 'Unter der Autobahnbrücke verlangt ein Troll Maut. Zwerge kann er nicht ausstehen, und du bist heute leider einer.',
@@ -80,24 +88,96 @@ const WORLDS = [{
     {id: 'w1s7', ax: 51.4, ay: 77.0, no: '7', x: 50, y: 770, type: 'shop', name: 'Rast im Gasthof', place: 'Gasthof', reqAny: ['w1s6a', 'w1s6b'],
       text: 'Kurz vor der Drachenhöhle steht ein kleiner Gasthof. Der Wirt zeigt auf ein Regal voller Kram: „Für ein paar Münzen ist alles zu haben. Wer weiß, ob du wiederkommst.“',
       goal: 'Tausche Münzen gegen Rahmen und Porträts. Danach geht es zum Drachen.',
-      shop: [{id: 'frame:moewenfeder', price: 30}, {id: 'portrait:gartenzwerg', price: 40}, {id: 'portrait:rentner', price: 40}]},
+      shop: [{id: 'frame:moewenfeder', price: 30}, {id: 'portrait:gartenzwerg', price: 40}, {id: 'portrait:rentner', price: 40}], onward: 'Weiter zum Drachen'},
     {id: 'w1s8', face: 'art/monster-drache-des-montagmorgens.webp', ax: 80.7, ay: 90.8, no: '8', x: 50, y: 895, type: 'boss', name: 'Der Drache des Montagmorgens', place: 'Drachenhöhle', req: ['w1s7'],
       text: 'Jeden Montag legt der Drache das Städtchen lahm: kein Kaffee, keine Laune, kein Durchkommen. Heute stellst du dich ihm. Die drei vom Stammtisch wollen den Ruhm natürlich selbst.',
       goal: 'Gegen Berta, Kalle und Uschi. Der Drache steckt in der unteren Hälfte des Türstapels und ist montags noch nicht ganz wach: Stufe 13 statt 16. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
       scn: {target: 10, bots: ['Berta', 'Kalle', 'Uschi'], boss: 'Drache des Montagmorgens', bossLvl: 13, diff: 'normal'},
       extras: [{t: 'Den Drachen selbst besiegen', ok: st => st.bossBy === 0}, {t: 'Nie Hilfe annehmen', ok: st => !st.help}],
       reward: 'title:montagsheld', final: true}
+  ],
+  finalTitle: 'Der Drache ist besiegt!'
+}, {
+  id: 'w2', n: 2, name: 'Der Tavernenkeller', face: 'icons/portrait-hilde.png', deck: 'keller', table: 'keller', theme: 'keller', map: 'art/karte-welt2.webp', mapRatio: 768 / 1376,
+  // solange Welt 1 offen ist: im Nebel zu erahnen (Punkte in Prozent der oberen 55 % des Bildes)
+  fog: {show: 0.55, teaser: [[50.1, 25.1], [20.8, 31.7], [43.6, 62.1]], hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.'},
+  intro: 'Das Bier ist alle, und aus dem Keller kommen seltsame Geräusche. Hilde drückt dir eine Laterne in die Hand: „Unten hat sich Rattenkönig Rüdiger zum Herrscher ausgerufen. Seitdem spielen alle da unten nach seinen Regeln. Hol mir mein Bier zurück!“ Am Stammtisch wetten Berta, Kalle und Uschi schon, ob du überhaupt wiederkommst.',
+  outro: 'Rüdiger rückt seinen Kronkorken gerade und gibt sich geschlagen. Hilde bekommt ihr Bier, der Stammtisch zahlt die Wettschulden. Hinter dem Thron entdeckst du einen schmalen Tunnel. Es riecht nach Moos und Pilzen …',
+  unlocks: ['das Keller-Deck', 'die Tischfläche „Kellergewölbe“', 'die Kellermusik'],
+  starReward: {n: 18, id: 'frame:goldkronkorken'},
+  finalTitle: 'Rüdiger ist besiegt!',
+  stations: [
+    {id: 'w2s1', face: 'art/monster-staubmaus-bande.webp', ax: 50, ay: 14, no: '1', type: 'puzzle', name: 'Die Kellertreppe', place: 'Kellertreppe', req: ['w1s8'],
+      text: 'Unten an der Kellertreppe raschelt es. Auf der letzten Stufe hockt eine Staubmaus-Bande, zu dritt und stinksauer, weil du ihnen mit der Laterne ins Gesicht leuchtest.',
+      goal: 'Besiege die stinksaure Staubmaus-Bande (Kampfstärke 6). Du hast Stufe 2, eine Kellerlaterne und drei Karten auf der Hand.',
+      scn: {fight: {mons: ['Staubmaus-Bande'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Kellerlaterne'], hand: ['Mausefalle', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
+      extras: [{t: 'Mit nur einer Karte gewinnen', ok: st => st.played <= 1}, {t: 'Den Riesenböller behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Riesenböller')}],
+      reward: 'title:kellerkind'},
+    {id: 'w2s2', face: 'icons/portrait-rosi.png', ax: 21, ay: 17, no: '2', type: 'duel', name: 'Rosi will spielen', place: 'Fässerecke', req: ['w2s1'],
+      text: 'Zwischen den Fässern sitzt Ratte Rosi, Rüdigers vorlaute Nichte, und mischt Karten mit dem Schwanz. „Du willst zu meinem Onkel? Erst gegen mich. Und glaub ja nicht, dass ich dir jemals helfe.“',
+      goal: '1 gegen 1 gegen Ratte Rosi, mit dem Keller-Deck: Erreiche Stufe 5 vor ihr.',
+      scn: {target: 5, bots: ['Rosi'], diff: 'gemuetlich'},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}],
+      reward: 'frame:rattengrau'},
+    {id: 'w2s3', face: 'icons/portrait-fridolin.png', ax: 75, ay: 16, no: '3', type: 'event', name: 'Das sprechende Fass', place: 'Zapfstelle', req: ['w2s2'],
+      text: 'Ein dickes Bierfass räuspert sich: „Fass Fridolin, sehr erfreut. Du willst in den Vorratsraum? Da spielen Rosi und ich heute Karten. Ich mach dir ein Angebot, unter Kellerleuten.“',
+      goal: 'Nimm eines von Fridolins Angeboten an. Es wirkt sich auf die nächste Station aus.',
+      choices: [
+        {v: 'shield', l: 'Den Fassdeckel-Schild nehmen', d: 'Du startest Station 4 mit dem Fassdeckel-Schild (+2, gegen Untote +4).'},
+        {v: 'help', l: 'Fridolins Hilfe annehmen', d: 'Fridolin hilft dir in Station 4 einmal, ohne Schätze zu verlangen.'},
+        {v: 'coins', l: 'Die 30 Münzen nehmen', d: 'Du bekommst 30 Münzen.', coins: 30}
+      ]},
+    {id: 'w2s4', face: 'icons/portrait-fridolin.png', ax: 44, ay: 34, no: '4', type: 'duel', name: 'Kartenrunde im Vorratsraum', place: 'Vorratsraum', req: ['w2s3'],
+      text: 'Zwischen Kartoffelsäcken und Schatztruhen haben Rosi und Fridolin einen Tisch aus Kisten gebaut. „Wer zuerst Stufe 6 hat, kriegt die Truhe“, quiekt Rosi. Fridolin gluckert zustimmend.',
+      goal: 'Gegen Rosi und Fridolin: Erreiche als Erster Stufe 6.',
+      scn: story => ({target: 6, bots: ['Rosi', 'Fridolin'], diff: 'gemuetlich',
+        start: story.choice.w2s3 === 'shield' ? {eq: ['Fassdeckel-Schild']} : undefined,
+        perks: story.choice.w2s3 === 'help' ? {freeHelp: 'Fridolin', why: 'Abgemacht ist abgemacht. Einmal umsonst!'} : undefined}),
+      extras: [{t: 'Nie Hilfe annehmen', ok: st => !st.help}, {t: 'Höchstens 1 Fluch abbekommen', ok: st => st.curses <= 1}]},
+    {id: 'w2s5', face: 'icons/portrait-gustav.png', ax: 35, ay: 52, no: '5', type: 'puzzle', name: 'Gustavs Geisterstunde', place: 'Weinkeller', req: ['w2s4'],
+      text: 'Im Weinkeller schlägt eine Uhr, die es gar nicht gibt. Gespenst Gustav, seit 300 Jahren gelangweilt, hat zwei Untote zum Spielen eingeladen und den Korkgeist schon mal stinksauer gemacht. „Endlich Unterhaltung“, gähnt er.',
+      goal: 'Besiege Korkgeist und Steuerprüfer-Gespenst zusammen (Kampfstärke 13, beide untot). Du bist Priester auf Stufe 4 mit dem Fassdeckel-Schild: Kampfstärke 8 gegen Untote.',
+      scn: {fight: {mons: ['Korkgeist', 'Steuerprüfer-Gespenst'], enh: ['Stinksauer']}, start: {lvl: 4, cls: 'Priester', eq: ['Fassdeckel-Schild'], hand: ['Knoblauchzopf', 'Trank der Tapferkeit', 'Winzig', 'Gummihuhn mit Quietsch', 'Ahnenforschung'], deal: false}, bots: []},
+      extras: [{t: 'Den Knoblauchzopf behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Knoblauchzopf')}, {t: 'Keine Karten abwerfen', ok: st => !st.discarded}],
+      reward: 'title:geisterjaeger'},
+    {id: 'w2s6a', face: 'icons/portrait-gustav.png', ax: 62, ay: 52, no: '6a', type: 'duel', name: 'Weinkeller', place: 'Weinkeller', hard: true, req: ['w2s5'],
+      text: 'Tiefer im Weinkeller ist es kalt, und die Flaschen flüstern. Rosi und Gustav spielen hier ihre Lieblingsvariante, mit doppelt so vielen Flüchen. „Ich liebe Flüche“, kichert Rosi.',
+      goal: 'Gegen Rosi und Gustav, mit doppelt so vielen Flüchen im Deck: Erreiche Stufe 7. Hier gibt es doppelte Münzen.',
+      scn: {target: 7, bots: ['Rosi', 'Gustav'], variant: 'fluchchaos', diff: 'normal'}, coinMul: 2,
+      extras: [{t: 'In weniger als 15 Runden', ok: (st, S) => S.turn < 15}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
+    {id: 'w2s6b', face: 'icons/portrait-fridolin.png', ax: 45, ay: 74, no: '6b', type: 'duel', name: 'Kartoffelkeller', place: 'Kartoffelkeller', easy: true, req: ['w2s5'],
+      text: 'Im Kartoffelkeller riecht es nach Erde. Fridolin hat sich gemütlich zwischen die Säcke gerollt: „Eine ruhige Runde, nur wir zwei? Ich helfe dir sogar, gegen eine kleine Gebühr.“',
+      goal: 'Gegen Fridolin: Erreiche Stufe 6.',
+      scn: {target: 6, bots: ['Fridolin'], diff: 'gemuetlich'},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
+    {id: 'w2s7', ax: 80, ay: 80, no: '7', type: 'shop', name: 'Rast beim Kellermeister', place: 'Kellermeister', reqAny: ['w2s6a', 'w2s6b'],
+      text: 'Kurz vor dem Thronsaal hat der alte Kellermeister seinen Stand: Kerzenstummel, Korken und allerlei Krimskrams. „Für ein paar Münzen ist alles zu haben. Rüdiger zahlt ja nie.“',
+      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Rüdiger.',
+      shop: [{id: 'title:fassfluesterer', price: 30}, {id: 'frame:kerzenwachs', price: 40}, {id: 'portrait:rosi', price: 60}], onward: 'Weiter zu Rüdiger'},
+    {id: 'w2s8', face: 'art/monster-rattenkoenig-ruediger.webp', ax: 50, ay: 92, no: '8', type: 'boss', name: 'Rüdigers Thronsaal', place: 'Thronsaal', req: ['w2s7'],
+      text: 'Auf einem Thron aus Pfandkisten sitzt Rattenkönig Rüdiger, den Kronkorken schief auf dem Kopf. Rosi, Fridolin und Gustav sitzen schon am Tisch. „Wer mich besiegt, kriegt das Bier“, piepst Rüdiger. „Aber das schafft eh keiner.“',
+      goal: 'Gegen Rosi, Fridolin und Gustav. Rüdiger steckt in der unteren Hälfte des Türstapels und ist nach dem Festmahl etwas träge: Stufe 13 statt 14. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
+      scn: {target: 10, bots: ['Rosi', 'Fridolin', 'Gustav'], boss: 'Rattenkönig Rüdiger', bossLvl: 13, diff: 'normal'},
+      extras: [{t: 'Rüdiger selbst besiegen', ok: st => st.bossBy === 0}, {t: 'Ohne Hilfe gegen Rüdiger', ok: st => st.bossBy === 0 && !st.bossHelped}],
+      reward: 'title:rattenschreck', final: true}
   ]
 }];
 
 // Welten, die noch kommen: auf der Karte im Nebel zu erahnen (map = späteres Musely-Bild)
+// map fehlt noch: dann zeigt der Nebel eine schlichte Fläche. teaser in Prozent des sichtbaren Ausschnitts
 const WORLDS_SOON = [
-  // teaser: Punkte in Prozent des sichtbaren Ausschnitts (oberste 55 % des Bildes)
-  // Spätere Stationen auf dem ganzen Bild (Prozent): Treppe 50/14, Fässer links 21/17, Fass rechts 75/16,
-  // Vorratsraum 44/34, Weinkeller 35/52 und 62/52, Kartoffelkeller 45/74, Thron 50/92
-  {id: 'w2', n: 2, name: 'Der Tavernenkeller', map: 'art/karte-welt2.webp', ratio: 768 / 1376, show: 0.55, teaser: [[50.1, 25.1], [20.8, 31.7], [43.6, 62.1]],
-    hint: 'Besiege den Drachen des Montagmorgens, dann geht es hinab.', soon: 'Folgt bald: neue Karten, neue Gegner und ein Rattenkönig.'}
+  {id: 'w3', n: 3, name: 'Der Pilzwald', map: null, ratio: 768 / 1376, show: 0.45, teaser: [[50, 30], [28, 52], [66, 74]],
+    hint: 'Besiege Rattenkönig Rüdiger, dann führt ein Tunnel weiter.', soon: 'Folgt bald: Hinter Rüdigers Thron wartet der Pilzwald.'}
 ];
+// Welten, die gerade offen sind: Welt 1 immer, jede weitere nach Abschluss der vorigen
+const openWorlds = () => WORLDS.filter((w, i) => i === 0 || STORY.worlds[WORLDS[i - 1].id]);
+const currentWorld = () => { const o = openWorlds(); return o[o.length - 1]; };
+// Die erste noch verschlossene Welt, als Nebel-Teaser (echte Welt mit fog-Daten oder Vorschau)
+function fogWorld() {
+  const o = openWorlds(), w = WORLDS[o.length];
+  if (w) return {id: w.id, n: w.n, name: w.name, map: w.map, ratio: w.mapRatio, show: w.fog.show, teaser: w.fog.teaser, hint: w.fog.hint, soon: w.fog.hint, near: false};
+  const f = WORLDS_SOON[0]; return f ? Object.assign({near: !!STORY.worlds[o[o.length - 1].id]}, f) : null;
+}
 
 const STORY = (() => {
   let s = null;
@@ -142,6 +222,8 @@ function finishStation(st, S) {
   coins += fresh * 5 * mul;
   const rewards = [];
   if (w && st.reward && grant(st.reward)) rewards.push(st.reward);
+  STORY.stars[st.id] = merged;
+  starReward(st.world, rewards);
   let worldDone = false;
   if (w) STORY.done[st.id] = true;
   if (w && st.final && !STORY.worlds[st.world]) { STORY.worlds[st.world] = true; worldDone = true; }
@@ -154,8 +236,14 @@ function chooseEvent(st, v) {
   const c = st.choices.find(x => x.v === v); if (!c || STORY.done[st.id]) return null;
   STORY.choice[st.id] = v; STORY.done[st.id] = true; STORY.stars[st.id] = [true];
   const coins = 5 + (c.coins || 0); STORY.coins += coins;
+  const rewards = []; starReward(st.world, rewards);
   saveStory();
-  return {coins};
+  return {coins, rewards};
+}
+// Sterne-Belohnung einer Welt (z. B. Rahmen ab 18 Sternen)
+function starReward(worldId, rewards) {
+  const w = worldById(worldId), r = w && w.starReward;
+  if (r && worldStars(w) >= r.n && grant(r.id)) rewards.push(r.id);
 }
 function visitShop(st) { if (!STORY.done[st.id]) { STORY.done[st.id] = true; saveStory(); } }
 function buyCosmetic(item) {
@@ -164,4 +252,4 @@ function buyCosmetic(item) {
   STORY.coins -= item.price; grant(item.id); saveStory();
   return 'ok';
 }
-if (typeof module !== 'undefined') module.exports = {WORLDS, STORY, COSMETICS, scenarioFor, finishStation, chooseEvent, stationById, stationUnlocked, maxStars};
+if (typeof module !== 'undefined') module.exports = {WORLDS, STORY, COSMETICS, scenarioFor, finishStation, chooseEvent, stationById, stationUnlocked, maxStars, openWorlds, worldStars, worldMaxStars};

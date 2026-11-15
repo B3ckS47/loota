@@ -9,7 +9,8 @@ const ICON = {
   kampf: 'icons/wert-kampf.png', run: 'icons/wert-weglaufen.png', hand: 'icons/wert-hand.png',
   slot: {kopf: 'icons/icon-kopf.png', ruestung: 'icons/icon-ruestung.png', schuhe: 'icons/icon-schuhe.png', hand: 'icons/icon-haende.png',
     none: 'icons/icon-sonstiges.png', pack: 'icons/icon-rucksack.png', race: 'icons/icon-rasse.png', cls: 'icons/icon-klasse.png'},
-  portrait: {Du: 'icons/portrait-du.png', Berta: 'icons/portrait-berta.png', Kalle: 'icons/portrait-kalle.png', Uschi: 'icons/portrait-uschi.png'}
+  portrait: {Du: 'icons/portrait-du.png', Berta: 'icons/portrait-berta.png', Kalle: 'icons/portrait-kalle.png', Uschi: 'icons/portrait-uschi.png',
+    Rosi: 'icons/portrait-rosi.png', Fridolin: 'icons/portrait-fridolin.png', Gustav: 'icons/portrait-gustav.png', Hilde: 'icons/portrait-hilde.png'}
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
 const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
@@ -37,6 +38,7 @@ function cosmeticSource(id) {
     const it = (st.shop || []).find(x => x.id === id);
     if (it) return `${cosmeticName(id)}: in Welt ${w.n} bei „${st.name}“ für ${it.price} Münzen.`;
   }
+  for (const w of WORLDS) if (w.starReward && w.starReward.id === id) return `${cosmeticName(id)}: für ${w.starReward.n} Sterne in Welt ${w.n}.`;
   return 'Schaltest du im Storymodus frei.';
 }
 function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portrait && cosOpen(q)) || PORTRAITS[0]; return x[2]; }
@@ -72,7 +74,7 @@ function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return 
 function clearSave() { try { localStorage.removeItem(K_SAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
-const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal'}, SAVED_SET || {});
+const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne'}, SAVED_SET || {});
 // Lernhilfen sind ab Einstellungs-Version 2 standardmäßig aus, auch für bereits gespeicherte Einstellungen
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
@@ -88,6 +90,10 @@ function applySettings() {
 function buzz(p) { if (SET.vibrate && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
 
 let GAME_ON = false;
+// Tischfläche und Musik der laufenden Partie: im Storymodus von der Welt, im freien Spiel aus den Optionen
+let GAME_TABLE = 'taverne', GAME_THEME = 'taverne';
+const moodOpen = () => !!STORY.worlds.w2;
+function freeMood() { GAME_TABLE = moodOpen() && SET.table === 'keller' ? 'keller' : 'taverne'; GAME_THEME = moodOpen() && SET.theme === 'keller' ? 'keller' : 'taverne'; }
 CHECKPOINT_HANDLER = () => { if (SCN) return; store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
 
 /* ================= Bildschirme ================= */
@@ -100,8 +106,12 @@ const DECK_MAX = 4;
 /* Decks und Varianten. Weitere Decks (z. B. je Welt aus dem Storymodus) bekommen eigene
    Grund-Stückzahlen (base), ein ikonisches Bild (icon) und eine Freischaltung (unlocked). */
 const DECKS = [
-  {id: 'grund', name: 'Grunddeck', icon: 'Wütender Gartenzwerg', desc: 'Die 70 Karten, mit denen alles begann.', base: p => p.def, unlocked: () => true}
+  {id: 'grund', name: 'Grunddeck', icon: 'Wütender Gartenzwerg', desc: 'Die Karten, mit denen alles begann.', base: p => p.def, unlocked: () => true},
+  {id: 'keller', name: 'Keller-Deck', icon: 'Rattenkönig Rüdiger', desc: 'Staubmäuse, Spukgeister und der Rattenkönig: 18 Kellerkarten plus alles aus dem Grunddeck, was in einen Keller passt.',
+    base: kellerCount, unlocked: () => !!STORY.worlds.w2, lockTxt: 'Das Keller-Deck schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'}
 ];
+// Karten einer Welt tauchen in der Kartenliste erst auf, wenn ihr Deck freigeschaltet ist
+const cardOpen = c => !c.w || c.w !== 2 || DECKS[1].unlocked();
 const VARIANTS = [
   ['standard', 'Standard', 'Die ausgewogene Mischung.', (p, b) => b],
   ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', (p, b) => !b ? 0 : p.tpl.k === 'monster' ? b + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? b - 1 : p.tpl.k === 'enh' ? b + 1 : b],
@@ -199,6 +209,8 @@ function setScreen(name) {
   CUR = name;
   updatePaused();
   Snd.mood(name === 'game' && S && S.combat ? 'combat' : 'tavern');
+  Snd.theme(name === 'game' ? GAME_THEME : 'taverne');
+  $('#app').classList.toggle('tbl-keller', name === 'game' && GAME_TABLE === 'keller');
   if (name === 'title') renderTitle();
   if (name === 'setup') { renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
   if (name === 'settings') { renderControls(); renderSaveInfo(); }
@@ -222,8 +234,8 @@ window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, 
 /* ================= Startbildschirm ================= */
 function renderTitle() {
   const save = load(K_SAVE), active = GAME_ON && S && S.winner == null;
-  const w1 = WORLDS[0], si = $('#story-info');
-  if (si) si.textContent = `Welt ${w1.n} · ${worldStars(w1)} von ${worldMaxStars(w1)} Sternen`;
+  const cw = currentWorld(), si = $('#story-info');
+  if (si) si.textContent = `Welt ${cw.n} · ${worldStars(cw)} von ${worldMaxStars(cw)} Sternen`;
   const btn = $('#btn-continue');
   btn.hidden = !(active || save);
   if (active && S.scn) { const st = stationById(S.scn); $('#continue-info').textContent = st ? `Storymodus · ${st.no} ${st.name}` : 'Storymodus'; }
@@ -251,7 +263,7 @@ const Motes = (() => {
 /* ================= Steuerelemente (Setup und Optionen) ================= */
 const DIFF_TXT = {gemuetlich: 'Die Bots greifen selten ein und verfluchen wenig. Gut zum Kennenlernen.', normal: 'Die Bots spielen wie typische Mitspieler: Sie bremsen vor allem, wer vorne liegt.', gnadenlos: 'Die Bots greifen oft ein und verteilen Flüche großzügig. Hier schenkt dir niemand etwas.'};
 function renderControls() {
-  $$('.seg[data-set]').forEach(seg => { const k = seg.dataset.set; seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(String(SET[k]) === b.dataset.v))); });
+  $$('.seg[data-set]').forEach(seg => { const k = seg.dataset.set; seg.querySelectorAll('button').forEach(b => { const lk = b.dataset.v === 'keller' && !moodOpen(); b.classList.toggle('locked', lk); b.setAttribute('aria-pressed', String(!lk && String(SET[k] === 'keller' && !moodOpen() ? 'taverne' : SET[k]) === b.dataset.v)); }); });
   $$('[data-toggle]').forEach(sw => sw.setAttribute('aria-checked', String(!!SET[sw.dataset.toggle])));
   $$('[data-range]').forEach(r => { r.value = SET[r.dataset.range]; });
   $('#diff-hint').textContent = DIFF_TXT[SET.diff] || '';
@@ -283,7 +295,7 @@ async function startNewGame() {
     counts = variantCounts('grund', 'standard');
   }
   DECK_COUNTS = counts;
-  SCN = null; STORY_RUN = null;
+  SCN = null; STORY_RUN = null; freeMood();
   clearSave(); applySettings();
   W.reset(); GAME_ON = true;
   STACK.length = 0; STACK.push('title');
@@ -293,7 +305,7 @@ async function startNewGame() {
 function continueGame() {
   if (GAME_ON && S && S.winner == null) { setScreen('game'); return; }
   const d = load(K_SAVE); if (!d) return;
-  SCN = null; STORY_RUN = null; applySettings();
+  SCN = null; STORY_RUN = null; freeMood(); applySettings();
   UI.bots = d.bots || UI.bots; UI.diff = d.diff || UI.diff;
   W.reset(); GAME_ON = true;
   STACK.length = 0; STACK.push('title');
@@ -865,7 +877,7 @@ function renderCards() {
   const f = UI.kfilter || 'alle';
   patch($('#card-filter'), KFILTERS.map(([k, l]) => `<button type="button" class="chip" data-kf="${k}" aria-pressed="${f === k}">${l}</button>`).join(''));
   const show = k => f === 'alle' || f === k || (f === 'rc' && (k === 'race' || k === 'class')) || (f === 'misc' && ['enh', 'wander', 'oneshot', 'levelup', 'amulet'].includes(k));
-  const all = POOL.map((p, i) => [p.tpl, i]);
+  const all = POOL.map((p, i) => [p.tpl, i]).filter(([c]) => cardOpen(c));
   const sorter = {monster: (a, b) => a.lvl - b.lvl, item: (a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot) || (a.hands || 0) - (b.hands || 0) || a.b - b.b, oneshot: (a, b) => (a.b || 0) - (b.b || 0), enh: (a, b) => a.v - b.v};
   let html = '';
   KGROUPS.forEach(([k, label]) => {
@@ -909,16 +921,27 @@ const ST_ICON = {
 const starSvg = on => `<svg class="star${on ? ' on' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6L12 16.8l-5.3 2.9 1.1-6-4.4-4.2 6-.8z" /></svg>`;
 const coinImg = '<img src="icons/muenze-voll.png" alt="">';
 function renderStory() {
-  const w = WORLDS[0];
+  const open = openWorlds(), cw = open[open.length - 1];
   patch($('#st-coins'), `${coinImg}<b>${STORY.coins}</b>`);
-  const done = !!STORY.worlds[w.id];
-  patch($('#st-head'), `<span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${done ? ' · abgeschlossen' : ''}</span>`);
-  const next = w.stations.find(st => stationUnlocked(st) && !STORY.done[st.id]);
-  const art = !!w.map, H = art ? 100 : w.mapH;
+  const head = w => `<span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${STORY.worlds[w.id] ? ' · abgeschlossen' : ''}</span>`;
+  patch($('#st-head'), head(open[0]));
+  let next = null;
+  open.forEach(w => { const n = w.stations.find(st => stationUnlocked(st) && !STORY.done[st.id]); if (n) next = n; });
+  const maps = open.map((w, i) => (i ? `<div class="st-link" aria-hidden="true"></div><div class="panel st-head st-band">${head(w)}</div>` : '') + worldMapHTML(w, next)).join('');
+  const f = fogWorld();
+  patch($('#st-map'), maps + (f ? fogHTML(f, f.near) : ''));
+  if (!STORY.intro[cw.id]) { STORY.intro[cw.id] = true; saveStory(); openSheet({id: 'storyintro', w: cw.id}); }
+  if (next && CUR === 'story') {
+    const sc = $('#scr-story .content');
+    if (sc && sc.__scrolledTo !== next.id) { sc.__scrolledTo = next.id; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - sc.clientHeight / 2); }); }
+  }
+}
+function worldMapHTML(w, next) {
+  const art = !!w.map, H = art ? 100 : w.mapH, done = !!STORY.worlds[w.id];
   const X = st => art ? st.ax : st.x, Y = st => art ? st.ay : st.y;
   const segs = [];
-  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r), ya = Y(a), yb = Y(st); segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="M${X(a)} ${ya} C${X(a)} ${(ya + yb) / 2} ${X(st)} ${(ya + yb) / 2} ${X(st)} ${yb}" vector-effect="non-scaling-stroke" />`); }));
-  const marks = w.landmarks.map(([t, x, y]) => `<span class="st-mark${x < 25 ? ' l' : x > 75 ? ' r' : ''}" style="left:${x}%;top:${y}px">${esc(t)}</span>`).join('');
+  w.stations.forEach(st => (st.req || st.reqAny || []).forEach(r => { const a = stationById(r); if (!a || a.world !== w.id) return; const ya = Y(a), yb = Y(st); segs.push(`<path class="${STORY.done[r] ? 'on' : ''}" d="M${X(a)} ${ya} C${X(a)} ${(ya + yb) / 2} ${X(st)} ${(ya + yb) / 2} ${X(st)} ${yb}" vector-effect="non-scaling-stroke" />`); }));
+  const marks = (w.landmarks || []).map(([t, x, y]) => `<span class="st-mark${x < 25 ? ' l' : x > 75 ? ' r' : ''}" style="left:${x}%;top:${y}px">${esc(t)}</span>`).join('');
   const nodes = w.stations.map(st => {
     const un = stationUnlocked(st), dn = !!STORY.done[st.id], s = starsOf(st.id), mx = maxStars(st);
     const stars = mx ? `<span class="sn-stars">${Array.from({length: mx}, (_, i) => starSvg(!!s[i])).join('')}</span>` : '';
@@ -927,10 +950,7 @@ function renderStory() {
   }).join('');
   const last = w.stations[w.stations.length - 1];
   if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
-  patch($('#st-map'), `<div class="smap-in${art ? ' pic' : ''}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}"><svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>` +
-    WORLDS_SOON.map(f => fogHTML(f, done)).join(''));
-  if (!STORY.intro[w.id]) { STORY.intro[w.id] = true; saveStory(); openSheet({id: 'storyintro', w: w.id}); }
-  else if (next && CUR === 'story') { const sc = $('#scr-story .content'); if (sc && !sc.__scrolled) { sc.__scrolled = true; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, el.offsetTop + $('#st-map').offsetTop - sc.clientHeight / 2); }); } }
+  return `<div class="smap-in${art ? ' pic' : ''}" data-world="${w.id}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}"><svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>`;
 }
 // Nächste Welt: im Nebel zu erahnen, je weiter unten desto dichter
 function fogHTML(f, open) {
@@ -951,7 +971,12 @@ function openStation(id) {
 function startStation(id) {
   const st = stationById(id); if (!st || !st.scn || !stationUnlocked(st)) return;
   const scn = scenarioFor(st);
-  scn.counts = variantCounts(worldById(st.world).deck, scn.variant || 'standard'); delete scn.variant;
+  const w = worldById(st.world);
+  scn.counts = variantCounts(w.deck, scn.variant || 'standard'); delete scn.variant;
+  // Der Endgegner einer Welt (ab Welt 2) kommt nur im Bosskampf ins Deck
+  const fin = w.id !== 'w1' && w.stations.find(x => x.final), bossName = fin && fin.scn && fin.scn.boss;
+  if (bossName && !scn.boss) scn.counts[bossName] = 0;
+  GAME_TABLE = w.table || 'taverne'; GAME_THEME = w.theme || 'taverne';
   SCN = scn; STORY_RUN = {st: st.id, done: false};
   $$('.endov').forEach(x => x.remove()); while (SHEETS.length) SHEETS.pop(); renderSheet(true);
   applySettings();
@@ -964,7 +989,7 @@ function startStation(id) {
 function pickChoice(v) {
   const s = topSheet(); if (!s || s.id !== 'station') return;
   const st = stationById(s.st), r = chooseEvent(st, v); if (!r) return;
-  Snd.sfx('coin'); toast(`+${r.coins} Münzen`); renderSheet(false); renderStory();
+  Snd.sfx('coin'); toast(`+${r.coins} Münzen${r.rewards && r.rewards.length ? ` · Neu: ${cosmeticName(r.rewards[0])}` : ''}`); renderSheet(false); renderStory();
 }
 function buyItem(id) {
   const s = topSheet(); if (!s || s.id !== 'station') return;
@@ -1006,7 +1031,7 @@ SHEET_VIEWS.curse = s => {
 };
 SHEET_VIEWS.storyintro = s => {
   const w = worldById(s.w);
-  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du in der Taverne gegen Rahmen und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
+  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du beim Händler gegen Rahmen, Titel und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
 };
 SHEET_VIEWS.station = s => {
   const st = stationById(s.st); if (!st) return null;
@@ -1019,7 +1044,7 @@ SHEET_VIEWS.station = s => {
   } else if (st.type === 'shop') {
     body += `<p class="st-purse">${coinImg}Du hast <b>${STORY.coins}</b> Münzen.</p><div class="shop">${st.shop.map(it => { const own = owns(it.id), poor = STORY.coins < it.price;
       return `<div class="shop-item">${cosmeticPreview(it.id)}<span>${esc(cosmeticName(it.id))}</span>${own ? '<em>Gehört dir</em>' : `<button type="button" class="btn small${poor ? ' poor' : ''}" data-buy="${it.id}">${coinImg}${it.price}</button>`}</div>`; }).join('')}</div>` +
-      `<div class="acts"><button type="button" class="btn primary" data-storyclose>Weiter zum Drachen</button></div>`;
+      `<div class="acts"><button type="button" class="btn primary" data-storyclose>${esc(st.onward || 'Weiter')}</button></div>`;
   } else {
     const goals = [['Station schaffen', !!stars[0]], ...(st.extras || []).map((e, i) => [e.t, !!stars[i + 1]])];
     body += `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>`;
@@ -1036,11 +1061,11 @@ function showStoryEnd(res) {
   const el = document.createElement('div'); el.className = 'endov story';
   const lose = st.type === 'puzzle' ? 'Das reicht noch nicht. Schau dir deine Karten noch einmal an.' : S && S.winner > 0 ? `${esc(P(S.winner).name)} war schneller. Gleich noch einmal?` : 'Gleich noch einmal?';
   el.innerHTML = `<div class="panel"><div class="se-stars">${res.stars.map((v, i) => `<span class="se-star${v ? ' on' : ''}" style="--d:${0.15 + i * 0.25}s">${starSvg(v)}</span>`).join('')}</div>` +
-    `<h2>${w ? (st.final ? 'Der Drache ist besiegt!' : 'Geschafft!') : 'Nicht geschafft'}</h2><p>${w ? esc(st.name) + ' liegt hinter dir.' : lose}</p>` +
+    `<h2>${w ? (st.final ? esc(worldById(st.world).finalTitle || 'Welt geschafft!') : 'Geschafft!') : 'Nicht geschafft'}</h2><p>${w ? esc(st.name) + ' liegt hinter dir.' : lose}</p>` +
     `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>` +
     (res.coins ? `<p class="se-coins">${coinImg}+${res.coins} Münzen</p>` : '') +
     res.rewards.map(r => `<p class="se-reward">Neu: ${esc(cosmeticName(r))}</p>`).join('') +
-    (res.worldDone ? `<p class="se-outro">${esc(worldById(st.world).outro)}</p>` : '') +
+    (res.worldDone ? `<p class="se-outro">${esc(worldById(st.world).outro)}</p>` + (worldById(st.world).unlocks ? `<p class="se-reward">Fürs freie Spiel freigeschaltet: ${esc(worldById(st.world).unlocks.join(', '))}</p>` : '') : '') +
     `<div class="acts"><button type="button" class="btn primary" data-go="storymap">Zur Karte</button><button type="button" class="btn" data-go="again">Nochmal</button></div></div>`;
   document.body.appendChild(el);
   if (w) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 4) clearInterval(iv); }, 280); }
@@ -1109,6 +1134,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-sheetback]'))) { popSheet(); return; }
   if ((el = t.closest('[data-back]'))) { back(); return; }
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
+  if ((el = t.closest('.seg[data-set] button.locked'))) { toast('Schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'); buzz(30); return; }
   if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
@@ -1183,7 +1209,7 @@ function dragIntents(c) {
     case 'item': case 'race': case 'class': case 'levelup':
       acts.forEach(a => I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis, sub: c.k === 'item' && !a.dis ? equipSub(me(), c) : ''})); break;
     case 'oneshot':
-      acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis, pv: c.b ? {side: mon ? 'm' : 'p', b: {l: c.n, v: c.b}} : null}); }); break;
+      acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis, pv: c.b ? {side: mon ? 'm' : 'p', b: {l: c.n, v: mon ? c.b : osP(c, C)}} : null}); }); break;
     case 'enh':
       if (C) acts.forEach((a, i) => { const m = C.mons[i]; if (!m) return; const z = ['art:' + m.c.uid]; if (C.mons.length === 1) z.push('table', 'monside'); I.push({zones: z, label: a.l.replace(' spielen', ''), run: a.fn, dis: a.dis, pv: {mon: m, e: {n: c.n, v: c.v}}}); });
       break;

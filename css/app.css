@@ -763,3 +763,9 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .es-pw{font:800 14px var(--body);color:var(--muted)}
 .es-pw.up{color:#2b6a1d}
 .es-pw.down{color:#8a2a1e}
+/* Welt 2: Kellergewölbe als Tischfläche */
+#app.tbl-keller{background:linear-gradient(rgba(10,6,4,.12),rgba(10,6,4,.12)), url(../art/hintergrund-keller.webp) center/cover no-repeat, #2a221c}
+/* Storykarte: Kopf jeder weiteren Welt zwischen den Karten */
+.st-band{margin:0 0 10px}
+.seg button.locked{opacity:.5;position:relative}
+.seg button.locked::after{content:'';position:absolute;right:8px;top:50%;width:12px;height:12px;margin-top:-6px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center/contain no-repeat}

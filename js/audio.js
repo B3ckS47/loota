@@ -5,7 +5,7 @@
 const Snd = (() => {
   let ctx = null, master = null, musicBus = null, sfxBus = null, revIn = null, noiseBuf = null;
   const st = {music: true, sfx: true, mvol: 0.5, svol: 0.8};
-  let playing = false, timer = null, nextT = 0, bar = 0, beat = 0, mood = 'tavern', pendingMood = 'tavern', round = 0;
+  let playing = false, timer = null, nextT = 0, bar = 0, beat = 0, mood = 'tavern', pendingMood = 'tavern', round = 0, theme = 'taverne', pendingTheme = 'taverne';
 
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -123,6 +123,15 @@ const Snd = (() => {
   const A_CH = ['Dm', 'F', 'F', 'Am', 'Dm', 'F', 'C', 'Dm'];
   const B_CH = ['F', 'C', 'Dm', 'F', 'F', 'C', 'G', 'Dm'];
   const BATTLE_CH = ['Dm', 'Dm', 'Bb', 'A'];
+  // Keller: langsam, Moll, Bordunton und tropfendes Wasser
+  CH.Gm = [43, 46, 50];
+  const K = [
+    [[62,3],[65,3]], [[64,2],[62,1],[60,3]], [[57,6]], [[0,6]],
+    [[62,3],[65,3]], [[69,2],[67,1],[65,3]], [[64,3],[61,3]], [[62,4],[0,2]]
+  ];
+  const K_CH = ['Dm', 'Gm', 'Dm', 'A', 'Dm', 'Bb', 'A', 'Dm'];
+  const KB_CH = ['Dm', 'Bb', 'Gm', 'A'];
+  function drip(t) { const f = 1500 + Math.random() * 1100; tone(f, t, 0.09, 'sine', 0.045, {bus: musicBus, to: f * 1.6, rev: 0.85}); }
 
   function pluck(m, t, dur, vol) {
     const f = mtof(m);
@@ -137,6 +146,26 @@ const Snd = (() => {
   function rim(t, vol) { noise(t, 0.03, vol, 'bandpass', 2600, null, {bus: musicBus, q: 2}); }
 
   function scheduleBar(t, e) {
+    if (theme === 'keller' && mood === 'tavern') {
+      const idx = bar % 8, ch = CH[K_CH[idx]];
+      let x = 0;
+      K[idx].forEach(([m, len]) => { if (m) pluck(m, t + x * e, len * e, 0.12); x += len; });
+      tone(mtof(38), t, 6 * e, 'triangle', 0.11, {bus: musicBus, lp: 380});
+      tone(mtof(45), t, 6 * e, 'sine', 0.05, {bus: musicBus, lp: 600});
+      [0, 1, 2].forEach(i => pluck(ch[i], t + i * 0.09 + 3 * e, 2.4 * e, 0.03));
+      drum(t, 0.14);
+      if (Math.random() < 0.6) drip(t + Math.random() * 6 * e);
+      if (Math.random() < 0.25) drip(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'keller') {
+      const ch = CH[KB_CH[bar % 4]];
+      for (let i = 0; i < 6; i++) bassN(ch[0] - 12, t + i * e, 0.85 * e, i % 3 === 0 ? 0.27 : 0.15);
+      drum(t, 0.45); drum(t + 2 * e, 0.22, false); drum(t + 3 * e, 0.38); drum(t + 5 * e, 0.25, false); rim(t + 4 * e, 0.07);
+      [0, 1, 2].forEach(i => pluck(ch[i] + 12, t + i * 0.025, 1.8 * e, 0.055));
+      if (bar % 2 === 1) { pluck(ch[2] + 12, t + 3 * e, e, 0.07); pluck(ch[1] + 12, t + 4 * e, e, 0.07); pluck(ch[0] + 12, t + 5 * e, e, 0.07); }
+      return;
+    }
     if (mood === 'tavern') {
       const part = (bar % 16) < 8 ? A : B, idx = bar % 8, notes = part[idx];
       const ch = CH[((bar % 16) < 8 ? A_CH : B_CH)[idx]];
@@ -160,9 +189,9 @@ const Snd = (() => {
   }
   function tick() {
     if (!ctx || !playing) return;
-    const e = mood === 'tavern' ? 0.19 : 0.15;
+    const e = mood === 'tavern' ? (theme === 'keller' ? 0.26 : 0.19) : (theme === 'keller' ? 0.13 : 0.15);
     while (nextT < ctx.currentTime + 0.25) {
-      if (pendingMood !== mood) { mood = pendingMood; bar = 0; }
+      if (pendingMood !== mood || pendingTheme !== theme) { mood = pendingMood; theme = pendingTheme; bar = 0; }
       scheduleBar(nextT, e);
       nextT += 6 * e; bar++;
       if (mood === 'tavern' && bar % 16 === 0) round++;
@@ -170,7 +199,7 @@ const Snd = (() => {
   }
   function startMusic() {
     if (!ctx || playing) return;
-    playing = true; nextT = ctx.currentTime + 0.1; bar = 0; mood = pendingMood;
+    playing = true; nextT = ctx.currentTime + 0.1; bar = 0; mood = pendingMood; theme = pendingTheme;
     timer = setInterval(tick, 40); tick();
   }
   function stopMusic() { playing = false; if (timer) clearInterval(timer); timer = null; }
@@ -182,6 +211,7 @@ const Snd = (() => {
     startMusic() { if (st.music) startMusic(); },
     stopMusic,
     mood(m) { pendingMood = m; },
+    theme(t) { pendingTheme = t === 'keller' ? 'keller' : 'taverne'; },
     suspend() { if (ctx && ctx.state === 'running') ctx.suspend(); },
     resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
     get ready() { return !!ctx; }
