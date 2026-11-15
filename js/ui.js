@@ -427,15 +427,36 @@ function artNode(c, enh, anim) {
   patch(b.querySelector('.art-top'), artTop(c, enh));
   return b;
 }
+/* Vorschau beim Ziehen: Bonus kurz eintragen, rechnen, wieder austragen */
+function withPv(C, fn) {
+  const pv = UI.pv; let undo = null;
+  if (pv && C) {
+    if (pv.side === 'p') { C.pB.push(pv.b); undo = () => C.pB.pop(); }
+    else if (pv.side === 'm') { C.mB.push(pv.b); undo = () => C.mB.pop(); }
+    else if (pv.mon && C.mons.includes(pv.mon)) { pv.mon.enh.push(pv.e); undo = () => pv.mon.enh.pop(); }
+  }
+  try { return fn(); } finally { if (undo) undo(); }
+}
 function hudHTML(C) {
-  const sF = sideStrength(C), sM = monStrength(C), r = evalCombat(C), f = P(C.f), h = C.h != null ? P(C.h) : null;
+  const f0 = sideStrength(C).s, m0 = monStrength(C).s;
+  const [sF, sM, r] = withPv(C, () => [sideStrength(C), monStrength(C), evalCombat(C)]);
+  const pvF = sF.s !== f0, pvM = sM.s !== m0, pv = pvF || pvM;
+  const f = P(C.f), h = C.h != null ? P(C.h) : null;
   const pts = [f, h].filter(Boolean).map(p => `<img${p.human ? ' class="me"' : ''} src="${portrait(p)}" alt="">`).join('');
   const who = (f.human ? 'Du' : f.name) + (h ? ' + ' + (h.human ? 'du' : h.name) : '');
   const team = f.human || (h && h.human);
   const verdict = r.win ? (f.human ? 'du gewinnst' : team ? 'ihr gewinnt' : f.name + ' gewinnt') : (f.human ? 'du verlierst' : team ? 'ihr verliert' : f.name + ' verliert');
-  return `<button type="button" class="side me" data-go="parts" aria-label="Kampfstärke ${sF.s}, Aufschlüsselung"><span class="pts">${pts}</span><span class="sv"><b class="snum" data-n="f">${sF.s}</b><span class="slbl">${esc(who)}</span></span></button>` +
-    `<div class="mid"><span class="verdict ${r.win ? 'win' : 'lose'}">${esc(verdict)}</span>${r.a === r.b ? `<span class="tie">${r.tieWin ? 'Krieger: Gleichstand gewinnt' : 'Gleichstand verliert'}</span>` : ''}</div>` +
-    `<button type="button" class="side mon" data-go="parts" aria-label="Monsterstärke ${sM.s}, Aufschlüsselung"><span class="sv"><b class="snum red" data-n="m">${sM.s}</b><span class="slbl">${C.mons.length > 1 ? C.mons.length + ' Monster' : 'Monster'}</span></span></button>`;
+  return `<button type="button" class="side me" data-go="parts" aria-label="Kampfstärke ${sF.s}, Aufschlüsselung"><span class="pts">${pts}</span><span class="sv">${pvF ? `<span class="was">${f0} →</span>` : ''}<b class="snum${pvF ? ' pv' : ''}" data-n="f">${sF.s}</b><span class="slbl">${esc(who)}</span></span></button>` +
+    `<div class="mid"><span class="verdict ${r.win ? 'win' : 'lose'}${pv ? ' pv' : ''}">${pv ? '→ ' : ''}${esc(verdict)}</span>${r.a === r.b ? `<span class="tie">${r.tieWin ? 'Krieger: Gleichstand gewinnt' : 'Gleichstand verliert'}</span>` : ''}</div>` +
+    `<button type="button" class="side mon" data-go="parts" aria-label="Monsterstärke ${sM.s}, Aufschlüsselung"><span class="sv">${pvM ? `<span class="was">${m0} →</span>` : ''}<b class="snum red${pvM ? ' pv' : ''}" data-n="m">${sM.s}</b><span class="slbl">${C.mons.length > 1 ? C.mons.length + ' Monster' : 'Monster'}</span></span></button>`;
+}
+function paintHud(hud, C) {
+  if (!patch(hud, hudHTML(C)) || UI.pv) return;
+  hud.querySelectorAll('.snum').forEach(b => {
+    const k = b.dataset.n, v = +b.textContent;
+    if (W.nums[k] != null && W.nums[k] !== v) { b.classList.add(v > W.nums[k] ? 'up' : 'down'); }
+    W.nums[k] = v;
+  });
 }
 function renderTable() {
   const el = $('#table');
@@ -467,14 +488,7 @@ function renderTable() {
     });
     have.forEach(n => n.remove());
     arts.dataset.n = C.mons.length;
-    const hud = el.querySelector('.hud');
-    if (patch(hud, hudHTML(C))) {
-      hud.querySelectorAll('.snum').forEach(b => {
-        const k = b.dataset.n, v = +b.textContent;
-        if (W.nums[k] != null && W.nums[k] !== v) { b.classList.add(v > W.nums[k] ? 'up' : 'down'); }
-        W.nums[k] = v;
-      });
-    }
+    paintHud(el.querySelector('.hud'), C);
   } else if (!R) {
     patch(el.querySelector('.idle'), `<div class="decks"><div class="deck"><div class="back door">Tür</div>${S.door.length} · Ablage ${S.doorDisc.length}</div><div class="deck"><div class="back treas">Schatz</div>${S.tr.length} · Ablage ${S.trDisc.length}</div></div><div class="idle-txt">${S.winner != null ? 'Das Spiel ist vorbei.' : S.cur === 0 ? 'Die Tür ist noch zu. Was wohl dahinter lauert?' : esc(P(S.cur).name) + ' ist am Zug.'}</div>`);
   }
@@ -941,6 +955,28 @@ function cosmeticPreview(id) {
 }
 // Story-Text, wenn bekannt mit dem Gesicht dessen, der spricht oder auftritt
 const sayHTML = (face, text) => face ? `<div class="st-say"><img src="${face}" alt=""><p class="st-text">${esc(text)}</p></div>` : `<p class="st-text">${esc(text)}</p>`;
+/* Fluch aufs Spielfeld gezogen: hier wählst du, wen er trifft */
+function curseHits(c, t) {
+  const e = c.eff || {};
+  switch (e.t) {
+    case 'lvl': return t.lvl > 1 ? `Stufe ${t.lvl} → ${Math.max(1, t.lvl - e.n)}` : 'Ist schon auf Stufe 1';
+    case 'slot': { const it = t.eq.find(i => i.slot === e.s); return it ? `Verliert ${it.n}` : 'Trägt dort nichts'; }
+    case 'best': { const all = [...t.eq, ...t.pack].sort((a, b) => (b.b || 0) - (a.b || 0) || (b.g - a.g)); return all.length ? `Verliert ${all[0].n}` : 'Hat keine Gegenstände'; }
+    case 'hand': return t.hand.length ? `Hat ${t.hand.length} ${t.hand.length === 1 ? 'Handkarte' : 'Handkarten'}` : 'Hat keine Handkarten';
+    case 'class': return t.cls ? `Verliert ${t.cls.n}` : t.lvl > 1 ? `Keine Klasse: Stufe ${t.lvl} → ${t.lvl - 1}` : 'Keine Klasse, schon Stufe 1';
+    case 'race': return t.race ? `Verliert ${t.race.n}` : 'Ist schon Mensch';
+    default: return '';
+  }
+}
+const curseTargets = c => { const acts = cardActions(c, 'hand'); return S.players.map(t => [t, !t.human && acts.find(a => a.fn && !a.dis && a.l === `Auf ${t.name} spielen`)]).filter(x => x[1]); };
+SHEET_VIEWS.curse = s => {
+  const c = S && findCard(s.uid); if (!c || !me().hand.includes(c)) return null;
+  const ts = curseTargets(c); if (!ts.length) return null;
+  const C = S.combat, mean = c.txt ? `<b>Wirkung:</b> ${esc(c.txt)}` : cardMeaning(c);
+  const row = ([t]) => { const role = C && !C.resolved ? (C.f === t.id ? 'kämpft' : C.h === t.id ? 'hilft' : '') : S.cur === t.id ? 'am Zug' : '';
+    return `<button type="button" class="ctgt" data-cursepick="${t.id}"><img src="${portrait(t)}" alt=""><span class="ct-t"><b>${esc(t.name)}</b><small>Stufe ${t.lvl} · Kampfstärke ${power(t)}${t.dead ? ' · tot' : ''}</small>${curseHits(c, t) ? `<em>${esc(curseHits(c, t))}</em>` : ''}</span>${role ? `<span class="ct-role">${role}</span>` : ''}</button>`; };
+  return {head: h3(`Wen triffst du mit „${esc(c.n)}“?`), body: (mean ? `<p class="meaning ct-mean">${mean}</p>` : '') + `<div class="ctg">${ts.map(row).join('')}</div>`};
+};
 SHEET_VIEWS.storyintro = s => {
   const w = worldById(s.w);
   return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du in der Taverne gegen Rahmen und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
@@ -1031,6 +1067,14 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-adv]'))) { closeAllSheets(); applyAdvice(); render(); return; }
   if ((el = t.closest('[data-advtoggle]'))) { UI.advOpen = !UI.advOpen; render(); return; }
   if ((el = t.closest('[data-hints]'))) { UI.hintsOpen = !UI.hintsOpen; render(); return; }
+  if ((el = t.closest('[data-cursepick]'))) {
+    const sh = topSheet(), c = sh && sh.id === 'curse' && findCard(sh.uid), x = c && curseTargets(c).find(([p]) => p.id === +el.dataset.cursepick);
+    closeAllSheets();
+    if (!x) { toast('Den Fluch kannst du gerade nicht ausspielen.'); return; }
+    Snd.sfx('play'); buzz(15);
+    try { x[1].fn(); } catch (err) { if (err !== STALE) console.error(err); }
+    render(); return;
+  }
   if ((el = t.closest('[data-cact]'))) { const a = UI.cardActs[+el.dataset.cact]; if (a && a.fn && !a.dis) { popSheet(); try { a.fn(); } catch (err) { if (err !== STALE) console.error(err); } render(); } return; }
   if ((el = t.closest('[data-sel]'))) { if (UI.sel) { const v = el.dataset.sel; UI.sel.done(v === 'ok' ? [...UI.sel.picked] : null); } return; }
   if ((el = t.closest('[data-opp]'))) { openSheet({id: 'opp', pid: +el.dataset.opp}); return; }
@@ -1112,9 +1156,9 @@ function dragIntents(c) {
     case 'item': case 'race': case 'class': case 'levelup':
       acts.forEach(a => I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis})); break;
     case 'oneshot':
-      acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis}); }); break;
+      acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis, pv: c.b ? {side: mon ? 'm' : 'p', b: {l: c.n, v: c.b}} : null}); }); break;
     case 'enh':
-      if (C) acts.forEach((a, i) => { const m = C.mons[i]; if (!m) return; const z = ['art:' + m.c.uid]; if (C.mons.length === 1) z.push('table', 'monside'); I.push({zones: z, label: a.l.replace(' spielen', ''), run: a.fn, dis: a.dis}); });
+      if (C) acts.forEach((a, i) => { const m = C.mons[i]; if (!m) return; const z = ['art:' + m.c.uid]; if (C.mons.length === 1) z.push('table', 'monside'); I.push({zones: z, label: a.l.replace(' spielen', ''), run: a.fn, dis: a.dis, pv: {mon: m, e: {n: c.n, v: c.v}}}); });
       break;
     case 'wander':
       if (acts.length === 1) I.push({zones: ['table'], label: acts[0].l, run: acts[0].fn});
@@ -1125,9 +1169,14 @@ function dragIntents(c) {
       if (w) { const wa = cardActions(w, 'hand').find(a => a.fn && a.l.startsWith(`Mit ${c.n} (`)); if (wa) I.push({zones: ['table'], label: 'Mit Ungebetenem Gast dazuschicken', run: wa.fn}); }
       break;
     }
-    case 'curse':
-      acts.forEach(a => { const t = S.players.find(x => !x.human && a.l === `Auf ${x.name} spielen`); if (t) I.push({zones: ['opp:' + t.id], label: `Fluch auf ${t.name}`, run: a.fn}); });
+    case 'curse': {
+      /* direkt auf einen Gegner oben, oder irgendwo aufs Spielfeld und danach das Ziel wählen */
+      const ts = [];
+      acts.forEach(a => { const t = S.players.find(x => !x.human && a.l === `Auf ${x.name} spielen`); if (t) { ts.push([t, a]); I.push({zones: ['opp:' + t.id], label: `Fluch auf ${t.name}`, run: a.fn}); } });
+      if (ts.length === 1) I.push({zones: ['table'], label: `Fluch auf ${ts[0][0].name}`, run: ts[0][1].fn});
+      else if (ts.length > 1) I.push({zones: ['table'], label: 'Fluch spielen: Ziel wählen', run: () => openSheet({id: 'curse', uid: c.uid}), sheet: true});
       break;
+    }
   }
   return I;
 }
@@ -1135,6 +1184,13 @@ const Drag = (() => {
   let st = null;
   const TH = 10;
   function zoneAt(x, y) {
+    if (st && st.split) {
+      const t = $('#table'), r = t && t.getBoundingClientRect();
+      if (r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        const left = x < r.left + r.width / 2;
+        return {key: left ? 'fighter' : 'monside', el: st.ov && st.ov.querySelector(left ? '.dh.me' : '.dh.mon')};
+      }
+    }
     const el = document.elementFromPoint(x, y); if (!el) return null;
     let z;
     if ((z = el.closest('.oc[data-opp]'))) return {key: 'opp:' + z.dataset.opp, el: z};
@@ -1177,7 +1233,9 @@ const Drag = (() => {
     try { st.el.setPointerCapture(e.pointerId); } catch (err) {}
     const keys = new Set(); st.intents.forEach(i => i.zones.forEach(z => keys.add(z)));
     st.marked = [];
-    keys.forEach(k => zoneEls(k).forEach(z => { if (z) { z.classList.add('dz'); st.marked.push(z); } }));
+    st.split = !!(S.combat && keys.has('fighter') && keys.has('monside') && $('#table'));
+    if (st.split) { st.ov = splitOverlay(st.intents); $('#table').classList.add('splitting'); }
+    else keys.forEach(k => zoneEls(k).forEach(z => { if (z) { z.classList.add('dz'); st.marked.push(z); } }));
     Snd.sfx('deal', 0.6); buzz(10);
   }
   function move(x, y) {
@@ -1186,13 +1244,29 @@ const Drag = (() => {
     const zone = zoneAt(x, y), it = intentFor(zone);
     if (st.hover !== (zone && zone.el)) { if (st.hover) st.hover.classList.remove('dzh'); st.hover = zone && it ? zone.el : null; if (st.hover) st.hover.classList.add('dzh'); }
     st.zone = zone; st.it = it;
+    const pv = it && !it.dis && it.pv ? it.pv : null;
+    if (pv !== UI.pv) setPv(pv);
     const txt = it ? it.label : '';
     if (st.lab.textContent !== txt) st.lab.textContent = txt;
-    st.lab.classList.toggle('show', !!txt);
+    st.lab.classList.toggle('show', !!txt && !st.split);
     st.lab.classList.toggle('no', !!(it && it.dis));
+  }
+  function setPv(pv) { UI.pv = pv; const hud = $('#table .hud'); if (hud && S && S.combat) paintHud(hud, S.combat); }
+  function splitOverlay(intents) {
+    const C = S.combat, inMine = C.f === 0 || C.h === 0;
+    const who = inMine ? (C.h != null ? 'Für euch' : 'Für dich') : `Für ${P(C.f).name}`;
+    const pts = [P(C.f), C.h != null ? P(C.h) : null].filter(Boolean).map(p => `<img${p.human ? ' class="me"' : ''} src="${portrait(p)}" alt="">`).join('');
+    const half = (z, cls, lbl, img) => { const it = intents.find(i => i.zones.includes(z)); const v = it && it.pv && it.pv.b ? sign(it.pv.b.v) : '';
+      return `<div class="dh ${cls}${it && it.dis ? ' no' : ''}"><span class="dh-who">${img}${esc(lbl)}</span>${v ? `<b class="dh-b">${v}</b>` : ''}</div>`; };
+    const el = document.createElement('div'); el.className = 'dsplit';
+    el.innerHTML = half('fighter', 'me', who, `<span class="dh-pts">${pts}</span>`) + half('monside', 'mon', C.mons.length > 1 ? 'Für die Monster' : 'Für das Monster', `<span class="dh-pts">${C.mons.map(m => `<img src="${ART[m.c.n] || ART_FALLBACK}" alt="">`).join('')}</span>`);
+    $('#table').appendChild(el);
+    return el;
   }
   function cleanup() {
     if (!st) return;
+    if (st.ov) { const ov = st.ov; ov.classList.add('out'); setTimeout(() => ov.remove(), 160); const t = $('#table'); if (t) t.classList.remove('splitting'); }
+    if (UI.pv) setPv(null);
     (st.marked || []).forEach(z => z.classList.remove('dz', 'dzh'));
     if (st.el) st.el.classList.remove('lifted');
   }
@@ -1207,8 +1281,10 @@ const Drag = (() => {
     if (!s0.started) { st = null; return; }
     Drag.noClickUntil = performance.now() + 400;
     cleanup();
-    const it = s0.it, g = s0.g;
+    let it = s0.it; const g = s0.g;
     st = null;
+    /* Hat sich die Lage während des Ziehens geändert (Kampf vorbei, Fenster zu), zählt die alte Aktion nicht mehr */
+    if (it && !it.dis && e.type !== 'pointercancel') { const k = it.zones.join(); it = dragIntents(s0.c).find(i => i.label === it.label && i.zones.join() === k) || null; if (!it) { flyBack(g, s0.r); toast('Zu spät, die Lage hat sich gerade geändert.'); return; } }
     if (e.type === 'pointercancel' || !it || it.dis) {
       flyBack(g, s0.r);
       if (e.type !== 'pointercancel' && s0.zone) {
@@ -1222,7 +1298,7 @@ const Drag = (() => {
     g.style.transform = g.style.transform.replace(/scale\([^)]*\)/, 'scale(.5)');
     g.style.opacity = '0';
     setTimeout(() => g.remove(), 270);
-    Snd.sfx('play'); buzz(15);
+    if (!it.sheet) { Snd.sfx('play'); buzz(15); }
     try { it.run(); } catch (err) { if (err !== STALE) console.error(err); }
     render();
   }
