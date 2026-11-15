@@ -939,14 +939,16 @@ function cosmeticPreview(id) {
   if (k === 'frame') return `<i class="cos-fr" style="--c:${c.c}"></i>`;
   return `<i class="cos-ti">„“</i>`;
 }
+// Story-Text, wenn bekannt mit dem Gesicht dessen, der spricht oder auftritt
+const sayHTML = (face, text) => face ? `<div class="st-say"><img src="${face}" alt=""><p class="st-text">${esc(text)}</p></div>` : `<p class="st-text">${esc(text)}</p>`;
 SHEET_VIEWS.storyintro = s => {
   const w = worldById(s.w);
-  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `<p class="st-text">${esc(w.intro)}</p><ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du in der Taverne gegen Rahmen und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
+  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du in der Taverne gegen Rahmen und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
 };
 SHEET_VIEWS.station = s => {
   const st = stationById(s.st); if (!st) return null;
   const done = !!STORY.done[st.id], stars = starsOf(st.id);
-  let body = `<span class="st-type t-${st.type}">${ST_TYPES[st.type]}${st.hard ? ' · schwer' : st.easy ? ' · leicht' : ''} · ${esc(st.place)}</span><p class="st-text">${esc(st.text)}</p><div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>`;
+  let body = `<span class="st-type t-${st.type}">${ST_TYPES[st.type]}${st.hard ? ' · schwer' : st.easy ? ' · leicht' : ''} · ${esc(st.place)}</span>${sayHTML(st.face, st.text)}<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>`;
   if (st.type === 'event') {
     const ch = STORY.choice[st.id];
     body += ch ? `<p class="st-chosen">${starSvg(true)}<span>Entschieden: <b>${esc(st.choices.find(c => c.v === ch).l)}</b>. ${esc(st.choices.find(c => c.v === ch).d)}</span></p><div class="acts"><button type="button" class="btn" data-storyclose>Schließen</button></div>`

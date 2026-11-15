@@ -711,3 +711,6 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .smap-in.pic .t-boss .sn-medal svg{width:28px;height:28px}
 .smap-in.pic .snode.locked .sn-medal{filter:grayscale(1) brightness(.9);opacity:.85}
 .smap-in.pic .snode.locked .sn-name{opacity:.8}
+.st-say{display:flex;align-items:flex-start;gap:12px;margin:10px 0}
+.st-say img{flex:0 0 auto;width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:3px solid var(--edge);background:#3a2414;box-shadow:0 3px 8px -3px rgba(0,0,0,.5)}
+.st-say .st-text{margin:0;flex:1}
