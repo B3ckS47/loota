@@ -13,7 +13,38 @@ const ICON = {
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
 const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
-const portrait = p => p.human ? ICON.portrait.Du : (ICON.portrait[p.name] || ICON.portrait.Du);
+const portrait = p => p.human ? myPortrait() : (ICON.portrait[p.name] || ICON.portrait.Du);
+
+/* ================= Profil: Name, Porträt, Rahmen ================= */
+const K_PROFILE = 'loota.profile';
+const PORTRAITS = [
+  ['du', 'Abenteurer', 'icons/portrait-du.png'], ['elf', 'Elfe', 'art/rasse-elf.webp'], ['zwerg', 'Zwerg', 'art/rasse-zwerg.webp'],
+  ['halbling', 'Halbling', 'art/rasse-halbling.webp'], ['krieger', 'Krieger', 'art/klasse-krieger.webp'], ['zauberer', 'Zauberer', 'art/klasse-zauberer.webp'],
+  ['dieb', 'Dieb', 'art/klasse-dieb.webp'], ['priester', 'Priester', 'art/klasse-priester.webp']
+];
+const FRAMES = [['gold', 'Gold', '#e9cf9a'], ['silber', 'Silber', '#dfe5ea'], ['bronze', 'Bronze', '#c8875a'], ['rubin', 'Rubin', '#c0392b'], ['smaragd', 'Smaragd', '#3f9a5c'], ['saphir', 'Saphir', '#3d6fb5']];
+const PROFILE = Object.assign({id: null, name: '', portrait: 'du', frame: 'gold'}, (() => { try { return JSON.parse(localStorage.getItem(K_PROFILE)); } catch (e) { return null; } })() || {});
+if (!PROFILE.id) { PROFILE.id = (crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2)); try { localStorage.setItem(K_PROFILE, JSON.stringify(PROFILE)); } catch (e) {} }
+function saveProfile() { try { localStorage.setItem(K_PROFILE, JSON.stringify(PROFILE)); } catch (e) {} applyProfile(); }
+function myPortrait() { const x = PORTRAITS.find(q => q[0] === PROFILE.portrait) || PORTRAITS[0]; return x[2]; }
+function myFrame() { const f = FRAMES.find(q => q[0] === PROFILE.frame) || FRAMES[0]; return f[2]; }
+function myName() { return PROFILE.name || 'Du'; }
+function applyProfile() { document.documentElement.style.setProperty('--pf', myFrame()); if (S && CUR === 'game') { W.renderedOnce = true; render(); } }
+const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
+function renderProfile() {
+  patch($('#pf-hero'), `<img class="pf-big" src="${myPortrait()}" alt=""><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b><span>${esc((PORTRAITS.find(q => q[0] === PROFILE.portrait) || PORTRAITS[0])[1])} · Rahmen ${esc((FRAMES.find(q => q[0] === PROFILE.frame) || FRAMES[0])[1])}</span></div>`);
+  const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
+  patch($('#pf-portraits'), PORTRAITS.map(([k, l, src]) => `<button type="button" class="pf-pt" data-portrait="${k}" aria-pressed="${PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy"><span>${l}</span></button>`).join(''));
+  patch($('#pf-frames'), FRAMES.map(([k, l, c]) => `<button type="button" class="pf-fr" data-frame="${k}" aria-pressed="${PROFILE.frame === k}" style="--c:${c}"><i></i><span>${l}</span></button>`).join(''));
+}
+document.addEventListener('input', e => {
+  if (e.target.id !== 'pf-name') return;
+  const v = e.target.value.trim(), hint = $('#pf-name-hint');
+  if (!v) { PROFILE.name = ''; hint.classList.remove('err'); hint.textContent = '2 bis 16 Zeichen. Später kann das dein Name für Partien gegen andere sein.'; saveProfile(); renderProfile(); return; }
+  if (!PROFILE_NAME_RE.test(v)) { hint.classList.add('err'); hint.textContent = 'Bitte 2 bis 16 Zeichen: Buchstaben, Ziffern, Leerzeichen, Punkt, Binde- oder Unterstrich.'; return; }
+  hint.classList.remove('err'); hint.textContent = 'Gespeichert.';
+  PROFILE.name = v; saveProfile(); renderProfile();
+});
 
 /* ================= Einstellungen und Speicher ================= */
 const K_SET = 'loota.settings', K_SAVE = 'loota.save';
@@ -40,7 +71,7 @@ let GAME_ON = false;
 CHECKPOINT_HANDLER = () => { store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
 
 /* ================= Bildschirme ================= */
-const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz'];
+const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile'];
 let CUR = 'title';
 const STACK = [];
 function show(name) { if (name !== CUR) STACK.push(CUR); setScreen(name); }
@@ -54,6 +85,7 @@ function setScreen(name) {
   if (name === 'settings') { renderControls(); renderSaveInfo(); }
   if (name === 'cards') renderCards();
   if (name === 'quiz') renderQuiz();
+  if (name === 'profile') renderProfile();
   if (name === 'game') { W.renderedOnce = false; render(); }
   Motes.toggle(name === 'title');
 }
@@ -264,7 +296,7 @@ function artNode(c, enh, anim) {
 }
 function hudHTML(C) {
   const sF = sideStrength(C), sM = monStrength(C), r = evalCombat(C), f = P(C.f), h = C.h != null ? P(C.h) : null;
-  const pts = [f, h].filter(Boolean).map(p => `<img src="${portrait(p)}" alt="">`).join('');
+  const pts = [f, h].filter(Boolean).map(p => `<img${p.human ? ' class="me"' : ''} src="${portrait(p)}" alt="">`).join('');
   const who = (f.human ? 'Du' : f.name) + (h ? ' + ' + (h.human ? 'du' : h.name) : '');
   const team = f.human || (h && h.human);
   const verdict = r.win ? (f.human ? 'du gewinnst' : team ? 'ihr gewinnt' : f.name + ' gewinnt') : (f.human ? 'du verlierst' : team ? 'ihr verliert' : f.name + ' verliert');
@@ -390,7 +422,7 @@ function renderAct() {
     const line = !last || last.kind === 'turn' ? (S.cur === 0 ? 'Einen Moment …' : `${who.name} ist am Zug`) : stripTags(last.t);
     // Porträt passend zur Meldung: wer am Satzanfang steht, sonst wer am Zug ist
     const actor = S.players.find(p => p.human ? /^(Du|Dein|Deine)\b/.test(line) : line.startsWith(p.name + ' ') || line.startsWith(p.name + ':')) || who;
-    html = `<div class="cap"><img class="cpt" src="${portrait(actor)}" alt=""><span class="ct">${esc(line)}</span></div>`;
+    html = `<div class="cap"><img class="cpt${actor.human ? ' me' : ''}" src="${portrait(actor)}" alt=""><span class="ct">${esc(line)}</span></div>`;
   }
   if (el.className !== cls) el.className = cls;
   patch(el, html);
@@ -399,7 +431,7 @@ function renderMe() {
   const p = me();
   const C = S.combat, role = C ? (C.f === 0 ? ' · kämpft' : C.h === 0 ? ' · hilft' : '') : '';
   const over = p.hand.length > handLimit(p);
-  patch($('#mebar'), `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${ICON.portrait.Du}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
+  patch($('#mebar'), `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
     `<span class="mstats"><button type="button" class="mstat" data-go="equip" aria-label="Kampfstärke ${power(p)}"><img src="${ICON.kampf}" alt="">${power(p)}</button>` +
     `<button type="button" class="mstat" data-go="equip" aria-label="Weglaufen ${sign(runBonus(p))}"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</button>` +
     `<button type="button" class="mstat${over ? ' warn' : ''}" data-go="equip" aria-label="Handkarten ${p.hand.length} von ${handLimit(p)}"><img src="${ICON.hand}" alt="">${p.hand.length}/${handLimit(p)}</button>` +
@@ -502,7 +534,7 @@ const SHEET_VIEWS = {
   equip() {
     if (!S) return null;
     const p = me(), free = isFree();
-    return {head: `<img class="pt" src="${ICON.portrait.Du}" alt=""><h3>Du<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span></h3>`, body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
+    return {head: `<img class="pt me" src="${myPortrait()}" alt=""><h3>${esc(myName())}<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span></h3>`, body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
       `<p class="hint">Im Kampf zählen nur Rasse, Klasse und ausgerüstete Gegenstände. Der Rucksack bringt keinen Bonus. Karte antippen für Aktionen.</p>` +
       (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') +
       `<div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="tipbox">${handTip(p)}</div>`};
@@ -627,7 +659,7 @@ function showEnd(wid) {
   const w = P(wid), mine = w.human;
   Snd.sfx(mine ? 'victory' : 'defeat'); buzz(mine ? [40, 60, 40, 60, 120] : 200);
   const el = document.createElement('div'); el.className = 'endov';
-  el.innerHTML = `<div class="panel"><img src="${portrait(w)}" alt=""><h2>${mine ? 'Gewonnen!' : esc(w.name) + ' gewinnt'}</h2><p>${mine ? 'Stufe 10 durch einen Monstersieg. Die ganze Beute gehört dir!' : 'Kein Drama, die nächste Runde wartet schon. In den Notizen siehst du, wie es dazu kam.'}</p><button type="button" class="btn primary" data-go="again">Nochmal spielen</button><button type="button" class="btn" data-go="log">Notizen ansehen</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
+  el.innerHTML = `<div class="panel"><img src="${portrait(w)}" alt=""><h2>${mine ? (PROFILE.name ? `Gewonnen, ${esc(PROFILE.name)}!` : 'Gewonnen!') : esc(w.name) + ' gewinnt'}</h2><p>${mine ? 'Stufe 10 durch einen Monstersieg. Die ganze Beute gehört dir!' : 'Kein Drama, die nächste Runde wartet schon. In den Notizen siehst du, wie es dazu kam.'}</p><button type="button" class="btn primary" data-go="again">Nochmal spielen</button><button type="button" class="btn" data-go="log">Notizen ansehen</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
   document.body.appendChild(el);
   if (mine) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 5) clearInterval(iv); }, 280); }
 }
@@ -683,6 +715,7 @@ function go(a) {
     case 'rules': closeAllSheets(); show('rules'); break;
     case 'cards': closeAllSheets(); show('cards'); break;
     case 'quiz': UI.q = null; show('quiz'); break;
+    case 'profile': show('profile'); break;
     case 'settings': closeAllSheets(); show('settings'); break;
     case 'pause': openSheet({id: 'pause'}); break;
     case 'resume': closeAllSheets(); break;
@@ -699,7 +732,7 @@ function go(a) {
 document.addEventListener('click', e => {
   const t = e.target;
   if (performance.now() < Drag.noClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
-  if (t.closest('.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art')) { Snd.sfx('tap'); buzz(8); }
+  if (t.closest('.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art,.pf-pt,.pf-fr,.pickbtn')) { Snd.sfx('tap'); buzz(8); }
   let el;
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }
@@ -728,6 +761,8 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
   if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
+  if ((el = t.closest('[data-portrait]'))) { PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-frame]'))) { PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-kf]'))) { UI.kfilter = el.dataset.kf; renderCards(); $('#scr-cards .content').scrollTop = 0; return; }
   if ((el = t.closest('[data-q]'))) {
     const Q = UI.q, v = el.dataset.q;
@@ -929,6 +964,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 (() => { const d = buildDecks(); buildCatalog([...d.door, ...d.tr]); })();
 applySettings();
+applyProfile();
 setScreen('title');
 const tap = $('#tapstart');
 tap.hidden = false;
