@@ -636,6 +636,30 @@ function renderSheet(fresh) {
   if (s.id === 'log') W.logSeen = S ? S.log.length : 0;
 }
 const h3 = t => `<h3>${t}</h3>`;
+/* Ausrüsten: was steckt schon im Slot, was wandert in den Rucksack, wie ändert sich die Kampfstärke */
+function equipInfo(p, c) {
+  if (!p || !c || c.k !== 'item' || !c.slot || c.slot === 'none' || p.eq.includes(c)) return null;
+  const q = Object.assign({}, p, {eq: [...p.eq], pack: [...p.pack], hand: [...p.hand]});
+  const moved = equip(q, c), ok = canEquip(p, c).ok;
+  const now = p.eq.filter(i => i.slot === c.slot);
+  return {now, moved, ok, k0: power(p), k1: power(q), r0: runBonus(p), r1: runBonus(q)};
+}
+const SLOT_HEAD = {kopf: 'Auf dem Kopf trägst du', ruestung: 'Als Rüstung trägst du', schuhe: 'An den Füßen trägst du', hand: 'In der Hand hältst du'};
+const SLOT_FREE = {kopf: 'Du trägst noch keine Kopfbedeckung.', ruestung: 'Du trägst noch keine Rüstung.', schuhe: 'Du trägst noch kein Schuhwerk.', hand: 'Beide Hände sind noch frei.'};
+function equipInfoHTML(p, c) {
+  const e = equipInfo(p, c); if (!e) return '';
+  const row = i => { const out = e.moved.includes(i), act = usable(p, i);
+    return `<button type="button" class="es-it" data-uid="${i.uid}" data-where="eq"><img src="${ART[i.n] || ART_FALLBACK}" alt=""><span><b>${esc(i.n)}</b><small>${sign(i.b || 0)}${act ? '' : ' · inaktiv'}${i.run ? ` · Weglaufen ${sign(i.run)}` : ''}</small></span><em class="${out ? 'out' : ''}">${out ? 'kommt in den Rucksack' : 'bleibt'}</em></button>`; };
+  const head = c.slot === 'hand' && e.now.length > 1 ? 'In den Händen hältst du' : SLOT_HEAD[c.slot];
+  const body = e.now.length ? `<span class="es-h">${head}</span>${e.now.map(row).join('')}${c.slot === 'hand' && !e.moved.length ? '<span class="es-free">Die zweite Hand ist noch frei.</span>' : ''}` : `<span class="es-free">${SLOT_FREE[c.slot]}</span>`;
+  const d = e.k1 - e.k0, dr = e.r1 - e.r0;
+  const pw = e.ok ? `<span class="es-pw ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">Kampfstärke ${e.k0} → ${e.k1}${dr ? ` · Weglaufen ${sign(e.r0)} → ${sign(e.r1)}` : ''}</span>` : '';
+  return `<div class="eqswap">${body}${pw}</div>`;
+}
+function equipSub(p, c) {
+  const e = equipInfo(p, c); if (!e) return '';
+  return (e.moved.length ? `ersetzt ${e.moved.map(i => i.n).join(' + ')}` : 'Platz frei') + (e.ok ? ` · Kampf ${e.k0} → ${e.k1}` : '');
+}
 const SHEET_VIEWS = {
   info() {
     if (!UI.prompt) return null;
@@ -667,7 +691,10 @@ const SHEET_VIEWS = {
     UI.cardActs = acts;
     const meaning = cardMeaning(c), wh = S && !s.human ? whereNow(c) : [];
     const actHTML = acts.map((a, i) => a.info ? `<p>${a.info}</p>` : `<button type="button" class="btn ${a.kind === 'primary' ? 'primary' : ''}${UI.adv && UI.adv.uid === c.uid && UI.adv.act && a.l.startsWith(UI.adv.act) ? ' rec' : ''}" data-cact="${i}" ${a.dis ? 'disabled' : ''}>${esc(a.l)}</button>${a.dis ? `<p class="err">${a.dis}</p>` : ''}`).join('');
-    return {head: h3(''), body: cardBig(c) + (meaning ? `<p class="meaning">${meaning}</p>` : '') + (wh.length ? `<ul class="wherenow">${wh.map(x => `<li>${x}</li>`).join('')}</ul>` : '') + (actHTML ? `<div class="acts">${actHTML}</div>` : '')};
+    const swap = live && (s.where === 'hand' || s.where === 'pack') ? equipInfoHTML(me(), c) : '';
+    const info = (meaning ? `<p class="meaning">${meaning}</p>` : '') + (wh.length ? `<ul class="wherenow">${wh.map(x => `<li>${x}</li>`).join('')}</ul>` : ''), actBox = actHTML ? `<div class="acts">${actHTML}</div>` : '';
+    /* Beim Ausrüsten stehen Slot-Info und Knopf direkt unter der Karte, die Erklärung danach */
+    return {head: h3(''), body: cardBig(c) + (swap ? swap + actBox + info : info + actBox)};
   },
   opp(s) {
     const p = S && S.players[s.pid]; if (!p) return null;
@@ -1154,7 +1181,7 @@ function dragIntents(c) {
   const C = S.combat;
   switch (c.k) {
     case 'item': case 'race': case 'class': case 'levelup':
-      acts.forEach(a => I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis})); break;
+      acts.forEach(a => I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis, sub: c.k === 'item' && !a.dis ? equipSub(me(), c) : ''})); break;
     case 'oneshot':
       acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis, pv: c.b ? {side: mon ? 'm' : 'p', b: {l: c.n, v: c.b}} : null}); }); break;
     case 'enh':
@@ -1246,8 +1273,8 @@ const Drag = (() => {
     st.zone = zone; st.it = it;
     const pv = it && !it.dis && it.pv ? it.pv : null;
     if (pv !== UI.pv) setPv(pv);
-    const txt = it ? it.label : '';
-    if (st.lab.textContent !== txt) st.lab.textContent = txt;
+    const txt = it ? it.label : '', key = txt + '|' + (it && it.sub || '');
+    if (st.labKey !== key) { st.labKey = key; st.lab.innerHTML = esc(txt) + (it && it.sub ? `<small>${esc(it.sub)}</small>` : ''); }
     st.lab.classList.toggle('show', !!txt && !st.split);
     st.lab.classList.toggle('no', !!(it && it.dis));
   }

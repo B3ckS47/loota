@@ -269,7 +269,7 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 #hand .mc.can{box-shadow:0 0 0 2px rgba(243,200,115,.95), 0 0 16px rgba(243,200,115,.5), 0 3px 0 rgba(0,0,0,.3)}
 #hand .mc.lifted{opacity:.28}
 .mc.ghost{position:fixed;left:0;top:0;z-index:85;margin:0;pointer-events:none;box-shadow:0 18px 30px rgba(0,0,0,.55), 0 0 0 2px rgba(243,200,115,.9);will-change:transform}
-.dlabel{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%) scale(.9);opacity:0;white-space:nowrap;padding:5px 10px;border-radius:999px;background:#2b1a0d;color:#fbe3b0;font:800 13px var(--body);box-shadow:0 4px 10px rgba(0,0,0,.5);transition:opacity .12s, transform .12s}
+.dlabel{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%) scale(.9);opacity:0;white-space:nowrap;text-align:center;padding:5px 10px;border-radius:14px;background:#2b1a0d;color:#fbe3b0;font:800 13px var(--body);box-shadow:0 4px 10px rgba(0,0,0,.5);transition:opacity .12s, transform .12s}
 .dlabel.show{opacity:1;transform:translateX(-50%) scale(1)}
 .dlabel.no{background:#5a1d15;color:#ffd1c8}
 .dz{outline:2px dashed rgba(243,200,115,.75);outline-offset:-4px}
@@ -747,3 +747,19 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 #table .art-top{transition:opacity .15s}
 #table.splitting .art-top{opacity:0}
 .ct-t em{font-style:normal;font-size:13.5px;font-weight:700;color:#8a2a1e}
+
+.dlabel small{display:block;margin-top:1px;font:700 11.5px/1.25 var(--body);color:#e9cf9a}
+/* Ausrüsten: was steckt schon im Slot */
+.eqswap{display:flex;flex-direction:column;gap:6px;margin:12px 0 2px;padding:10px;border-radius:12px;background:var(--card-hi);border:1.5px solid var(--edge)}
+.es-h{font:800 12px/1 var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.es-it{appearance:none;display:flex;align-items:center;gap:10px;width:100%;margin:0;padding:4px;border:0;border-radius:10px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.es-it img{flex:0 0 auto;width:44px;height:44px;border-radius:8px;object-fit:cover;border:1.5px solid var(--edge)}
+.es-it span{flex:1;min-width:0;display:flex;flex-direction:column}
+.es-it b{font-size:15px;line-height:1.2}
+.es-it small{font-size:13px;font-weight:700;color:var(--muted)}
+.es-it em{flex:0 0 auto;font-style:normal;font:800 11.5px/1.2 var(--body);padding:3px 7px;border-radius:999px;background:#e2ebd0;color:#2b4d1d;max-width:42%;text-align:center}
+.es-it em.out{background:#f3e3c4;color:#7a4a12}
+.es-free{font-size:14.5px;font-weight:600}
+.es-pw{font:800 14px var(--body);color:var(--muted)}
+.es-pw.up{color:#2b6a1d}
+.es-pw.down{color:#8a2a1e}
