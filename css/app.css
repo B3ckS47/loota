@@ -131,7 +131,7 @@ img{-webkit-user-drag:none;user-select:none}
 .t-logo,.t-chips{cursor:pointer}
 .tn-play{width:58px;height:58px;margin-top:-26px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ffc560,#ff7a1a 75%);box-shadow:0 0 0 4px #241912,0 0 24px rgba(255,130,30,.8);display:grid;place-items:center}
 .tn-play img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,20,0,.45))}
-.tn-dot{position:absolute;top:-2px;left:50%;margin-left:6px;width:10px;height:10px;border-radius:50%;background:#ff5a3c;box-shadow:0 0 0 2px #241912}
+.tn-dot{position:absolute;z-index:2;top:-3px;left:50%;margin-left:7px;width:11px;height:11px;border-radius:50%;background:#ff5a3c;box-shadow:0 0 0 2px #241912}
 .tn-dot[hidden]{display:none}
 .online-list{margin:0 0 10px;padding-left:20px;display:grid;gap:4px}
 @keyframes sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}}
@@ -957,7 +957,6 @@ img.star{object-fit:contain}
 .scene{display:block;width:100%;height:clamp(110px,32vw,170px);object-fit:cover;border-radius:12px;border:2px solid var(--edge);margin:0 0 12px;box-shadow:0 4px 10px -6px rgba(0,0,0,.6)}
 
 /* ===== Plundo-Stil für alle Bildschirme: dunkler Grund, helle Karten, orange Hauptknöpfe ===== */
-#scr-story,#scr-setup,#scr-settings,#scr-rules,#scr-profile,#scr-cards,#scr-quiz{background:radial-gradient(130% 55% at 50% -5%,#4a2d16 0%,#22170f 55%,#15100c 100%)}
 .bar{padding:12px 14px 10px;color:#fff1d6}
 .bar h2{font-size:28px;letter-spacing:.3px;text-shadow:0 2px 0 #5a2405,0 6px 14px rgba(0,0,0,.5)}
 .bar .iconbtn,.topbar .iconbtn{border-radius:50%;border:1px solid rgba(255,200,120,.28);background:rgba(21,13,7,.66);box-shadow:none;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
