@@ -95,7 +95,7 @@ function storySave() { const d = load(K_STORYSAVE); return d && d.st && d.S && s
 function clearStorySave() { try { localStorage.removeItem(K_STORYSAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
-const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall', test: false}, SAVED_SET || {});
+const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall', test: false, mode: 'free'}, SAVED_SET || {});
 // Lernhilfen sind ab Einstellungs-Version 2 standardmäßig aus, auch für bereits gespeicherte Einstellungen
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
@@ -274,7 +274,11 @@ function renderTitle() {
   $('#t-wname').textContent = cw.name;
   const open = worldMaxStars(cw) - worldStars(cw), first = nx && nx.type === 'tutorial';
   $('#story-info').textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : first ? `Zum Start: ${nx.name}` : nx ? `Weiter mit Station ${nx.no} · ${nx.name}` : open ? `Alles geschafft · noch ${open} ${open === 1 ? 'Stern' : 'Sterne'} offen` : 'Alles geschafft. Bald geht es weiter!';
-  $('#t-cta').textContent = sst ? 'Fortsetzen' : first ? 'Los geht’s' : nx ? 'Weiterspielen' : 'Zur Karte';
+  $('#t-cta').textContent = sst || (nx && !first) ? 'Story fortsetzen' : first ? 'Mit der Story loslegen' : 'Zur Storykarte';
+  // Spielauswahl: die gewählte Kachel ist umrandet, der Spielen-Knopf startet sie
+  const mode = SET.mode === 'online' ? 'online' : 'free';
+  $$('.t-card[data-mode]').forEach(c => { const on = c.dataset.mode === mode; c.classList.toggle('sel', on); c.setAttribute('aria-checked', String(on)); });
+  $('#tn-play').setAttribute('aria-label', `Spielen: ${mode === 'online' ? 'Online spielen' : 'Freies Spiel starten'}`);
   // Charakter oben links
   const pt = $('#t-pt'); pt.style.setProperty('--fr', myFrame()); const pim = pt.querySelector('img'); if (pim.getAttribute('src') !== myPortrait()) pim.setAttribute('src', myPortrait());
   $('#t-name').textContent = PROFILE.name || 'Abenteurer';
@@ -282,7 +286,7 @@ function renderTitle() {
   $('#shop-info').textContent = STORY.coins;
   // Freies Spiel: offene Partie anzeigen
   const fg = freeGame();
-  $('#free-info').textContent = fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2–4 Bots';
+  $('#free-info').textContent = fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2 oder 3 Bots';
   // Aufträge mit Serie
   const ds = dailyState(), dn = ds.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, sk = streakNow();
   patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main"><span class="td-row"><b>Aufträge</b><small id="daily-info">${dn >= 3 ? 'Alle erledigt' : `${dn} von 3`}</small></span><span class="td-bar"><i style="width:${Math.round(dn / 3 * 100)}%"></i></span></span>` +
@@ -297,18 +301,17 @@ function storyGo() {
   show('story');
   if (nx) openStation(nx.id);
 }
-// Spielen-Knopf unten: weiter mit der zuletzt gespielten Partie (Story oder frei), sonst weiter im Storymodus
+// Spielen-Knopf unten: startet, was in der Spielauswahl gewählt ist
 function playNow() {
-  if (GAME_ON && S && S.winner == null) { continueGame(); return; }
-  const ss = storySave(), fs = load(K_SAVE);
-  if (fs && (!ss || (fs.ts || 0) > (ss.ts || 0))) { continueGame(); return; }
-  storyGo();
+  if (SET.mode === 'online') { closeAllSheets(); openSheet({id: 'online'}); return; }
+  freePlay();
 }
 // Freies Spiel: offene Partie weiterspielen oder eine neue einrichten
 async function freePlay() {
   const fg = freeGame();
   if (!fg) { show('setup'); return; }
-  const ok = await confirmDialog('Freies Spiel', `Deine Partie ist noch offen (Runde ${fg.turn}, Stufe ${fg.lvl}). Spielst du weiter oder fängst du neu an?`, 'Weiterspielen', 'Neue Partie');
+  const ok = await confirmDialog('Freies Spiel', `Deine Partie ist noch offen (Runde ${fg.turn}, Stufe ${fg.lvl}). Spielst du weiter oder fängst du neu an?`, 'Weiterspielen', 'Neue Partie', 'Abbrechen');
+  if (ok === null) return;
   if (ok) continueGame(); else show('setup');
 }
 const Motes = (() => {
@@ -933,11 +936,16 @@ function showEnd(wid) {
   document.body.appendChild(el);
   if (mine) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 5) clearInterval(iv); }, 280); }
 }
-function confirmDialog(title, text, yes, no) {
+// Antwort: true (ja), false (nein) oder null (abgebrochen: Abbrechen-Knopf oder Tippen daneben)
+function confirmDialog(title, text, yes, no, cancel) {
   return new Promise(res => {
     const d = document.createElement('div'); d.className = 'dialog';
-    d.innerHTML = `<div class="panel"><h3>${title}</h3><p>${text}</p><div class="btnrow"><button type="button" class="btn" data-dlg="0">${no}</button><button type="button" class="btn primary" data-dlg="1">${yes}</button></div></div>`;
-    d.addEventListener('click', e => { const b = e.target.closest('[data-dlg]'); if (!b) return; d.remove(); res(b.dataset.dlg === '1'); });
+    d.innerHTML = `<div class="panel"><h3>${title}</h3><p>${text}</p><div class="btnrow"><button type="button" class="btn" data-dlg="0">${no}</button><button type="button" class="btn primary" data-dlg="1">${yes}</button></div>${cancel ? `<button type="button" class="dlg-x" data-dlg="x">${cancel}</button>` : ''}</div>`;
+    d.addEventListener('click', e => {
+      if (e.target === d) { d.remove(); res(null); return; }
+      const b = e.target.closest('[data-dlg]'); if (!b) return;
+      d.remove(); res(b.dataset.dlg === 'x' ? null : b.dataset.dlg === '1');
+    });
     document.body.appendChild(d);
   });
 }
@@ -1312,6 +1320,7 @@ document.addEventListener('click', e => {
     if (e.clientY < cta.top - 2) { Snd.sfx('tap'); buzz(8); go('story'); return; }
   }
   let el;
+  if ((el = t.closest('.t-card[data-mode]'))) { if (SET.mode !== el.dataset.mode) { SET.mode = el.dataset.mode; saveSettings(); } renderTitle(); return; }
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }
   if ((el = t.closest('[data-uid]'))) {

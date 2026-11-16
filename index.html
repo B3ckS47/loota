@@ -35,14 +35,16 @@
       <button class="t-wbtn" type="button" data-go="story"><span class="t-wname" id="t-wname">Rund um die Taverne</span><span class="t-next" id="story-info"></span></button>
       <button class="t-cta" type="button" data-go="storygo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg><span id="t-cta">Weiterspielen</span></button>
     </section>
-    <div class="t-modes">
-      <button class="t-card" type="button" data-go="setup">
+    <div class="t-modes" role="radiogroup" aria-label="Spielauswahl: mit dem Spielen-Knopf unten starten">
+      <button class="t-card" type="button" role="radio" data-mode="free" aria-checked="true">
         <span class="tc-art tc-free" aria-hidden="true"><img src="art/kachel-frei.webp" alt=""></span>
-        <span class="tc-txt"><b>Freies Spiel</b><small id="free-info">Gegen 2–4 Bots</small></span>
+        <span class="tc-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+        <span class="tc-txt"><b>Freies Spiel</b><small id="free-info">Gegen 2 oder 3 Bots</small></span>
       </button>
-      <button class="t-card" type="button" data-go="online">
-        <span class="tc-badge">Bald</span>
+      <button class="t-card" type="button" role="radio" data-mode="online" aria-checked="false">
         <span class="tc-art tc-online" aria-hidden="true"><img src="art/kachel-online.webp" alt=""></span>
+        <span class="tc-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+        <span class="tc-badge">Bald</span>
         <span class="tc-txt"><b>Online</b><small>Mit Freunden spielen</small></span>
       </button>
     </div>
@@ -50,7 +52,7 @@
     <nav class="t-nav" aria-label="Bereiche">
       <button type="button" data-go="shop"><img src="icons/nav-laden.png" alt="">Laden</button>
       <button type="button" data-go="cards"><img src="icons/nav-karten.png" alt="">Karten</button>
-      <button type="button" class="on" aria-current="page" data-go="playnow" aria-label="Spielen: weiter, wo du aufgehört hast"><span class="tn-play"><img src="icons/sym-beute.png" alt=""></span>Spielen</button>
+      <button type="button" class="on" data-go="playnow" id="tn-play" aria-label="Spielen: Freies Spiel starten"><span class="tn-play"><img src="icons/sym-beute.png" alt=""></span>Spielen</button>
       <button type="button" data-go="daily"><span class="tn-dot" id="tn-daily" hidden></span><img src="icons/nav-auftraege.png" alt="">Aufträge</button>
       <button type="button" data-go="online"><img src="icons/nav-freunde.png" alt="">Freunde</button>
     </nav>
