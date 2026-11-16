@@ -467,6 +467,14 @@ function skipTo(st) {
     for (const x of w.stations) { if (x === st) return; if (!(x.easy && w.stations.some(y => y.hard && STORY.done[y.id]))) skipStation(x); }
   }
 }
+// Testphase: alle Welten kaufen, jede Station mit allen Sternen abschließen und alle Optik freischalten
+function unlockAll() {
+  OFFERS.forEach(o => o.worlds.forEach(w => { PURCHASE.worlds[w] = true; })); savePurchase();
+  allStations().forEach(st => skipStation(st));
+  WORLDS.forEach(w => { STORY.worlds[w.id] = true; STORY.intro[w.id] = true; STORY.intro['kauf-' + w.id] = true; });
+  Object.entries(COSMETICS).forEach(([k, list]) => Object.keys(list).forEach(key => grant(k + ':' + key)));
+  saveStory();
+}
 function resetStory() { Object.assign(STORY, {done: {}, stars: {}, coins: 0, owned: [], choice: {}, worlds: {}, intro: {}, fails: {}}); saveStory(); }
 function visitShop(st) { if (!STORY.done[st.id]) { STORY.done[st.id] = true; saveStory(); } }
 function buyCosmetic(item) {

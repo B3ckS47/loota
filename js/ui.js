@@ -1381,6 +1381,7 @@ function go(a) {
     case 'chest': showChest(); break;
     case 'streakplus': { const n = cheatStreak(); if (!chestsWaiting().length || n % 7 && n !== 3) toast(`Serie: ${n} ${n === 1 ? 'Tag' : 'Tage'}`); renderSaveInfo(); break; }
     case 'streakreset': resetStreak(); toast('Serie auf 0 gesetzt'); renderSaveInfo(); break;
+    case 'unlockall': confirmDialog('Alles freischalten?', 'Alle Welten werden gekauft, jede Station gilt mit allen Sternen als geschafft, und alle Decks, Tische, Musikstücke, Titel, Rahmen und Porträts werden freigeschaltet.', 'Freischalten', 'Abbrechen').then(ok => { if (!ok) return; unlockAll(); toast('Alles freigeschaltet'); renderSaveInfo(); renderControls(); }); break;
     case 'buyreset': PURCHASE.worlds = {}; savePurchase(); toast('Käufe zurückgesetzt'); renderSaveInfo(); break;
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
