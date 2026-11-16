@@ -18,7 +18,14 @@ const COSMETICS = {
     pilzkenner: 'Pilzkenner',
     wurzelfluesterer: 'Wurzelflüsterer',
     schwammerlsucher: 'Schwammerlsucher',
-    myzelmeister: 'Myzelmeister'
+    myzelmeister: 'Myzelmeister',
+    // Krämerladen
+    gluckspilz: 'Glückspilz',
+    wuerfelkoenig: 'Würfelkönig',
+    kartenhai: 'Kartenhai',
+    fruehaufsteher: 'Frühaufsteher',
+    nachteule: 'Nachteule',
+    schatzsucher: 'Schatzsucher'
   },
   frame: {
     kupferkessel: {n: 'Kupferkessel', c: '#c8773a'},
@@ -28,13 +35,30 @@ const COSMETICS = {
     goldkronkorken: {n: 'Goldener Kronkorken', c: '#e8b923'},
     moosgruen: {n: 'Moosgrün', c: '#6a9a3e'},
     fliegenpilz: {n: 'Fliegenpilz', c: '#c8352b'},
-    leuchtpilz: {n: 'Leuchtpilz', c: '#7fe3d4'}
+    leuchtpilz: {n: 'Leuchtpilz', c: '#7fe3d4'},
+    // Krämerladen und Serie
+    bierdeckel: {n: 'Bierdeckel', c: '#d9b38c'},
+    abendrot: {n: 'Abendrot', c: '#e8774a'},
+    mitternacht: {n: 'Mitternacht', c: '#2c3e70'},
+    eichenholz: {n: 'Eichenholz', c: '#8a5a2b'},
+    lavendel: {n: 'Lavendel', c: '#a98bd6'},
+    perlmutt: {n: 'Perlmutt', c: '#efe6f5'},
+    wochenstammgast: {n: 'Wochenstammgast', c: '#f0b429'}
   },
   portrait: {
     gartenzwerg: {n: 'Gartenzwerg', src: 'icons/portrait-gartenzwerg.png'},
     rentner: {n: 'Rentner-Ritter', src: 'icons/portrait-rentner.png'},
     rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'},
-    flora: {n: 'Fee Flora', src: 'icons/portrait-flora.png'}
+    flora: {n: 'Fee Flora', src: 'icons/portrait-flora.png'},
+    // Krämerladen: die Gegner aus Taverne, Keller und Wald
+    berta: {n: 'Berta', src: 'icons/portrait-berta.png'},
+    kalle: {n: 'Kalle', src: 'icons/portrait-kalle.png'},
+    uschi: {n: 'Uschi', src: 'icons/portrait-uschi.png'},
+    hilde: {n: 'Wirtin Hilde', src: 'icons/portrait-hilde.png'},
+    fridolin: {n: 'Fass Fridolin', src: 'icons/portrait-fridolin.png'},
+    gustav: {n: 'Gespenst Gustav', src: 'icons/portrait-gustav.png'},
+    trudi: {n: 'Trüffelschwein Trudi', src: 'icons/portrait-trudi.png'},
+    walter: {n: 'Waldschrat Walter', src: 'icons/portrait-walter.png'}
   }
 };
 function cosmeticName(id) {
@@ -305,6 +329,7 @@ function finishStation(st, S) {
   const stars = [w, ...(st.extras || []).map(e => { try { return w && !!e.ok(S.stats || {}, S); } catch (err) { return false; } })];
   const old = starsOf(st.id), merged = stars.map((v, i) => v || !!old[i]);
   const fresh = merged.filter((v, i) => v && !old[i]).length;
+  if (fresh && st.type !== 'tutorial') dailyTrack('star', fresh);
   let coins = 0;
   if (w && !STORY.done[st.id]) coins += 10 * mul;
   coins += fresh * 5 * mul;
@@ -363,4 +388,104 @@ function buyCosmetic(item) {
   STORY.coins -= item.price; grant(item.id); saveStory();
   return 'ok';
 }
-if (typeof module !== 'undefined') module.exports = {WORLDS, STORY, COSMETICS, scenarioFor, finishStation, chooseEvent, stationById, stationUnlocked, maxStars, openWorlds, worldStars, worldMaxStars};
+
+/* ================= Tägliche Aufträge, Serie und Krämerladen =================
+   Jeden Tag (Ortszeit, ab Mitternacht) drei Aufträge: leicht, mittel, schwer. Sie zählen im freien Spiel und im
+   Storymodus, nicht in Rätseln und im Probespiel. Belohnung sind Münzen, dieselben wie im Storymodus. */
+const K_DAILY = 'loota.daily';
+const MISSIONS = [
+  {id: 'kampf3', d: 0, k: 'win', n: 3, t: 'Gewinne 3 Kämpfe'},
+  {id: 'fluch2', d: 0, k: 'curse', n: 2, t: 'Spiel 2 Flüche auf Gegner'},
+  {id: 'einmal3', d: 0, k: 'oneshot', n: 3, t: 'Setz 3 Einmal-Gegenstände ein'},
+  {id: 'flucht', d: 0, k: 'escape', n: 1, t: 'Entkomme einmal beim Weglaufen'},
+  {id: 'helfen', d: 1, k: 'helped', n: 1, t: 'Hilf einem Mitspieler, einen Kampf zu gewinnen'},
+  {id: 'gold', d: 1, k: 'gold', n: 1000, t: 'Verkaufe Gegenstände für 1.000 Gold'},
+  {id: 'einmischen', d: 1, k: 'intf', n: 2, t: 'Misch dich zweimal in fremde Kämpfe ein'},
+  {id: 'untot', d: 1, k: 'undead', n: 1, t: 'Besiege ein untotes Monster'},
+  {id: 'kampf6', d: 1, k: 'win', n: 6, t: 'Gewinne 6 Kämpfe'},
+  {id: 'nager', d: 1, k: 'nager', n: 1, t: 'Besiege einen Nager', w: 'w2'},
+  {id: 'pilz', d: 1, k: 'pilz', n: 1, t: 'Besiege ein Pilz-Monster', w: 'w3'},
+  {id: 'pfanne', d: 1, k: 'pfanne', n: 1, t: 'Koche eine Pilzpfanne', w: 'w3'},
+  {id: 'sieg', d: 2, k: 'gamewon', n: 1, t: 'Gewinne eine Partie'},
+  {id: 'gross', d: 2, k: 'big', n: 1, t: 'Besiege ein Monster ab Stufe 10'},
+  {id: 'sauber', d: 2, k: 'cleanwin', n: 1, t: 'Gewinne eine Partie, ohne eine Stufe zu verlieren'},
+  {id: 'stern', d: 2, k: 'star', n: 1, t: 'Hol dir einen neuen Stern im Storymodus', stars: true}
+];
+const MISSION_COINS = [10, 15, 25], MISSION_LEVEL = ['Leicht', 'Mittel', 'Schwer'];
+// Täglich wechselndes Angebot im Krämerladen (nur, was du noch nicht hast)
+const SHOP_POOL = [
+  {id: 'portrait:berta', price: 60}, {id: 'portrait:kalle', price: 60}, {id: 'portrait:uschi', price: 60}, {id: 'portrait:hilde', price: 100},
+  {id: 'portrait:fridolin', price: 80}, {id: 'portrait:gustav', price: 80}, {id: 'portrait:trudi', price: 80}, {id: 'portrait:walter', price: 80},
+  {id: 'frame:bierdeckel', price: 40}, {id: 'frame:abendrot', price: 40}, {id: 'frame:mitternacht', price: 50}, {id: 'frame:eichenholz', price: 40},
+  {id: 'frame:lavendel', price: 40}, {id: 'frame:perlmutt', price: 50},
+  {id: 'title:gluckspilz', price: 30}, {id: 'title:wuerfelkoenig', price: 30}, {id: 'title:kartenhai', price: 30},
+  {id: 'title:fruehaufsteher', price: 30}, {id: 'title:nachteule', price: 30}, {id: 'title:schatzsucher', price: 30}
+];
+const SHOP_N = 4;
+const STREAK_FRAME = 'frame:wochenstammgast';
+let DAILY_NOTIFY = null;   // (Text, Münzen) => Hinweis in der Oberfläche
+
+function dayKey(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function dayOffset(n) { const d = new Date(); d.setDate(d.getDate() + n); return dayKey(d); }
+// Zufall mit festem Startwert, damit Aufträge und Ladenangebot am selben Tag gleich bleiben
+function seeded(str) { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; }; }
+const hasOpenStars = () => openWorlds().some(w => worldStars(w) < worldMaxStars(w));
+const missionOk = m => (!m.w || openWorlds().some(w => w.id === m.w)) && (!m.stars || hasOpenStars());
+const missionById = id => MISSIONS.find(m => m.id === id);
+
+function rollMissions(day) {
+  const r = seeded('auftrag-' + day);
+  const used = [];   // kein Zähler doppelt, z. B. nicht „3 Kämpfe“ und „6 Kämpfe“ am selben Tag
+  return [0, 1, 2].map(d => { const pool = MISSIONS.filter(m => m.d === d && missionOk(m) && !used.includes(m.k)); const m = pool[Math.floor(r() * pool.length)]; used.push(m.k); return {id: m.id, p: 0}; });
+}
+function rollShop(day) {
+  const r = seeded('laden-' + day), pool = SHOP_POOL.filter(x => !owns(x.id)).slice();
+  const out = []; while (pool.length && out.length < SHOP_N) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0].id);
+  return out;
+}
+let DAILY = null;
+function saveDaily() { try { if (typeof localStorage !== 'undefined') localStorage.setItem(K_DAILY, JSON.stringify(DAILY)); } catch (e) {} }
+// Aktueller Stand, beim Tageswechsel neue Aufträge und ein neues Angebot
+function dailyState() {
+  if (!DAILY) { try { DAILY = typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem(K_DAILY)) : null; } catch (e) { DAILY = null; } }
+  if (!DAILY) DAILY = {day: null, list: [], rer: false, streak: {n: 0, last: null}, shop: []};
+  const today = dayKey();
+  if (DAILY.day !== today) { DAILY.day = today; DAILY.list = rollMissions(today); DAILY.rer = false; DAILY.shop = rollShop(today); saveDaily(); }
+  return DAILY;
+}
+// Laufende Serie: zählt, solange gestern oder heute mindestens ein Auftrag erledigt wurde
+function streakNow() { const s = dailyState().streak; return s.last === dayKey() || s.last === dayOffset(-1) ? s.n : 0; }
+function streakNext(n) { return n < 3 ? {at: 3, l: '20 Münzen'} : n < 7 ? {at: 7, l: owns(STREAK_FRAME) ? '40 Münzen' : 'Rahmen „Wochenstammgast“'} : {at: Math.ceil((n + 1) / 7) * 7, l: '40 Münzen'}; }
+function bumpStreak() {
+  const s = dailyState().streak, today = dayKey();
+  if (s.last === today) return;
+  s.n = s.last === dayOffset(-1) ? s.n + 1 : 1; s.last = today;
+  if (s.n === 3) { STORY.coins += 20; DAILY_NOTIFY && DAILY_NOTIFY('Serie: 3 Tage in Folge!', 20); }
+  else if (s.n % 7 === 0) {
+    if (grant(STREAK_FRAME)) DAILY_NOTIFY && DAILY_NOTIFY('Serie: 7 Tage! Neu: Rahmen „Wochenstammgast“', 0);
+    else { STORY.coins += 40; DAILY_NOTIFY && DAILY_NOTIFY(`Serie: ${s.n} Tage in Folge!`, 40); }
+  }
+}
+// Von der Engine gemeldet: k = Zähler, n = Menge
+function dailyTrack(k, n = 1) {
+  const st = dailyState(); let gain = 0;
+  st.list.forEach(e => {
+    const m = missionById(e.id); if (!m || m.k !== k || e.p >= m.n) return;
+    e.p = Math.min(m.n, e.p + n);
+    if (e.p >= m.n) { const c = MISSION_COINS[m.d]; gain += c; STORY.coins += c; bumpStreak(); DAILY_NOTIFY && DAILY_NOTIFY(`Auftrag erledigt: ${m.t}`, c); }
+  });
+  saveDaily(); if (gain) saveStory();
+}
+// Einen Auftrag pro Tag gegen einen anderen gleicher Schwierigkeit tauschen
+function rerollMission(i) {
+  const st = dailyState(), e = st.list[i], m = e && missionById(e.id);
+  if (!m || st.rer || e.p >= m.n) return false;
+  const pool = MISSIONS.filter(x => x.d === m.d && missionOk(x) && !st.list.some(y => y.id === x.id || missionById(y.id).k === x.k));
+  if (!pool.length) return false;
+  st.list[i] = {id: pool[Math.floor(Math.random() * pool.length)].id, p: 0}; st.rer = true; saveDaily();
+  return true;
+}
+const shopItem = id => SHOP_POOL.find(x => x.id === id);
+function buyShopItem(id) { const it = shopItem(id); if (!it || !dailyState().shop.includes(id)) return 'gone'; return buyCosmetic(it); }
+if (typeof module !== 'undefined') module.exports = {WORLDS, STORY, COSMETICS, scenarioFor, finishStation, chooseEvent, stationById, stationUnlocked, maxStars, openWorlds, worldStars, worldMaxStars, dailyState, dailyTrack, rerollMission, streakNow, MISSIONS, buyShopItem};

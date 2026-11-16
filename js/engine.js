@@ -110,7 +110,7 @@ function canPfanne(p){
 function doPfanne(p){
   const set=pfanneSet(p); if(!set || p.lvl>=WINLVL()-1) return;
   set.forEach(c=>{ take(p,c); discard(c); }); p.lvl++;
-  if(p.human) stat('pfanne');
+  if(p.human){ stat('pfanne'); track('pfanne'); }
   log(`${nm(p)} ${V(p,'kochst','kocht')} eine Pilzpfanne aus ${set.map(c=>c.n).join(', ')} und ${V(p,'steigst','steigt')} auf Stufe ${p.lvl}.`,'good');
   ruleOnce('pfanne','Pilzpfanne: Steinpilz, Pfifferling und Champignon zusammen ablegen bringt 1 Stufe, mit Sammelkorb reichen zwei verschiedene. Nie für die Siegstufe.');
 }
@@ -309,6 +309,9 @@ const diffF = () => DIFF[UI.diff]||1;
 let FX_HANDLER = null;
 function fx(type, data){ if(FX_HANDLER){ try{ FX_HANDLER(type, data||{}); }catch(e){ console.error(e); } } }
 let CHECKPOINT_HANDLER = null;
+// Zähler für die täglichen Aufträge (nur deine Aktionen; Rätsel und Probespiel zählen nicht)
+let TRACK_HANDLER = null;
+function track(k, n=1){ if(!TRACK_HANDLER || (SCN && (SCN.fight || SCN.tut))) return; try{ TRACK_HANDLER(k, n); }catch(e){} }
 /* ================= Szenarien (Storymodus) =================
    SCN setzt die Oberfläche vor newGame; null = freies Spiel.
    {target, bots:[Namen], counts, start:{lvl, race, cls, eq:[], hand:[], deal}, boss:'Kartenname',
@@ -656,6 +659,7 @@ async function gameLoop(t){
     if(S.cur===0) S.turn++;
     if(S.turn>400){ log('Abbruch nach 400 Runden.','sys'); break; }
   }
+  if(S.winner===0 && t===TOKEN){ track('gamewon'); if(!S.stats.lvlLost) track('cleanwin'); }
   if(S.winner!=null && t===TOKEN) fx('gameover',{winner:S.winner});
   render();
 }
@@ -1024,7 +1028,7 @@ async function humanInterfereWindow(C){
     const v=await ask(()=>interferePrompt(C), 'interfere');
     if(v==='stab'){
       const sel=await selectCards({ctx:'stab', title:'Dieb: in den Rücken fallen', text:'Wirf 1 Karte ab. Die kämpfende Seite bekommt −2.', min:1, max:1, cancel:true, filter:(c,w)=>w==='hand', confirm:()=>'Abwerfen'});
-      if(sel && sel.length){ const c=findCard(sel[0]); take(p,c); discard(c); C.stabbed[0]=true; C.pB.push({l:'Dieb: du fällst in den Rücken',v:-2}); C.hchg=true; C.asked[0]=true; log(`Du fällst ${P(C.f).name} in den Rücken: −2.`,'bad'); }
+      if(sel && sel.length){ const c=findCard(sel[0]); take(p,c); discard(c); C.stabbed[0]=true; C.pB.push({l:'Dieb: du fällst in den Rücken',v:-2}); C.hchg=true; C.asked[0]=true; track('intf'); log(`Du fällst ${P(C.f).name} in den Rücken: −2.`,'bad'); }
       continue;
     }
     break;
@@ -1138,6 +1142,8 @@ function botPlayAgainst(b,C,threat){
 }
 async function winCombat(C){
   const f=P(C.f), h=C.h!=null?P(C.h):null, lv=levelsGained(C);
+  if(f.human){ track('win'); if(C.mons.some(m=>m.c.lvl>=10)) track('big'); ['undead','nager','pilz'].forEach(t=>{ if(C.mons.some(m=>m.c[t])) track(t); }); }
+  if(h && h.human) track('helped');
   fx('win',{p:f, mine: f.human || (h&&h.human)});
   f.lvl+=lv;
   const boss=C.mons.find(m=>m.c.boss);
@@ -1179,7 +1185,7 @@ async function loseCombat(C){
 function severe(bad){ if(bad.t==='death') return true; if(bad.t==='lvl') return bad.n>=2; if(bad.t==='multi') return bad.l.length>=2 || bad.l.some(severe); if(bad.t==='hand') return bad.n>=5; return false; }
 async function runAway(p,m,i=0,n=1){
   const left=n-i;
-  if(m.c.np && p.lvl<=m.c.np){ log(`${m.c.n} verfolgt niemanden bis Stufe ${m.c.np}. ${nm(p)} ${V(p,'entkommst','entkommt')} automatisch.`,'good'); ruleOnce('np','„Verfolgt niemanden bis Stufe X“: Wer diese Stufe oder niedriger hat, entkommt ohne Würfeln.'); return; }
+  if(m.c.np && p.lvl<=m.c.np){ if(p.human) track('escape'); log(`${m.c.n} verfolgt niemanden bis Stufe ${m.c.np}. ${nm(p)} ${V(p,'entkommst','entkommt')} automatisch.`,'good'); ruleOnce('np','„Verfolgt niemanden bis Stufe X“: Wer diese Stufe oder niedriger hat, entkommt ohne Würfeln.'); return; }
   const mod=runBonus(p)+(m.c.run||0);
   const need=5-mod;
   const nebel=p.hand.find(c=>c.escape);
@@ -1188,7 +1194,7 @@ async function runAway(p,m,i=0,n=1){
     const v=await ask(()=>({title:`Weglaufen vor ${m.c.n}${n>1?` (Monster ${i+1} von ${n})`:''}`, text: need<=1 ? 'Mit deinen Boni klappt die Flucht auf jeden Fall.' : need>6 ? 'Mit diesen Mali schaffst du es nur mit Hilfe von Karten.' : `Du brauchst eine ${need}${need<6?' oder mehr':''}. Grundwert 5${parts.length?', '+parts.join(', '):''}.`,
       hint:[`Misslingt es: ${m.c.badTxt}`, ...(n>1?['Bei mehreren Monstern läufst du vor jedem einzeln weg.']:[]), ...(nebel?[left>1?`Mit Nebelpulver entkommst du sicher, und zwar vor allen ${left} übrigen Monstern.`:'Mit Nebelpulver entkommst du sicher.']:[])],
       opts:[{l:'Würfeln',v:'roll',kind:'primary'}, ...(nebel?[{l:'Nebelpulver einsetzen',v:'nebel'}]:[])]}), 'run', {m, left});
-    if(v==='nebel'){ take(p,nebel); discard(nebel); log(`Du verschwindest im Nebelpulver und entkommst${left>1?' allen übrigen Monstern':''}!`,'good'); return 'all'; }
+    if(v==='nebel'){ take(p,nebel); discard(nebel); track('escape'); log(`Du verschwindest im Nebelpulver und entkommst${left>1?' allen übrigen Monstern':''}!`,'good'); return 'all'; }
   } else if(nebel && (severe(m.c.bad) || left>1)){ take(p,nebel); discard(nebel); log(`${p.name} verschwindet im Nebelpulver und entkommt${left>1?' allen übrigen Monstern':''}.`,'good'); return 'all'; }
   let roll=await rollDie(p), total=roll+mod;
   log(`${nm(p)} ${V(p,'würfelst','würfelt')} eine ${roll}${mod?` (${sign(mod)} = ${total})`:''}.`);
@@ -1205,7 +1211,7 @@ async function runAway(p,m,i=0,n=1){
       if(sel && sel.length){ sel.map(findCard).forEach(c=>{ take(p,c); discard(c); }); total+=k; log(`Du wirfst ${k} ${pl(k,'Karte','Karten')} ab: Der Wurf zählt jetzt ${total}.`); }
     } else if(severe(m.c.bad) || k===1){ const cs=p.hand.slice().sort((x,y)=>keepValue(p,x)-keepValue(p,y)).slice(0,k); cs.forEach(c=>{ take(p,c); discard(c); }); total+=k; log(`${p.name} wirft als Zauberer ${k} ${pl(k,'Karte','Karten')} ab: Der Wurf zählt ${total}.`); }
   }
-  if(total>=5){ log(`${nm(p)} ${V(p,'entkommst','entkommt')}!`,'good'); fx('escape',{p}); }
+  if(total>=5){ if(p.human) track('escape'); log(`${nm(p)} ${V(p,'entkommst','entkommt')}!`,'good'); fx('escape',{p}); }
   else { log(`Flucht misslungen: ${m.c.badTxt}`,'bad'); fx('hurt',{p}); applyBad(p,m.c.bad); render(); await sleep(spd(0.6)); }
 }
 async function rollDie(p){
@@ -1367,26 +1373,26 @@ function playRC(c){
 }
 function markIntf(){ const C=S.combat; if(C && C.f!==0){ C.hchg=true; } fx('play',{}); }
 function playOneShot(c,side){
-  const p=me(), C=S.combat; take(p,c); C.used.push(c); stat('played'); stat('os');
+  const p=me(), C=S.combat; take(p,c); C.used.push(c); stat('played'); stat('os'); track('oneshot'); if(C.f!==0 && C.h!==0) track('intf');
   if(side==='p'){ const v=osP(c,C); C.pB.push({l:`${c.n} (von dir)`,v}); log(`Du setzt ${c.n} für ${C.f===0||C.h===0?'eure Seite':P(C.f).name} ein (+${v}).`,'good'); }
   else { C.mB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für das Monster ein (+${c.b}).`); if(C.f!==0 && C.h!==0) C.asked[0]=true; }
   markIntf();
 }
 function playEnh(c,m){
-  const p=me(), C=S.combat; take(p,c); m.enh.push(c); stat('played');
+  const p=me(), C=S.combat; take(p,c); m.enh.push(c); stat('played'); if(C.f!==0 && C.h!==0) track('intf');
   log(`Du spielst „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`);
   ruleOnce('enh','Monsterverstärker darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.');
   if(C.f!==0 && C.h!==0 && c.v>0) C.asked[0]=true;
   markIntf();
 }
 function playWander(w,m){
-  const p=me(), C=S.combat; take(p,w); take(p,m); discard(w); C.mons.push({c:m,enh:[]}); stat('played');
+  const p=me(), C=S.combat; take(p,w); take(p,m); discard(w); C.mons.push({c:m,enh:[]}); stat('played'); track('intf');
   log(`Du spielst „Ungebetener Gast“: <b>${m.n}</b> (Stufe ${m.lvl}) mischt mit!`);
   ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.');
   C.asked[0]=true; markIntf();
 }
 function playCurseOn(c,t){
-  const p=me(); take(p,c);
+  const p=me(); take(p,c); track('curse');
   log(`Du spielst den Fluch „${c.n}“ auf ${t.name}.`);
   ruleOnce('cursehand','Flüche von der Hand darf man jederzeit auf jeden Spieler spielen.');
   if(S.combat && !S.combat.resolved) { markIntf(); if(S.combat.f===t.id) S.combat.asked[0]=true; }
@@ -1409,7 +1415,7 @@ async function startSell(pre){
     if(!sel || !sel.length) return;
     const cs=sel.map(findCard).filter(Boolean), v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl);
     if(lv<1) return;
-    cs.forEach(c=>{ take(p,c); discard(c); }); p.lvl+=lv; if(v.dbl) p.soldDouble=true;
+    cs.forEach(c=>{ take(p,c); discard(c); }); p.lvl+=lv; if(v.dbl) p.soldDouble=true; track('gold', v.sum);
     log(`Du verkaufst ${cs.map(c=>c.n).join(', ')} für ${fmt(v.sum)} Gold${v.dbl?` (als Halbling ${v.dbl.n} doppelt)`:''}: Stufe ${p.lvl}.`,'good');
     if(v.dbl) ruleOnce('halbsell','Halbling: Einmal pro Zug darf ein Gegenstand zum doppelten Preis verkauft werden.');
     ruleOnce('sell','Verkaufen: Je 1.000 Gold gibt es 1 Stufe. Wechselgeld gibt es nicht.');

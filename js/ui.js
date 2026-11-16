@@ -54,6 +54,8 @@ function cosmeticSource(id) {
     if (it) return `${cosmeticName(id)}: in Welt ${w.n} bei „${st.name}“ für ${it.price} Münzen.`;
   }
   for (const w of WORLDS) if (w.starReward && w.starReward.id === id) return `${cosmeticName(id)}: für ${w.starReward.n} Sterne in Welt ${w.n}.`;
+  if (id === STREAK_FRAME) return `${cosmeticName(id)}: für 7 Tage Auftrags-Serie.`;
+  const sh = shopItem(id); if (sh) return `${cosmeticName(id)}: im Krämerladen für ${sh.price} Münzen, wenn er im Angebot ist.`;
   return 'Schaltest du im Storymodus frei.';
 }
 function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portrait && cosOpen(q)) || PORTRAITS[0]; return x[2]; }
@@ -71,7 +73,7 @@ function renderProfile() {
   // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
   const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k));
   patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +
-    `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} verdienst du im Storymodus.</p>`);
+    `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} gibt es im Storymodus und im Krämerladen.</p>`);
 }
 document.addEventListener('input', e => {
   if (e.target.id !== 'pf-name') return;
@@ -263,6 +265,9 @@ function renderTitle() {
   const cw = currentWorld(), si = $('#story-info');
   const ss = storySave(), sst = ss && stationById(ss.st);
   if (si) si.textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : `Welt ${cw.n} · ${worldStars(cw)} von ${worldMaxStars(cw)} Sternen`;
+  const ds = dailyState(), dn = ds.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, sk = streakNow();
+  if ($('#daily-info')) $('#daily-info').textContent = `${dn} von 3 erledigt${sk ? ` · Serie ${sk}` : ''}`;
+  if ($('#shop-info')) $('#shop-info').textContent = `${STORY.coins} Münzen`;
   const btn = $('#btn-continue');
   btn.hidden = !(active || save);
   if (active && S.scn) { const st = stationById(S.scn); $('#continue-info').textContent = st ? `Storymodus · ${st.no} ${st.name}` : 'Storymodus'; }
@@ -1043,6 +1048,49 @@ function startStation(id) {
   setScreen('game');
   newGame(false);
 }
+/* ================= Auftragsbrett und Krämerladen ================= */
+function untilMidnight() { const n = new Date(), m = new Date(n); m.setHours(24, 0, 0, 0); const min = Math.max(1, Math.round((m - n) / 60000)); const h = Math.floor(min / 60); return min >= 60 ? `${h} ${h === 1 ? 'Stunde' : 'Stunden'}` : `${min} ${min === 1 ? 'Minute' : 'Minuten'}`; }
+function missionToast(text, coins) {   // auch über offenen Blättern sichtbar
+  $$('.mtoast').forEach(t => t.remove());
+  const t = document.createElement('div'); t.className = 'toast mtoast';
+  t.innerHTML = `${esc(text)}${coins ? ` <span class="mt-c">${coinImg}+${coins}</span>` : ''}`;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 3200);
+  Snd.sfx('coin'); buzz([30, 40, 30]);
+  if (CUR === 'title') renderTitle();
+}
+TRACK_HANDLER = (k, n) => dailyTrack(k, n);
+DAILY_NOTIFY = (text, coins) => missionToast(text, coins);
+SHEET_VIEWS.daily = () => {
+  const st = dailyState(), sk = streakNow(), nx = streakNext(sk);
+  const notes = st.list.map((e, i) => {
+    const m = missionById(e.id); if (!m) return '';
+    const done = e.p >= m.n, pct = Math.round(e.p / m.n * 100), prog = m.k === 'gold' ? `${fmt(e.p)} / ${fmt(m.n)} Gold` : `${e.p} / ${m.n}`;
+    return `<div class="note d${m.d}${done ? ' done' : ''}"><span class="nl">${MISSION_LEVEL[m.d]}<span class="nc">${coinImg}+${MISSION_COINS[m.d]}</span></span><b>${esc(m.t)}</b>` +
+      `<span class="nbar"><i style="width:${pct}%"></i></span><span class="np">${done ? '<em class="stamp">Erledigt</em>' : prog}${!done && !st.rer ? `<button type="button" class="btn small" data-reroll="${i}">Tauschen</button>` : ''}</span></div>`;
+  }).join('');
+  const streak = `<div class="streakbox"><b>${sk ? `Serie: ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : 'Noch keine Serie'}</b><span>${sk ? 'Erledige morgen wieder einen Auftrag, dann wächst sie weiter.' : 'Erledige an mehreren Tagen hintereinander mindestens einen Auftrag.'} Am ${nx.at}. Tag: ${esc(nx.l)}.</span></div>`;
+  return {head: h3('Hildes Auftragsbrett'),
+    body: `<div class="say"><img src="icons/portrait-hilde.png" alt=""><p>„Ich hab da ein paar Aufträge für dich. Jeden Tag neue, versprochen.“</p></div><div class="notes">${notes}</div>${streak}` +
+      `<p class="hint">Neue Aufträge in ${untilMidnight()}. Sie zählen im freien Spiel und im Storymodus, nicht in Rätseln und im Probespiel.${st.rer ? '' : ' Einen Auftrag pro Tag darfst du tauschen.'}</p>` +
+      `<div class="acts"><button type="button" class="btn" data-go="shop">Zum Krämerladen (${STORY.coins} Münzen)</button></div>`};
+};
+function cosPreview(id) {
+  const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
+  if (k === 'portrait') return `<img class="sp-pt" src="${c.src}" alt="">`;
+  if (k === 'frame') return `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
+  return `<span class="sp-ti">${esc(c)}</span>`;
+}
+SHEET_VIEWS.shop = () => {
+  const st = dailyState();
+  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), poor = STORY.coins < it.price, [k] = id.split(':');
+    return `<div class="sitem${own ? ' own' : ''}">${cosPreview(id)}<span class="si-t"><b>${esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
+      (own ? '<em class="stamp">Gekauft</em>' : `<button type="button" class="btn small${poor ? '' : ' primary'}" data-shopbuy="${id}"${poor ? ' disabled' : ''}>${coinImg}${it.price}</button>`) + '</div>'; }).join('');
+  return {head: h3('Krämerladen'),
+    body: `<div class="say"><img src="icons/portrait-kalle.png" alt=""><p>„Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
+      `<div class="sitems">${items || '<p class="hint">Du hast schon alles aus dem Laden. Hut ab!</p>'}</div>` +
+      `<p class="hint">Neues Angebot in ${untilMidnight()}. Münzen gibt es für Aufträge und im Storymodus. Gekauftes wählst du im Charakter-Bildschirm aus.</p>` +
+      `<div class="acts"><button type="button" class="btn" data-go="daily">Zu den Aufträgen</button><button type="button" class="btn" data-go="profile">Zum Charakter</button></div>`};
+};
 function resumeStation() {
   const d = storySave(); if (!d) return;
   if (GAME_ON && S && S.scn === d.st && S.winner == null) { closeAllSheets(); setScreen('game'); return; }
@@ -1176,7 +1224,9 @@ function go(a) {
     case 'rules': closeAllSheets(); show('rules'); break;
     case 'cards': closeAllSheets(); show('cards'); break;
     case 'quiz': UI.q = null; show('quiz'); break;
-    case 'profile': show('profile'); break;
+    case 'profile': closeAllSheets(); show('profile'); break;
+    case 'daily': closeAllSheets(); openSheet({id: 'daily'}); break;
+    case 'shop': closeAllSheets(); openSheet({id: 'shop'}); break;
     case 'settings': closeAllSheets(); show('settings'); break;
     case 'pause': openSheet({id: 'pause'}); break;
     case 'resume': closeAllSheets(); break;
@@ -1237,6 +1287,11 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
   if ((el = t.closest('[data-story-start]'))) { askStartStation(el.dataset.storyStart); return; }
   if ((el = t.closest('[data-story-resume]'))) { resumeStation(); return; }
+  if ((el = t.closest('[data-reroll]'))) { if (rerollMission(+el.dataset.reroll)) { Snd.sfx('deal'); renderSheet(false); renderTitle(); } return; }
+  if ((el = t.closest('[data-shopbuy]'))) { const id = el.dataset.shopbuy, r = buyShopItem(id);
+    if (r === 'poor') { buzz(40); return; }
+    if (r === 'ok') { Snd.sfx('coin'); missionToast(`${cosmeticName(id)} gehört dir`, 0); renderSheet(false); renderTitle(); if (CUR === 'profile') renderProfile(); }
+    return; }
   if ((el = t.closest('[data-story-choice]'))) { pickChoice(el.dataset.storyChoice); return; }
   if ((el = t.closest('[data-buy]'))) { buyItem(el.dataset.buy); return; }
   if ((el = t.closest('[data-storyclose]'))) { closeAllSheets(); return; }
