@@ -1021,3 +1021,17 @@ input[type=range]{accent-color:#ff8a1f}
 @keyframes cv-spin{to{transform:rotate(360deg)}}
 @keyframes cv-flash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
 @keyframes cv-rise{from{opacity:0;transform:translateY(46px) scale(.8)}to{opacity:1;transform:none}}
+/* ===== Serie auf der Startseite: Kerze und Truhe auf Hildes Holzbrett ===== */
+.t-daily{height:84px;padding:0 12px 0 6px;align-items:flex-start;border-radius:18px;background:#1a120c url(../art/serie-brett.webp) center/cover no-repeat;border:2px solid rgba(255,214,160,.28);box-shadow:0 14px 24px -10px rgba(0,0,0,.8);color:#f3dfbd}
+.t-daily .candle{width:52px;height:52px;align-self:flex-start;margin-top:12px}
+.t-daily .td-main{align-self:stretch}
+.t-daily .sk-track{--ry:38px;--l:2px;height:100%;margin:0 4px 0 -6px}
+.t-daily .sk-rail{background:rgba(14,8,4,.6);box-shadow:inset 0 1px 2px rgba(0,0,0,.6),0 0 0 1px rgba(255,200,130,.16)}
+.t-daily .sk-dot{background:#3b2817;border-color:#d9bb8e;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+.t-daily .sk-dot.f{background:#ff8a1f;border-color:#fff1d6}
+.t-daily .sk-dot.t{background:#2a1a10;border-color:#ff9a2e}
+.t-daily .sk-dot em,.t-daily .sk-goal em{color:#e9d2a8;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.8)}
+.t-daily .sk-dot.f em,.t-daily .sk-goal.ready em{color:#ffb547}
+.t-daily .sk-goal{background:#2a1a10;border-color:#d9a24a}
+.t-daily .sk-goal.ok{border-color:#56c24c}
+.t-daily .sk-goal.ok em{color:#86dc78}
