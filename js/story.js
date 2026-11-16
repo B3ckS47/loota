@@ -457,7 +457,24 @@ function dailyState() {
 // Laufende Serie: zählt, solange gestern oder heute mindestens ein Auftrag erledigt wurde
 function streakNow() { const s = dailyState().streak; return s.last === dayKey() || s.last === dayOffset(-1) ? s.n : 0; }
 // Nächstes Serienziel nach n Tagen: bei 3 Tagen 20 Münzen, alle 7 Tage der Rahmen (sonst 40 Münzen)
-function streakGoal(at) { return at === 3 ? {c: 20, l: '20 Münzen'} : owns(STREAK_FRAME) ? {c: 40, l: '40 Münzen'} : {fr: STREAK_FRAME, l: 'Rahmen „Wochenstammgast“'}; }
+// Serienziele bringen Truhen: nach 3 Tagen eine Holztruhe, alle 7 Tage eine Goldtruhe. Kaufen kann man sie nicht.
+const CHESTS = {holz: {n: 'Holztruhe'}, gold: {n: 'Goldtruhe'}};
+function streakGoal(at) { const t = at === 3 ? 'holz' : 'gold'; return {chest: t, l: `zur ${CHESTS[t].n}`}; }
+const chestsWaiting = () => dailyState().chests || [];
+// Truhe öffnen: Holztruhe meist Münzen, manchmal ein Porträt, Rahmen oder Titel; Goldtruhe sicher etwas davon
+// (zuerst der Rahmen „Wochenstammgast“, den es nur hier gibt) und dazu Münzen. Schon Vorhandenes wird nie gezogen.
+function openChest() {
+  const d = dailyState(); if (!d.chests || !d.chests.length) return null;
+  const c = d.chests.shift(), gold = c.t === 'gold', rnd = a => a[Math.floor(Math.random() * a.length)];
+  const pool = SHOP_POOL.map(x => x.id).filter(id => !owns(id));
+  let id = null;
+  if (gold) id = !owns(STREAK_FRAME) ? STREAK_FRAME : pool.length ? rnd(pool) : null;
+  else if (pool.length && Math.random() < 0.35) id = rnd(pool);
+  const coins = gold ? (id ? 20 : 60 + 5 * Math.floor(Math.random() * 9)) : (id ? 0 : 15 + 5 * Math.floor(Math.random() * 5));
+  if (id) grant(id);
+  STORY.coins += coins; saveStory(); saveDaily();
+  return {t: c.t, id, coins};
+}
 function streakNext(n) { const at = n < 3 ? 3 : n < 7 ? 7 : Math.ceil((n + 1) / 7) * 7; return Object.assign({at, from: at === 3 ? 0 : at === 7 ? 3 : at - 7}, streakGoal(at)); }
 // Längste je erreichte Serie (auch wenn die aktuelle schon abgerissen ist)
 function streakBest() { const s = dailyState().streak; return Math.max(s.best || 0, s.n || 0); }
@@ -467,11 +484,8 @@ function bumpStreak() {
   if (s.last === today) return;
   s.n = s.last === dayOffset(-1) ? s.n + 1 : 1; s.last = today;
   s.best = Math.max(s.best || 0, s.n);   // Rekord fürs Profil
-  if (s.n === 3) { STORY.coins += 20; DAILY_NOTIFY && DAILY_NOTIFY('Serie: 3 Tage in Folge!', 20); }
-  else if (s.n % 7 === 0) {
-    if (grant(STREAK_FRAME)) DAILY_NOTIFY && DAILY_NOTIFY('Serie: 7 Tage! Neu: Rahmen „Wochenstammgast“', 0);
-    else { STORY.coins += 40; DAILY_NOTIFY && DAILY_NOTIFY(`Serie: ${s.n} Tage in Folge!`, 40); }
-  }
+  const t = s.n === 3 ? 'holz' : s.n % 7 === 0 ? 'gold' : null;
+  if (t) { const d = dailyState(); (d.chests = d.chests || []).push({t, n: s.n}); DAILY_NOTIFY && DAILY_NOTIFY(`Serie: ${s.n} Tage! Eine ${CHESTS[t].n} wartet auf dich.`, 0); }
 }
 // Von der Engine gemeldet: k = Zähler, n = Menge
 function dailyTrack(k, n = 1) {

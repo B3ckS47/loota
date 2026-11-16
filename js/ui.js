@@ -54,7 +54,7 @@ function cosmeticSource(id) {
     if (it) return `${cosmeticName(id)}: in Welt ${w.n} bei „${st.name}“ für ${it.price} Münzen.`;
   }
   for (const w of WORLDS) if (w.starReward && w.starReward.id === id) return `${cosmeticName(id)}: für ${w.starReward.n} Sterne in Welt ${w.n}.`;
-  if (id === STREAK_FRAME) return `${cosmeticName(id)}: für 7 Tage Auftrags-Serie.`;
+  if (id === STREAK_FRAME) return `${cosmeticName(id)}: steckt in der Goldtruhe, die es alle 7 Tage Auftrags-Serie gibt.`;
   const sh = shopItem(id); if (sh) return `${cosmeticName(id)}: im Krämerladen für ${sh.price} Münzen, wenn er im Angebot ist.`;
   return 'Schaltest du im Storymodus frei.';
 }
@@ -293,7 +293,9 @@ function renderTitle() {
   // Serie wie im Auftragsbrett: Kerze, Schiene mit Tagespunkten und Belohnung
   patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span><small id="daily-info" hidden>${dn} von 3</small>`);
   $('#t-daily').setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : ''}`);
-  $('#tn-daily').hidden = dn > 0;
+  const wait = chestsWaiting().length;
+  $('#t-daily').dataset.go = wait ? 'chest' : 'daily';
+  $('#tn-daily').hidden = dn > 0 && !wait;
 }
 // Weiter im Storymodus: angefangene Station fortsetzen, sonst die nächste Station auf der Karte öffnen
 function storyGo() {
@@ -1115,9 +1117,11 @@ function streakTrack(sk) {
   const nx = streakNext(hit ? sk - 1 : sk), len = nx.at - nx.from, fill = sk - nx.from, f = n => (n / len).toFixed(4);
   const dots = Array.from({length: len - 1}, (_, k) => { const i = k + 1, cl = i <= fill ? 'f' : i === fill + 1 && !today ? 't' : '';
     return `<span class="sk-dot ${cl}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s"><em>${nx.from + i}</em></span>`; }).join('');
-  const icon = nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>` : coinImg;   // erreicht: dasselbe Symbol, grün umrandet
-  const goal = `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1">${icon}<em>Tag ${nx.at}</em></span>`;
-  const lbl = hit ? `Ziel erreicht! Nächstes Ziel am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
+  // am Ende eine Truhe: wartet eine aufs Öffnen, wackelt sie; heute erreicht und schon offen: offene Truhe, grün umrandet
+  const wait = chestsWaiting()[0];
+  const goal = wait ? `<span class="sk-goal ready" style="--f:1" data-chest><img src="icons/truhe-${wait.t}-zu.png" alt="${CHESTS[wait.t].n}"><em>Öffnen!</em></span>`
+    : `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1"><img src="icons/truhe-${nx.chest}-${hit ? 'auf' : 'zu'}.png" alt=""><em>Tag ${nx.at}</em></span>`;
+  const lbl = wait ? `Deine ${CHESTS[wait.t].n} ist bereit. Tippe sie an!` : hit ? `Ziel erreicht! Nächste Truhe am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
   const track = `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div>`;
   return {today, track, html: `${track}<span class="sk-l">${lbl}</span>`};
 }
@@ -1126,7 +1130,38 @@ function streakBox(sk) {
   const txt = !sk ? 'Erledige heute einen Auftrag, dann zündet Hilde die Kerze an.'
     : tr.today ? 'Heute geschafft! Morgen geht es weiter.' : 'Heute noch offen. Sonst erlischt die Kerze um Mitternacht.';
   return `<div class="streakbox${sk ? ' lit' : ''}"><div class="sk-head">${candleHtml(sk > 0)}<div class="sk-main">` +
-    `<b>${sk ? `<span class="sk-n">${sk}</span> ${sk === 1 ? 'Tag' : 'Tage'} in Folge` : 'Noch keine Serie'}</b><span class="sk-txt">${txt}</span></div></div>${tr.html}</div>`;
+    `<b>${sk ? `<span class="sk-n">${sk}</span> ${sk === 1 ? 'Tag' : 'Tage'} in Folge` : 'Noch keine Serie'}</b><span class="sk-txt">${txt}</span></div></div>${tr.html}${chestsWaiting().length ? `<button type="button" class="btn primary small sk-open" data-chest>${CHESTS[chestsWaiting()[0].t].n} öffnen</button>` : ''}` +
+    `<span class="sk-info">In der Holztruhe stecken Münzen oder mit Glück ein Porträt, Rahmen oder Titel. In der Goldtruhe ist sicher eins davon.</span></div>`;
+}
+// Truhe öffnen: wackelt immer stärker, heller Blitz (darin wechselt das Bild auf offen), Strahlen, Münzregen, Beute steigt auf
+function showChest() {
+  const w = chestsWaiting()[0]; if (!w || $('.chestov')) return;
+  const nm = CHESTS[w.t].n, el = document.createElement('div'); el.className = 'chestov ' + w.t;
+  el.innerHTML = `<div class="cv-rays" aria-hidden="true"><i></i></div><div class="cv-box"><span class="cv-name">${nm}</span>` +
+    `<button type="button" class="cv-chest idle" aria-label="${nm} öffnen"><img class="cv-zu" src="icons/truhe-${w.t}-zu.png" alt=""><img class="cv-auf" src="icons/truhe-${w.t}-auf.png" alt=""></button>` +
+    `<p class="cv-hint">Tippe auf die Truhe!</p><div class="cv-loot" hidden></div><button type="button" class="cv-later">Später öffnen</button></div>`;
+  document.body.appendChild(el); Snd.sfx('deal');
+  const box = el.querySelector('.cv-chest'), done = () => { el.remove(); if (CUR === 'title') renderTitle(); if (topSheet() && topSheet().id === 'daily') renderSheet(false); };
+  el.querySelector('.cv-later').addEventListener('click', done);
+  box.addEventListener('click', () => {
+    if (box.disabled) return; box.disabled = true;
+    el.querySelector('.cv-hint').hidden = true; el.querySelector('.cv-later').hidden = true;
+    box.classList.remove('idle'); box.classList.add('shake'); Snd.sfx('dice'); buzz([20, 60, 20, 60, 30]);
+    setTimeout(() => {
+      const r = openChest(); if (!r) { done(); return; }
+      const fl = document.createElement('div'); fl.className = 'cv-flash'; el.appendChild(fl);
+      el.classList.add('open'); box.classList.remove('shake');
+      Snd.sfx('levelup'); buzz([40, 50, 80]);
+      const b = box.getBoundingClientRect(); Particles.burst(b.left + b.width / 2, b.top + b.height * 0.35, w.t === 'gold' ? 40 : 26, 1.2);
+      const k = r.id && r.id.split(':')[0], loot = el.querySelector('.cv-loot');
+      loot.innerHTML = r.id
+        ? `<span class="cv-new">Neu für dich</span>${k === 'title' ? `<span class="cv-title">„${esc(COSMETICS.title[r.id.split(':')[1]])}“</span>` : cosPreview(r.id)}<b>${esc(cosmeticName(r.id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]} · im Charakter-Bildschirm auswählen</small>${r.coins ? `<span class="cv-coins sm">${coinImg}+${r.coins}</span>` : ''}`
+        : `<span class="cv-new">Münzen</span><span class="cv-coins">${coinImg}+${r.coins}</span><small>Für den Krämerladen</small>`;
+      loot.insertAdjacentHTML('beforeend', '<button type="button" class="btn primary small cv-ok">Super!</button>');
+      setTimeout(() => { loot.hidden = false; Snd.sfx('coin'); }, 450);
+      loot.querySelector('.cv-ok').addEventListener('click', done);
+    }, UI.reduce ? 50 : 1050);
+  });
 }
 SHEET_VIEWS.daily = () => {
   const st = dailyState(), sk = streakNow();
@@ -1289,6 +1324,7 @@ function go(a) {
     case 'continue': continueGame(); break;
     case 'storygo': storyGo(); break;
     case 'playnow': playNow(); break;
+    case 'chest': showChest(); break;
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
@@ -1325,6 +1361,7 @@ document.addEventListener('click', e => {
     if (e.clientY < cta.top - 2) { Snd.sfx('tap'); buzz(8); go('story'); return; }
   }
   let el;
+  if (t.closest('[data-chest]')) { showChest(); return; }
   if ((el = t.closest('.t-card[data-mode]'))) { if (SET.mode !== el.dataset.mode) { SET.mode = el.dataset.mode; saveSettings(); } renderTitle(); return; }
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }

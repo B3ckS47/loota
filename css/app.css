@@ -994,3 +994,46 @@ input[type=range]{accent-color:#ff8a1f}
 .mc.picked{box-shadow:0 0 0 3px #ff8a1f,0 3px 0 rgba(0,0,0,.3)}
 .mc.picked::after{background:var(--or);color:var(--or-ink)}
 .quizcta b,.dk-head b,.st-name{color:#b8420c}
+
+/* ===== Truhen der Serie ===== */
+.sk-goal img{width:24px;height:22px;object-fit:contain}
+.sk-goal.ready{padding:0;border-color:#ffb547;cursor:pointer;box-shadow:0 0 0 4px rgba(255,180,70,.35),0 0 16px rgba(255,170,50,.85);animation:cv-wiggle 1.8s ease-in-out infinite}
+.sk-goal.ready em{color:#c2560c}
+.sk-goal.ok img{width:26px;height:24px}
+.sk-open{width:auto;margin:6px auto 0;padding-left:20px;padding-right:20px}
+.sk-info{display:block;margin-top:6px;font-size:12.5px;line-height:1.35;color:var(--muted);text-align:center}
+@keyframes cv-wiggle{0%,55%,100%{transform:translate(-50%,-50%) rotate(0) scale(1.08)}65%{transform:translate(-50%,-50%) rotate(-14deg) scale(1.12)}75%{transform:translate(-50%,-50%) rotate(12deg) scale(1.12)}85%{transform:translate(-50%,-50%) rotate(-7deg) scale(1.1)}}
+.chestov{position:fixed;inset:0;z-index:90;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 42%,rgba(70,40,14,.94),rgba(10,6,3,.97) 72%);animation:fadeIn .25s ease}
+.chestov.gold{background:radial-gradient(circle at 50% 42%,rgba(96,62,12,.94),rgba(12,8,2,.97) 72%)}
+.cv-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:340px;padding:24px;text-align:center;color:#fff1d6}
+.cv-name{font:400 32px/1 var(--display);text-shadow:0 3px 0 #5a2405,0 8px 18px rgba(0,0,0,.6)}
+.cv-chest{position:relative;width:230px;height:206px;padding:0;border:0;background:none;cursor:pointer}
+.cv-chest img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 18px rgba(0,0,0,.65))}
+.cv-auf{opacity:0}
+.chestov.open .cv-zu{opacity:0}
+.chestov.open .cv-auf{opacity:1}
+.cv-chest.idle{animation:cv-bob 2.4s ease-in-out infinite}
+.cv-chest.shake{animation:cv-shake 1.05s ease-in both}
+.chestov.open .cv-chest{animation:cv-pop .5s cubic-bezier(.2,1.5,.4,1) both;cursor:default}
+.cv-rays{position:absolute;left:50%;top:44%;width:720px;height:720px;margin:-360px 0 0 -360px;pointer-events:none;opacity:0;transform:scale(.3);transition:opacity .45s,transform .7s cubic-bezier(.2,1.2,.4,1)}
+.cv-rays i{position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.26) 0deg 8deg,rgba(255,214,120,0) 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 0%,rgba(0,0,0,.55) 32%,transparent 66%);mask:radial-gradient(circle,#000 0%,rgba(0,0,0,.55) 32%,transparent 66%);animation:cv-spin 16s linear infinite}
+.chestov.open .cv-rays{opacity:1;transform:scale(1)}
+.cv-flash{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 42%,#fff 0%,rgba(255,244,210,.95) 28%,rgba(255,220,150,0) 70%);animation:cv-flash .75s ease-out both}
+.cv-hint{margin:0;font-weight:800;color:#f0d9b3;animation:pulse 1.6s ease-in-out infinite}
+.cv-later{margin-top:4px;padding:6px 10px;border:0;background:none;color:#cdb48e;font:800 14px var(--body);text-decoration:underline;text-underline-offset:3px}
+.cv-loot{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:230px;margin-top:-26px;padding:14px 18px 16px;border-radius:18px;background:#fff4dc;border:2px solid #e9cf9c;color:#3a2414;box-shadow:inset 0 0 0 3px #fffaf0,0 16px 30px -10px rgba(0,0,0,.8);animation:cv-rise .55s cubic-bezier(.2,1.3,.4,1) both}
+.cv-loot b{font:400 22px/1.1 var(--display)}
+.cv-loot small{font-size:13px;font-weight:700;color:var(--muted)}
+.cv-loot .btn{margin-top:6px;width:auto;min-width:140px}
+.cv-new{font:900 12px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#c2560c}
+.cv-coins{display:flex;align-items:center;gap:6px;font:400 30px var(--display);color:#8a5a00}
+.cv-coins img{width:36px;height:36px}
+.cv-coins.sm{font-size:18px}.cv-coins.sm img{width:22px;height:22px}
+.cv-title{padding:6px 14px;border-radius:10px;background:#3a2414;color:#f3d48a;font:400 20px var(--display)}
+.cv-loot .sp-pt,.cv-loot .sp-fr{width:72px;height:72px}
+@keyframes cv-bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(-1.5deg)}}
+@keyframes cv-shake{0%{transform:rotate(0)}10%{transform:rotate(-3deg)}20%{transform:rotate(3deg)}30%{transform:rotate(-5deg) translateY(-2px)}40%{transform:rotate(5deg) translateY(-2px)}50%{transform:rotate(-7deg) translateY(-4px)}60%{transform:rotate(7deg) translateY(-4px) scale(1.03)}70%{transform:rotate(-9deg) translateY(-6px) scale(1.06)}80%{transform:rotate(9deg) translateY(-6px) scale(1.08)}90%{transform:rotate(-5deg) translateY(-8px) scale(1.12)}100%{transform:rotate(0) translateY(-8px) scale(1.14)}}
+@keyframes cv-pop{0%{transform:scale(1.14)}50%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes cv-spin{to{transform:rotate(360deg)}}
+@keyframes cv-flash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+@keyframes cv-rise{from{opacity:0;transform:translateY(46px) scale(.8)}to{opacity:1;transform:none}}
