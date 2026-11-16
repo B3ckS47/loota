@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-dbcd865b73';
+const CACHE = 'loota-d3cb9d8a5b';
 const FILES = [
 "./",
 "index.html",
@@ -106,6 +106,7 @@ const FILES = [
 "art/karte-welt5.webp",
 "art/klasse-dieb.webp",
 "art/klasse-krieger.webp",
+"art/klasse-pirat.webp",
 "art/klasse-priester.webp",
 "art/klasse-zauberer.webp",
 "art/logo-emblem.webp",

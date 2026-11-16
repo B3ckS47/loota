@@ -317,6 +317,7 @@ const ART = {
   "Dieb":"art/klasse-dieb.webp",
   "Krieger":"art/klasse-krieger.webp",
   "Priester":"art/klasse-priester.webp",
+  "Pirat":"art/klasse-pirat.webp",
   "Zauberer":"art/klasse-zauberer.webp",
   "Bürokratie-Golem":"art/monster-buerokratie-golem.webp",
   "Drache des Montagmorgens":"art/monster-drache-des-montagmorgens.webp",
