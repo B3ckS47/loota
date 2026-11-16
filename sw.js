@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-37bc54bd84';
+const CACHE = 'loota-3c083452a9';
 const FILES = [
 "./",
 "index.html",
@@ -131,6 +131,8 @@ const FILES = [
 "art/stufe-regelheft-gelesen.webp",
 "art/stufe-snacks-mitgebracht.webp",
 "art/stufe-wuerfel-angehaucht.webp",
+"art/szene-auftragsbrett.webp",
+"art/szene-kraemerladen.webp",
 "art/verstaerker-riesenhaft.webp",
 "art/verstaerker-stinksauer.webp",
 "art/verstaerker-winzig.webp",
@@ -162,6 +164,7 @@ const FILES = [
 "icons/portrait-hilde.png",
 "icons/portrait-kalle.png",
 "icons/portrait-kriegerin.png",
+"icons/portrait-kuno.png",
 "icons/portrait-priester.png",
 "icons/portrait-rentner.png",
 "icons/portrait-rosi.png",
@@ -178,6 +181,9 @@ const FILES = [
 "icons/st-shop.png",
 "icons/stern-leer.png",
 "icons/stern-voll.png",
+"icons/sym-auftraege.png",
+"icons/sym-laden.png",
+"icons/sym-serie.png",
 "icons/wert-hand.png",
 "icons/wert-kampf.png",
 "icons/wert-weglaufen.png",

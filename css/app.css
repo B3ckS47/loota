@@ -840,8 +840,10 @@ img.star{object-fit:contain}
 .note .np{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px;color:#6b5434;min-height:28px}
 .stamp{font-style:normal;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#2f7a2a;border:2px solid #2f7a2a;border-radius:6px;padding:2px 7px;transform:rotate(-4deg)}
 .note.done b{text-decoration:line-through;text-decoration-color:rgba(60,40,20,.45)}
-.streakbox{display:grid;gap:3px;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f6e7c4;border:1px solid #e0c58e}
-.streakbox span{font-size:14px}
+.streakbox{display:flex;gap:10px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f6e7c4;border:1px solid #e0c58e}
+.streakbox>img{width:44px;height:44px;flex:0 0 auto}
+.streakbox>span{display:grid;gap:3px}
+.streakbox>span span{font-size:14px}
 .shop-coins{display:flex;align-items:center;gap:6px;font-size:16px;margin:0 0 10px}
 .sitems{display:grid;gap:8px}
 .sitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:#fff8e6;border:1px solid #e3cfa6}
@@ -853,9 +855,17 @@ img.star{object-fit:contain}
 .sp-fr img{width:100%;height:100%;object-fit:cover}
 .sp-ti{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:52px;padding:0 8px;border-radius:10px;background:#3a2414;color:#f3d48a;font:800 13px/1.1 var(--display);text-align:center}
 .sitem .btn{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-.pf-shoplink{display:grid;gap:3px;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.pf-shoplink{display:flex;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.pf-shoplink>img{width:52px;height:52px;flex:0 0 auto}
+.pf-shoplink>span{display:grid;gap:3px}
 .pf-shoplink b{font-size:16px}
-.pf-shoplink span{font-size:14px;opacity:.85}
+.pf-shoplink span span{font-size:14px;opacity:.85}
 
 .note .btn.small,.sitem .btn.small{flex:0 0 auto;width:auto;min-height:32px;padding:4px 12px;font-size:13px;border-radius:10px}
 .sitem .btn.small{min-width:76px;justify-content:center;flex-direction:row;gap:5px}
+
+.btn.ib{flex-direction:row;gap:8px;padding-left:10px;padding-right:10px}
+.btn.ib img{width:34px;height:34px;flex:0 0 auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.btn.ib>span{display:flex;flex-direction:column;align-items:flex-start;min-width:0;text-align:left}
+.btn.ib small{white-space:nowrap}
+.scene{display:block;width:100%;height:clamp(110px,32vw,170px);object-fit:cover;border-radius:12px;border:2px solid var(--edge);margin:0 0 12px;box-shadow:0 4px 10px -6px rgba(0,0,0,.6)}

@@ -1068,9 +1068,9 @@ SHEET_VIEWS.daily = () => {
     return `<div class="note d${m.d}${done ? ' done' : ''}"><span class="nl">${MISSION_LEVEL[m.d]}<span class="nc">${coinImg}+${MISSION_COINS[m.d]}</span></span><b>${esc(m.t)}</b>` +
       `<span class="nbar"><i style="width:${pct}%"></i></span><span class="np">${done ? '<em class="stamp">Erledigt</em>' : prog}${!done && !st.rer ? `<button type="button" class="btn small" data-reroll="${i}">Tauschen</button>` : ''}</span></div>`;
   }).join('');
-  const streak = `<div class="streakbox"><b>${sk ? `Serie: ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : 'Noch keine Serie'}</b><span>${sk ? 'Erledige morgen wieder einen Auftrag, dann wächst sie weiter.' : 'Erledige an mehreren Tagen hintereinander mindestens einen Auftrag.'} Am ${nx.at}. Tag: ${esc(nx.l)}.</span></div>`;
+  const streak = `<div class="streakbox"><img src="icons/sym-serie.png" alt=""><span><b>${sk ? `Serie: ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : 'Noch keine Serie'}</b><span>${sk ? 'Erledige morgen wieder einen Auftrag, dann wächst sie weiter.' : 'Erledige an mehreren Tagen hintereinander mindestens einen Auftrag.'} Am ${nx.at}. Tag: ${esc(nx.l)}.</span></span></div>`;
   return {head: h3('Hildes Auftragsbrett'),
-    body: `<div class="say"><img src="icons/portrait-hilde.png" alt=""><p>„Ich hab da ein paar Aufträge für dich. Jeden Tag neue, versprochen.“</p></div><div class="notes">${notes}</div>${streak}` +
+    body: `<img class="scene" src="art/szene-auftragsbrett.webp" alt=""><div class="say"><img src="icons/portrait-hilde.png" alt=""><p>„Ich hab da ein paar Aufträge für dich. Jeden Tag neue, versprochen.“</p></div><div class="notes">${notes}</div>${streak}` +
       `<p class="hint">Neue Aufträge in ${untilMidnight()}. Sie zählen im freien Spiel und im Storymodus, nicht in Rätseln und im Probespiel.${st.rer ? '' : ' Einen Auftrag pro Tag darfst du tauschen.'}</p>` +
       `<div class="acts"><button type="button" class="btn" data-go="shop">Zum Krämerladen (${STORY.coins} Münzen)</button></div>`};
 };
@@ -1086,7 +1086,7 @@ SHEET_VIEWS.shop = () => {
     return `<div class="sitem${own ? ' own' : ''}">${cosPreview(id)}<span class="si-t"><b>${esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
       (own ? '<em class="stamp">Gekauft</em>' : `<button type="button" class="btn small${poor ? '' : ' primary'}" data-shopbuy="${id}"${poor ? ' disabled' : ''}>${coinImg}${it.price}</button>`) + '</div>'; }).join('');
   return {head: h3('Krämerladen'),
-    body: `<div class="say"><img src="icons/portrait-kalle.png" alt=""><p>„Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
+    body: `<img class="scene" src="art/szene-kraemerladen.webp" alt=""><div class="say"><img src="icons/portrait-kuno.png" alt=""><p>Krämer Kuno: „Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
       `<div class="sitems">${items || '<p class="hint">Du hast schon alles aus dem Laden. Hut ab!</p>'}</div>` +
       `<p class="hint">Neues Angebot in ${untilMidnight()}. Münzen gibt es für Aufträge und im Storymodus. Gekauftes wählst du im Charakter-Bildschirm aus.</p>` +
       `<div class="acts"><button type="button" class="btn" data-go="daily">Zu den Aufträgen</button><button type="button" class="btn" data-go="profile">Zum Charakter</button></div>`};
