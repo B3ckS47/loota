@@ -735,12 +735,11 @@ const SHEET_VIEWS = {
   },
   opp(s) {
     const p = S && S.players[s.pid]; if (!p) return null;
-    const rc = `<div class="rcrow">${p.race ? `<button type="button" class="rcchip" data-uid="${p.race.uid}" data-where="opp"><small>Rasse</small>${esc(p.race.n)}</button>` : '<button type="button" class="rcchip" data-human="1"><small>Rasse</small>Mensch</button>'}${p.cls ? `<button type="button" class="rcchip cls" data-uid="${p.cls.uid}" data-where="opp"><small>Klasse</small>${esc(p.cls.n)}</button>` : '<span class="rcchip cls"><small>Klasse</small>keine</span>'}</div>`;
     const ab = abilList(p);
     const rows = slotRows(p, false);
     const hand = UI.open && p.hand.length ? `<div class="tipbox"><span class="tip-h">Handkarten (sichtbar, weil eingeschaltet)</span>${p.hand.map(c => linkify(esc(cardLabel(c)))).join(', ')}</div>` : '';
     return {head: `<img class="pt" src="${portrait(p)}" alt=""><h3>${esc(p.name)}<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}</h3>`,
-      body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${rc}${ab}${stats3(p)}<div class="tipbox">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="slots">${rows}</div>${hand}`};
+      body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${ab}${stats3(p)}<div class="slots">${rows}</div><div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div>${hand}`};
   },
   equip() {
     if (!S) return null;
@@ -797,13 +796,13 @@ function abilList(p) {
   return `<div class="abil">${a.length ? a.join('') : '<span class="ab none">keine Fähigkeiten</span>'}</div>`;
 }
 function slotRows(p, mine) {
-  const item = (c, w) => mine ? cardMini(c, {where: w, size: 'tiny', extra: (w === 'eq' && !usable(p, c) ? 'inactive' : '') + (UI.adv && UI.adv.uid === c.uid ? ' rec' : '')})
-    : `<button type="button" class="oitem${w === 'pack' ? ' pack' : ''}${w === 'eq' && !usable(p, c) ? ' off' : ''}" data-uid="${c.uid}" data-where="opp">${esc(c.n)}${w === 'eq' && c.b ? ` <b>+${c.b}</b>` : ''}${w === 'eq' && c.run ? ` <b>Flucht +${c.run}</b>` : ''}</button>`;
+  // Eigene Karten sind antippbar mit Aktionen, die der Gegner nur zum Ansehen (where 'opp')
+  const W = w => mine ? w : 'opp';
+  const item = (c, w) => cardMini(c, {where: W(w), size: 'tiny', extra: (w === 'eq' && !usable(p, c) ? 'inactive' : '') + (mine && UI.adv && UI.adv.uid === c.uid ? ' rec' : '')});
+  const human = `<button type="button" class="mc tiny k-race" data-human="1" aria-label="Mensch"><span class="mc-head"><span class="mc-type">Rasse</span></span><img class="mc-art" src="${ART.Mensch || ICON.slot.race}" alt="" draggable="false"><span class="mc-name">Mensch</span></button>`;
   const rows = [];
-  if (mine) {
-    rows.push(['race', 'Rasse', p.race ? cardMini(p.race, {where: 'race', size: 'tiny'}) : `<button type="button" class="mc tiny k-race" data-human="1"><span class="mc-head"><span class="mc-type">Rasse</span></span><img class="mc-art" src="${ICON.slot.race}" alt="" style="object-fit:contain;padding:6px"><span class="mc-name">Mensch</span></button>`]);
-    rows.push(['cls', 'Klasse', p.cls ? cardMini(p.cls, {where: 'cls', size: 'tiny'}) : '<span class="none">keine Klasse</span>']);
-  }
+  rows.push(['race', 'Rasse', p.race ? cardMini(p.race, {where: W('race'), size: 'tiny'}) : human]);
+  rows.push(['cls', 'Klasse', p.cls ? cardMini(p.cls, {where: W('cls'), size: 'tiny'}) : '<span class="none">keine Klasse</span>']);
   const by = s => p.eq.filter(i => i.slot === s);
   [['kopf', 'Kopf'], ['ruestung', 'Rüstung'], ['schuhe', 'Schuhe'], ['hand', `Hände ${handsUsed(p)}/2`], ['none', 'Sonstiges']].forEach(([s, l]) => rows.push([s, l, by(s).map(c => item(c, 'eq')).join('') || '<span class="none">leer</span>']));
   rows.push(['pack', 'Rucksack', p.pack.map(c => item(c, 'pack')).join('') || '<span class="none">leer</span>']);
