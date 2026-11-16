@@ -84,7 +84,7 @@ img{-webkit-user-drag:none;user-select:none}
 .t-plus{width:22px;height:22px;border-radius:50%;background:#ff9a2e;display:grid;place-items:center}
 .t-plus svg{width:12px;height:12px;stroke:#2a1404;stroke-width:2;stroke-linecap:round;fill:none}
 .t-gear{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;padding:0}
-.t-gear svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.t-gear img{width:24px;height:24px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
 .t-logo{position:relative;z-index:1;margin:clamp(6px,2.6vh,24px) 0 0;text-align:center;font:400 clamp(44px,7.4vh,60px)/1 var(--pop);color:#fff1d6;letter-spacing:1px;text-shadow:0 3px 0 #b8520f,0 6px 0 #5a2405,0 10px 24px rgba(0,0,0,.6)}
 .t-logo img{display:block;width:min(84%,340px);max-height:15vh;object-fit:contain;height:auto;margin:0 auto;filter:drop-shadow(0 8px 16px rgba(0,0,0,.6))}
 .t-story{position:relative;z-index:1;margin-top:auto;padding:0 16px;display:flex;flex-direction:column;gap:8px}
@@ -122,8 +122,9 @@ img{-webkit-user-drag:none;user-select:none}
 .td-sk{padding:4px 9px;border-radius:999px;background:#ffe2b8;color:#a3460b;font-weight:900;font-size:13px;white-space:nowrap}
 .td-sk.off{background:#efe3cb;color:#7a5a2c}
 .t-nav{position:relative;z-index:2;margin:14px 12px 10px;height:66px;flex:0 0 auto;border-radius:26px;background:#241912;border:1px solid rgba(255,190,110,.18);box-shadow:0 10px 30px -10px rgba(0,0,0,.85);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center}
-.t-nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0;border:0;background:none;color:#b39a78;font:800 11.5px var(--round);cursor:pointer}
-.t-nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.t-nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:0;border:0;background:none;color:#b39a78;font:800 11.5px var(--round);cursor:pointer}
+.t-nav button>img{width:30px;height:30px;margin-top:-2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));transition:transform .12s}
+.t-nav button:active>img{transform:scale(.9)}
 .t-nav button.on{color:#ffc77a;font-weight:900}
 .t-nav button.on:active .tn-play{transform:scale(.92)}
 .tn-play{transition:transform .1s}

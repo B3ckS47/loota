@@ -26,7 +26,7 @@
       <button class="t-me" type="button" data-go="profile" aria-label="Dein Charakter"><span class="t-pt" id="t-pt"><img src="icons/portrait-du.png" alt=""></span><span class="t-who"><b id="t-name">Abenteurer</b><small id="t-title">Dein Charakter</small></span></button>
       <div class="t-right">
         <button class="t-coins" type="button" data-go="shop" aria-label="Münzen, zum Krämerladen"><img src="icons/muenze-voll.png" alt=""><b id="shop-info">0</b><span class="t-plus" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg></span></button>
-        <button class="t-gear" type="button" data-go="settings" aria-label="Optionen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2.2" /><circle cx="8" cy="17" r="2.2" /></svg></button>
+        <button class="t-gear" type="button" data-go="settings" aria-label="Optionen"><img src="icons/nav-optionen.png" alt=""></button>
       </div>
     </header>
     <h1 class="t-logo"><img src="art/logo-plundo.webp" alt="Plundo" width="960" height="397"></h1>
@@ -48,11 +48,11 @@
     </div>
     <button class="t-daily" type="button" data-go="daily" id="t-daily"></button>
     <nav class="t-nav" aria-label="Bereiche">
-      <button type="button" data-go="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10l1.5-5h13L20 10" /><path d="M4 10c0 1.4 1.1 2.5 2.7 2.5S9.3 11.4 9.3 10c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.6 2.5S20 11.4 20 10" /><path d="M5.5 12.3V19h13v-6.7" /></svg>Laden</button>
-      <button type="button" data-go="cards"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4" width="11" height="15" rx="2" /><path d="M5 7.5v11A2.5 2.5 0 0 0 7.5 21H15" /></svg>Karten</button>
+      <button type="button" data-go="shop"><img src="icons/nav-laden.png" alt="">Laden</button>
+      <button type="button" data-go="cards"><img src="icons/nav-karten.png" alt="">Karten</button>
       <button type="button" class="on" aria-current="page" data-go="playnow" aria-label="Spielen: weiter, wo du aufgehört hast"><span class="tn-play"><img src="icons/sym-beute.png" alt=""></span>Spielen</button>
-      <button type="button" data-go="daily"><span class="tn-dot" id="tn-daily" hidden></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h9a2 2 0 0 1 2 2v12" /><path d="M6 7h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" /><path d="M7.5 12h6M7.5 15.5h4" /></svg>Aufträge</button>
-      <button type="button" data-go="online"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" /><circle cx="16.5" cy="9.5" r="2.6" /><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3" /></svg>Freunde</button>
+      <button type="button" data-go="daily"><span class="tn-dot" id="tn-daily" hidden></span><img src="icons/nav-auftraege.png" alt="">Aufträge</button>
+      <button type="button" data-go="online"><img src="icons/nav-freunde.png" alt="">Freunde</button>
     </nav>
   </section>
 
@@ -260,7 +260,7 @@
     <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Dein Charakter</h2></header>
     <div class="content">
       <div class="panel pf-hero" id="pf-hero"></div>
-      <button class="panel pf-shoplink" type="button" data-go="shop"><img src="icons/sym-laden.png" alt=""><span><b>Krämerladen</b><span>Porträts, Rahmen und Titel gegen Münzen. Jeden Tag ein neues Angebot.</span></span></button>
+      <button class="panel pf-shoplink" type="button" data-go="shop"><img src="icons/nav-laden.png" alt=""><span><b>Krämerladen</b><span>Porträts, Rahmen und Titel gegen Münzen. Jeden Tag ein neues Angebot.</span></span></button>
       <div class="panel pf-sec">
         <label class="lbl" for="pf-name">Profilname</label>
         <input id="pf-name" class="pf-input" type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Wie sollen dich die anderen nennen?">
