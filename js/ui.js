@@ -289,8 +289,8 @@ function renderTitle() {
   $('#free-info').textContent = fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2 oder 3 Bots';
   // Aufträge mit Serie
   const ds = dailyState(), dn = ds.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, sk = streakNow();
-  patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main"><span class="td-row"><b>Aufträge</b><small id="daily-info">${dn >= 3 ? 'Alle erledigt' : `${dn} von 3`}</small></span><span class="td-bar"><i style="width:${Math.round(dn / 3 * 100)}%"></i></span></span>` +
-    `<span class="td-sk${sk ? '' : ' off'}">${sk ? `${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : 'Serie starten'}</span>`);
+  // Serie wie im Auftragsbrett: Kerze, Schiene mit Tagespunkten und Belohnung, darunter was als Nächstes kommt
+  patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).html}</span><small id="daily-info" hidden>${dn} von 3</small>`);
   $('#t-daily').setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : ''}`);
   $('#tn-daily').hidden = dn > 0;
 }
@@ -1107,21 +1107,24 @@ TRACK_HANDLER = (k, n) => dailyTrack(k, n);
 DAILY_NOTIFY = (text, coins) => missionToast(text, coins);
 // Serie: Kerze (brennt nur bei laufender Serie) und Fortschritt bis zum nächsten Ziel, ein Feld pro Tag
 function candleHtml(on) { return `<span class="candle${on ? ' on' : ''}" aria-hidden="true"><i class="glow"></i><img src="icons/sym-serie-aus.png" alt=""><img class="flame" src="icons/sym-serie-flamme.png" alt=""></span>`; }
-function streakBox(sk) {
+// Fortschritt der Serie: durchgehende Schiene, ein Punkt pro Tag, am Ende die Belohnung (Auftragsbrett und Startseite)
+function streakTrack(sk) {
   const today = sk > 0 && streakToday(), days = n => `${n} ${n === 1 ? 'Tag' : 'Tage'}`;
   const hit = today && (sk === 3 || (sk >= 7 && sk % 7 === 0));   // heute ein Ziel erreicht: Leiste bleibt bis morgen voll
   const nx = streakNext(hit ? sk - 1 : sk), len = nx.at - nx.from, fill = sk - nx.from, f = n => (n / len).toFixed(4);
-  // durchgehende Schiene, ein Punkt pro Tag, am Ende die Belohnung
   const dots = Array.from({length: len - 1}, (_, k) => { const i = k + 1, cl = i <= fill ? 'f' : i === fill + 1 && !today ? 't' : '';
     return `<span class="sk-dot ${cl}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s"><em>${nx.from + i}</em></span>`; }).join('');
   const icon = hit ? '<b>✓</b>' : nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>` : coinImg;
   const goal = `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1">${icon}<em>Tag ${nx.at}</em></span>`;
   const lbl = hit ? `Ziel erreicht! Nächstes Ziel am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
+  return {today, html: `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div><span class="sk-l">${lbl}</span>`};
+}
+function streakBox(sk) {
+  const tr = streakTrack(sk);
   const txt = !sk ? 'Erledige heute einen Auftrag, dann zündet Hilde die Kerze an.'
-    : today ? 'Heute geschafft! Morgen geht es weiter.' : 'Heute noch offen. Sonst erlischt die Kerze um Mitternacht.';
+    : tr.today ? 'Heute geschafft! Morgen geht es weiter.' : 'Heute noch offen. Sonst erlischt die Kerze um Mitternacht.';
   return `<div class="streakbox${sk ? ' lit' : ''}"><div class="sk-head">${candleHtml(sk > 0)}<div class="sk-main">` +
-    `<b>${sk ? `<span class="sk-n">${sk}</span> ${sk === 1 ? 'Tag' : 'Tage'} in Folge` : 'Noch keine Serie'}</b><span class="sk-txt">${txt}</span></div></div>` +
-    `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div><span class="sk-l">${lbl}</span></div>`;
+    `<b>${sk ? `<span class="sk-n">${sk}</span> ${sk === 1 ? 'Tag' : 'Tage'} in Folge` : 'Noch keine Serie'}</b><span class="sk-txt">${txt}</span></div></div>${tr.html}</div>`;
 }
 SHEET_VIEWS.daily = () => {
   const st = dailyState(), sk = streakNow();
