@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3a2414">
+<meta name="theme-color" content="#15100c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Loota">
+<meta name="apple-mobile-web-app-title" content="Plundo">
 <meta name="description" content="Fantasy-Kartenspiel gegen Bots: Monster besiegen, Beute machen, Stufe 10 erreichen.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="app-icons/icon-192.png">
 <link rel="apple-touch-icon" href="app-icons/apple-touch-icon.png">
-<title>Loota</title>
+<title>Plundo</title>
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -20,29 +20,40 @@
 
   <!-- ============ Startbildschirm ============ -->
   <section id="scr-title" class="screen" aria-label="Startbildschirm">
+    <div class="t-hero" aria-hidden="true"><img id="t-map" src="art/karte-welt1.webp" alt=""></div>
     <canvas id="motes" aria-hidden="true"></canvas>
-    <button class="cbtn cb-l" type="button" data-go="daily" aria-label="Aufträge"><img src="icons/sym-auftraege.png" alt=""><span class="cb-chip" id="daily-info"></span></button>
-    <button class="cbtn cb-r" type="button" data-go="shop" aria-label="Krämerladen"><img src="icons/sym-laden.png" alt=""><span class="cb-chip" id="shop-info"></span></button>
-    <div class="sign" role="img" aria-label="Loota">
-      <span class="sign-small">Fantasy-Kartenspiel</span>
-      <span class="sign-big">Loota</span>
+    <header class="t-top">
+      <button class="t-me" type="button" data-go="profile" aria-label="Dein Charakter"><span class="t-pt" id="t-pt"><img src="icons/portrait-du.png" alt=""></span><span class="t-who"><b id="t-name">Abenteurer</b><small id="t-title">Dein Charakter</small></span></button>
+      <div class="t-right">
+        <button class="t-coins" type="button" data-go="shop" aria-label="Münzen, zum Krämerladen"><img src="icons/muenze-voll.png" alt=""><b id="shop-info">0</b><span class="t-plus" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg></span></button>
+        <button class="t-gear" type="button" data-go="settings" aria-label="Optionen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2.2" /><circle cx="8" cy="17" r="2.2" /></svg></button>
+      </div>
+    </header>
+    <h1 class="t-logo"><img src="art/logo-plundo.webp" alt="Plundo" width="960" height="397"></h1>
+    <section class="t-story" aria-label="Storymodus">
+      <div class="t-chips"><span class="t-world" id="t-world">Welt 1</span><span class="t-stars"><img src="icons/stern-voll.png" alt=""><b id="t-stars">0 / 0</b></span></div>
+      <button class="t-wbtn" type="button" data-go="story"><span class="t-wname" id="t-wname">Rund um die Taverne</span><span class="t-next" id="story-info"></span></button>
+      <button class="t-cta" type="button" data-go="storygo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg><span id="t-cta">Weiterspielen</span></button>
+    </section>
+    <div class="t-modes">
+      <button class="t-card" type="button" data-go="setup">
+        <span class="tc-art tc-free" aria-hidden="true"><img src="art/monster-falsche-schatztruhe.webp" alt=""><img src="art/fluch-pechstraehne.webp" alt=""><img src="art/gegenstand-gusseiserne-bratpfanne.webp" alt=""></span>
+        <span class="tc-txt"><b>Freies Spiel</b><small id="free-info">Gegen 2–4 Bots</small></span>
+      </button>
+      <button class="t-card" type="button" data-go="online">
+        <span class="tc-badge">Bald</span>
+        <span class="tc-art tc-online" aria-hidden="true"><img src="icons/portrait-elfe.png" alt=""><img src="icons/portrait-zwerg.png" alt=""><img src="icons/portrait-diebin.png" alt=""></span>
+        <span class="tc-txt"><b>Online</b><small>Mit Freunden spielen</small></span>
+      </button>
     </div>
-    <div class="emblem" aria-hidden="true"><img src="art/logo-emblem.webp" alt=""></div>
-    <nav class="menu" aria-label="Hauptmenü">
-      <button class="btn primary" type="button" data-go="continue" id="btn-continue" hidden>Weiterspielen<small id="continue-info"></small></button>
-      <button class="btn story" type="button" data-go="story">Storymodus<small id="story-info">Welt 1 · Rund um die Taverne</small></button>
-      <button class="btn" type="button" data-go="setup">Freies Spiel</button>
-      <div class="menu-row">
-        <button class="btn" type="button" data-go="rules">Regeln</button>
-        <button class="btn" type="button" data-go="cards">Karten</button>
-      </div>
-      <div class="menu-row">
-        <button class="btn" type="button" data-go="profile">Charakter</button>
-        <button class="btn" type="button" data-go="settings">Optionen</button>
-      </div>
-      <button class="btn ghost" type="button" id="btn-install" hidden>Als App installieren</button>
+    <button class="t-daily" type="button" data-go="daily" id="t-daily"></button>
+    <nav class="t-nav" aria-label="Bereiche">
+      <button type="button" data-go="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10l1.5-5h13L20 10" /><path d="M4 10c0 1.4 1.1 2.5 2.7 2.5S9.3 11.4 9.3 10c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.6 2.5S20 11.4 20 10" /><path d="M5.5 12.3V19h13v-6.7" /></svg>Laden</button>
+      <button type="button" data-go="cards"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4" width="11" height="15" rx="2" /><path d="M5 7.5v11A2.5 2.5 0 0 0 7.5 21H15" /></svg>Karten</button>
+      <button type="button" class="on" aria-current="page"><span class="tn-play"><img src="art/logo-emblem.webp" alt=""></span>Spielen</button>
+      <button type="button" data-go="daily"><span class="tn-dot" id="tn-daily" hidden></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h9a2 2 0 0 1 2 2v12" /><path d="M6 7h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" /><path d="M7.5 12h6M7.5 15.5h4" /></svg>Aufträge</button>
+      <button type="button" data-go="online"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" /><circle cx="16.5" cy="9.5" r="2.6" /><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3" /></svg>Freunde</button>
     </nav>
-    <p class="fine">Monster besiegen · Beute machen · Stufe 10 erreichen</p>
   </section>
 
   <!-- ============ Storymodus ============ -->
@@ -169,8 +180,9 @@
       </div>
       <div class="panel about">
         <h3 class="lbl">Über die App</h3>
-        <p>Loota <span id="app-version"></span>. Ein Hobbyprojekt: Alle Karten, Texte, Grafiken und Klänge sind eigens für dieses Spiel entstanden.</p>
+        <p>Plundo <span id="app-version"></span>. Ein Hobbyprojekt: Alle Karten, Texte, Grafiken und Klänge sind eigens für dieses Spiel entstanden.</p>
         <p id="install-hint" class="hint"></p>
+        <button class="btn small" type="button" id="btn-install" hidden>Als App installieren</button>
       </div>
     </div>
   </section>
@@ -273,7 +285,7 @@
   <!-- ============ Karten ============ -->
   <section id="scr-cards" class="screen" aria-label="Kartenübersicht" hidden>
     <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Karten &amp; Deck</h2></header>
-    <div class="content"><div class="panel deckp" id="deck-panel"></div><div class="chips cfilter" id="card-filter"></div><div class="cgrid" id="card-grid"></div></div>
+    <div class="content"><div class="panel quizcta"><div><b>Regeln und Probespiel</b><span>Wie eine Runde abläuft, Hildes Übungspartie und das Regel-Quiz.</span></div><button class="btn" type="button" data-go="rules">Öffnen</button></div><div class="panel deckp" id="deck-panel"></div><div class="chips cfilter" id="card-filter"></div><div class="cgrid" id="card-grid"></div></div>
   </section>
 
   <!-- ============ Quiz ============ -->

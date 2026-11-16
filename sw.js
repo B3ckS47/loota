@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-85e768571f';
+const CACHE = 'loota-07cc652d4f';
 const FILES = [
 "./",
 "index.html",
@@ -16,6 +16,10 @@ const FILES = [
 "fonts/grenze-gotisch-latin-700-normal.woff2",
 "fonts/kalam-latin-400-normal.woff2",
 "fonts/kalam-latin-700-normal.woff2",
+"fonts/lilita-one-latin-400-normal.woff2",
+"fonts/nunito-latin-700-normal.woff2",
+"fonts/nunito-latin-800-normal.woff2",
+"fonts/nunito-latin-900-normal.woff2",
 "art/einmal-champignon.webp",
 "art/einmal-flasche-drachenschnaps.webp",
 "art/einmal-fusspilzsalbe.webp",
@@ -80,6 +84,7 @@ const FILES = [
 "art/klasse-priester.webp",
 "art/klasse-zauberer.webp",
 "art/logo-emblem.webp",
+"art/logo-plundo.webp",
 "art/monster-baerlauch-baer.webp",
 "art/monster-buerokratie-golem.webp",
 "art/monster-drache-des-montagmorgens.webp",

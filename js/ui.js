@@ -1,5 +1,5 @@
 'use strict';
-/* ================= Loota · Handy-Oberfläche ================= */
+/* ================= Plundo · Handy-Oberfläche ================= */
 const APP_VERSION = '1.0';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -260,20 +260,49 @@ history.pushState({app: 1}, '');
 window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, ''); });
 
 /* ================= Startbildschirm ================= */
+// Ausschnitt der Weltkarte oben auf dem Startbildschirm (senkrechte Lage im Bild)
+const HERO_Y = {w1: '68%', w2: '6%', w3: '88%'};
+const nextStation = w => w.stations.find(st => st.type !== 'shop' && !STORY.done[st.id] && stationUnlocked(st));
+const freeGame = () => { const act = GAME_ON && S && S.winner == null && !S.scn; const sv = !act && load(K_SAVE); return act ? {turn: S.turn, lvl: S.players[0].lvl, live: true} : sv ? {turn: sv.S.turn, lvl: sv.S.players[0].lvl} : null; };
 function renderTitle() {
-  const save = load(K_SAVE), active = GAME_ON && S && S.winner == null;
-  const cw = currentWorld(), si = $('#story-info');
-  const ss = storySave(), sst = ss && stationById(ss.st);
-  if (si) si.textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : `Welt ${cw.n} · ${worldStars(cw)} von ${worldMaxStars(cw)} Sternen`;
+  const cw = currentWorld(), ss = storySave(), sst = ss && stationById(ss.st), nx = nextStation(cw);
+  const map = $('#t-map');
+  if (map.getAttribute('src') !== cw.map) map.setAttribute('src', cw.map);
+  map.style.objectPosition = `50% ${HERO_Y[cw.id] || '60%'}`;
+  $('#t-world').textContent = `Welt ${cw.n}`;
+  $('#t-stars').textContent = `${worldStars(cw)} / ${worldMaxStars(cw)}`;
+  $('#t-wname').textContent = cw.name;
+  const open = worldMaxStars(cw) - worldStars(cw), first = nx && nx.type === 'tutorial';
+  $('#story-info').textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : first ? `Zum Start: ${nx.name}` : nx ? `Weiter mit Station ${nx.no} · ${nx.name}` : open ? `Alles geschafft · noch ${open} ${open === 1 ? 'Stern' : 'Sterne'} offen` : 'Alles geschafft. Bald geht es weiter!';
+  $('#t-cta').textContent = sst ? 'Fortsetzen' : first ? 'Los geht’s' : nx ? 'Weiterspielen' : 'Zur Karte';
+  // Charakter oben links
+  const pt = $('#t-pt'); pt.style.setProperty('--fr', myFrame()); const pim = pt.querySelector('img'); if (pim.getAttribute('src') !== myPortrait()) pim.setAttribute('src', myPortrait());
+  $('#t-name').textContent = PROFILE.name || 'Abenteurer';
+  $('#t-title').textContent = myTitle() || 'Dein Charakter';
+  $('#shop-info').textContent = STORY.coins;
+  // Freies Spiel: offene Partie anzeigen
+  const fg = freeGame();
+  $('#free-info').textContent = fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2–4 Bots';
+  // Aufträge mit Serie
   const ds = dailyState(), dn = ds.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, sk = streakNow();
-  const di = $('#daily-info'), si2 = $('#shop-info');
-  if (di) { di.textContent = dn >= 3 ? '✓ 3/3' : `${dn}/3`; di.classList.toggle('done', dn >= 3); di.parentElement.setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk}` : ''}`); }
-  if (si2) { si2.innerHTML = `${coinImg}${STORY.coins}`; si2.parentElement.setAttribute('aria-label', `Krämerladen: ${STORY.coins} Münzen`); }
-  const btn = $('#btn-continue');
-  btn.hidden = !(active || save);
-  if (active && S.scn) { const st = stationById(S.scn); $('#continue-info').textContent = st ? `Storymodus · ${st.no} ${st.name}` : 'Storymodus'; }
-  else if (active) $('#continue-info').textContent = `Runde ${S.turn} · Stufe ${S.players[0].lvl}`;
-  else if (save) $('#continue-info').textContent = `Gespeichert: Runde ${save.S.turn} · Stufe ${save.S.players[0].lvl}`;
+  patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main"><span class="td-row"><b>Aufträge</b><small id="daily-info">${dn >= 3 ? 'Alle erledigt' : `${dn} von 3`}</small></span><span class="td-bar"><i style="width:${Math.round(dn / 3 * 100)}%"></i></span></span>` +
+    `<span class="td-sk${sk ? '' : ' off'}">${sk ? `${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : 'Serie starten'}</span>`);
+  $('#t-daily').setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : ''}`);
+  $('#tn-daily').hidden = dn > 0;
+}
+// Weiter im Storymodus: angefangene Station fortsetzen, sonst die nächste Station auf der Karte öffnen
+function storyGo() {
+  if (storySave()) { resumeStation(); return; }
+  const nx = nextStation(currentWorld());
+  show('story');
+  if (nx) openStation(nx.id);
+}
+// Freies Spiel: offene Partie weiterspielen oder eine neue einrichten
+async function freePlay() {
+  const fg = freeGame();
+  if (!fg) { show('setup'); return; }
+  const ok = await confirmDialog('Freies Spiel', `Deine Partie ist noch offen (Runde ${fg.turn}, Stufe ${fg.lvl}). Spielst du weiter oder fängst du neu an?`, 'Weiterspielen', 'Neue Partie');
+  if (ok) continueGame(); else show('setup');
 }
 const Motes = (() => {
   const cv = $('#motes'), cx = cv.getContext('2d'); let on = false, parts = [];
@@ -1093,6 +1122,11 @@ SHEET_VIEWS.daily = () => {
       `<p class="hint">Neue Aufträge in ${untilMidnight()}. Sie zählen im freien Spiel und im Storymodus, nicht in Rätseln und im Probespiel.${st.rer ? '' : ' Einen Auftrag pro Tag darfst du tauschen.'}</p>` +
       `<div class="acts"><button type="button" class="btn" data-go="shop">Zum Krämerladen (${STORY.coins} Münzen)</button></div>`};
 };
+SHEET_VIEWS.online = () => ({head: h3('Online spielen'),
+  body: `<div class="online-pic"><img src="icons/portrait-elfe.png" alt=""><img src="icons/portrait-zwerg.png" alt=""><img src="icons/portrait-diebin.png" alt=""></div>` +
+    `<p>Bald spielst du hier mit deinen Freunden statt gegen Bots:</p><ul class="online-list"><li>Freunde über einen Code oder Link hinzufügen</li><li>Eine Partie erstellen und Freunde einladen</li><li>Sehen, wer gerade online ist</li></ul>` +
+    `<p class="hint">Dafür meldest du dich einmal an. Dann ist auch dein Fortschritt gesichert, wenn du das Handy wechselst.</p>` +
+    `<div class="acts"><button type="button" class="btn primary" data-sheetclose>Alles klar</button></div>`});
 function cosPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
   if (k === 'portrait') return `<img class="sp-pt" src="${c.src}" alt="">`;
@@ -1233,7 +1267,9 @@ function showStoryEnd(res) {
 function go(a) {
   switch (a) {
     case 'continue': continueGame(); break;
-    case 'setup': show('setup'); break;
+    case 'storygo': storyGo(); break;
+    case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
+    case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
     case 'resetstory': confirmDialog('Storymodus zurücksetzen?', 'Alle Stationen, Sterne, Münzen und Belohnungen aus dem Storymodus gehen verloren.', 'Zurücksetzen', 'Abbrechen').then(ok => { if (ok) { resetStory(); clearStorySave(); toast('Storymodus zurückgesetzt'); } }); break;
     case 'reroll': ROSTER = rollRoster(); renderFoes(); Snd.sfx('deal'); break;
@@ -1262,7 +1298,7 @@ function go(a) {
 document.addEventListener('click', e => {
   const t = e.target;
   if (performance.now() < Drag.noClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
-  if (t.closest('.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art,.pf-pt,.pf-fr,.pickbtn')) { Snd.sfx('tap'); buzz(8); }
+  if (t.closest('.t-me,.t-coins,.t-gear,.t-wbtn,.t-cta,.t-card,.t-daily,.t-nav button:not(.on),.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art,.pf-pt,.pf-fr,.pickbtn')) { Snd.sfx('tap'); buzz(8); }
   let el;
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }

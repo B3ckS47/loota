@@ -1,4 +1,4 @@
-# Loota
+# Plundo
 
 Fantasy-Kartenspiel gegen 2 oder 3 Bots: Monster besiegen, Beute machen, als Erster Stufe 10 erreichen. Mit Zug-Empfehlung, Regeln, Kartenübersicht und Quiz. Musik und Sounds entstehen direkt im Code, Bilder und Schriften liegen alle in diesem Ordner. Einmal geöffnet, läuft die App auch offline.
 
@@ -13,7 +13,7 @@ Fantasy-Kartenspiel gegen 2 oder 3 Bots: Monster besiegen, Beute machen, als Ers
    ```
    git init -b main
    git add .
-   git commit -m "Loota v1"
+   git commit -m "Plundo v1"
    git remote add origin https://github.com/DEINNAME/loota.git
    git push -u origin main
    ```
@@ -23,7 +23,7 @@ Fantasy-Kartenspiel gegen 2 oder 3 Bots: Monster besiegen, Beute machen, als Ers
 
 ## Auf dem Handy installieren
 
-- **Android (Chrome):** Adresse öffnen, auf dem Startbildschirm der App „Als App installieren“ tippen. Alternativ im Chrome-Menü (⋮) **App installieren**.
+- **Android (Chrome):** Adresse öffnen, in den Optionen der App „Als App installieren“ tippen. Alternativ im Chrome-Menü (⋮) **App installieren**.
 - **iPhone (Safari):** Adresse öffnen, unten auf **Teilen** tippen, dann **Zum Home-Bildschirm**.
 
 Einmal mit Internet starten, dann lädt die App alle Bilder und läuft danach auch offline.
