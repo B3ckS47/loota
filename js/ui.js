@@ -297,6 +297,13 @@ function storyGo() {
   show('story');
   if (nx) openStation(nx.id);
 }
+// Spielen-Knopf unten: weiter mit der zuletzt gespielten Partie (Story oder frei), sonst weiter im Storymodus
+function playNow() {
+  if (GAME_ON && S && S.winner == null) { continueGame(); return; }
+  const ss = storySave(), fs = load(K_SAVE);
+  if (fs && (!ss || (fs.ts || 0) > (ss.ts || 0))) { continueGame(); return; }
+  storyGo();
+}
 // Freies Spiel: offene Partie weiterspielen oder eine neue einrichten
 async function freePlay() {
   const fg = freeGame();
@@ -1268,6 +1275,7 @@ function go(a) {
   switch (a) {
     case 'continue': continueGame(); break;
     case 'storygo': storyGo(); break;
+    case 'playnow': playNow(); break;
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
@@ -1298,7 +1306,11 @@ function go(a) {
 document.addEventListener('click', e => {
   const t = e.target;
   if (performance.now() < Drag.noClickUntil) { e.preventDefault(); e.stopPropagation(); return; }
-  if (t.closest('.t-me,.t-coins,.t-gear,.t-wbtn,.t-cta,.t-card,.t-daily,.t-nav button:not(.on),.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art,.pf-pt,.pf-fr,.pickbtn')) { Snd.sfx('tap'); buzz(8); }
+  if (t.closest('.t-me,.t-coins,.t-gear,.t-wbtn,.t-cta,.t-card,.t-daily,.t-nav button,.btn,.iconbtn,.chip,.seg button,.switch,.oc,.mstat,.rcchip,.oitem,.ptbtn,.side,.art,.pf-pt,.pf-fr,.pickbtn')) { Snd.sfx('tap'); buzz(8); }
+  if (CUR === 'title' && t.closest('#scr-title') && !t.closest('button,a,.t-modes,.t-nav,.t-top')) {
+    const cta = $('.t-cta').getBoundingClientRect();
+    if (e.clientY < cta.top - 2) { Snd.sfx('tap'); buzz(8); go('story'); return; }
+  }
   let el;
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }

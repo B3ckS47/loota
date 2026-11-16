@@ -124,7 +124,10 @@ img{-webkit-user-drag:none;user-select:none}
 .t-nav{position:relative;z-index:2;margin:14px 12px 10px;height:66px;flex:0 0 auto;border-radius:26px;background:#241912;border:1px solid rgba(255,190,110,.18);box-shadow:0 10px 30px -10px rgba(0,0,0,.85);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center}
 .t-nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0;border:0;background:none;color:#b39a78;font:800 11.5px var(--round);cursor:pointer}
 .t-nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.t-nav button.on{color:#ffc77a;font-weight:900;cursor:default}
+.t-nav button.on{color:#ffc77a;font-weight:900}
+.t-nav button.on:active .tn-play{transform:scale(.92)}
+.tn-play{transition:transform .1s}
+.t-logo,.t-chips{cursor:pointer}
 .tn-play{width:58px;height:58px;margin-top:-26px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ffc560,#ff7a1a 75%);box-shadow:0 0 0 4px #241912,0 0 24px rgba(255,130,30,.8);display:grid;place-items:center}
 .tn-play img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(60,20,0,.45))}
 .tn-dot{position:absolute;top:-2px;left:50%;margin-left:6px;width:10px;height:10px;border-radius:50%;background:#ff5a3c;box-shadow:0 0 0 2px #241912}
