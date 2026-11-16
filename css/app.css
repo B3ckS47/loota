@@ -977,13 +977,13 @@ input[type=range]{accent-color:#ff8a1f}
 .mc.picked::after{background:var(--or);color:var(--or-ink)}
 
 /* ===== Truhen der Serie ===== */
-.sk-goal img{width:26px;height:26px;object-fit:contain}
+.sk-goal img{width:24px;height:22px;object-fit:contain}
 .sk-goal.ready{padding:0;border-color:#ffb547;cursor:pointer;box-shadow:0 0 0 4px rgba(255,180,70,.35),0 0 16px rgba(255,170,50,.85);animation:sk-glow 1.8s ease-in-out infinite}
 /* nur die Truhe wackelt, Rahmen und Text bleiben ruhig */
-.sk-goal.ready img{width:30px;height:30px;animation:cv-wiggle 1.8s ease-in-out infinite}
+.sk-goal.ready img{width:28px;height:26px;animation:cv-wiggle 1.8s ease-in-out infinite}
 @keyframes sk-glow{0%,100%{box-shadow:0 0 0 4px rgba(255,180,70,.35),0 0 14px rgba(255,170,50,.7)}50%{box-shadow:0 0 0 5px rgba(255,180,70,.45),0 0 22px rgba(255,170,50,.95)}}
 .sk-goal.ready em{color:#c2560c}
-.sk-goal.ok img{width:26px;height:26px}
+.sk-goal.ok img{width:26px;height:24px}
 .sk-open{width:auto;margin:6px auto 0;padding-left:20px;padding-right:20px}
 .sk-info{display:block;margin-top:6px;font-size:12.5px;line-height:1.35;color:var(--muted);text-align:center}
 @keyframes cv-wiggle{0%,55%,100%{transform:rotate(0) scale(1)}65%{transform:rotate(-14deg) scale(1.1)}75%{transform:rotate(12deg) scale(1.1)}85%{transform:rotate(-7deg) scale(1.05)}}
