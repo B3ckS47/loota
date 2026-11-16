@@ -65,7 +65,8 @@ function myName() { return PROFILE.name || 'Du'; }
 function applyProfile() { document.documentElement.style.setProperty('--pf', myFrame()); if (S && CUR === 'game') { W.renderedOnce = true; render(); } }
 const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
 function renderProfile() {
-  patch($('#pf-hero'), `<img class="pf-big" src="${myPortrait()}" alt=""><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span></div>`);
+  patch($('#pf-hero'), `<img class="pf-big" src="${myPortrait()}" alt=""><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
+    `<span class="pf-streak">${candleHtml(streakNow() > 0)}<span><b>Längste Serie: ${streakBest()} ${streakBest() === 1 ? 'Tag' : 'Tage'}</b><small>Aktuell: ${streakNow()} ${streakNow() === 1 ? 'Tag' : 'Tage'}</small></span></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
   patch($('#pf-portraits'), ALL_PORTRAITS.map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join(''));

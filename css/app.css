@@ -546,6 +546,11 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .pf-who{display:flex;flex-direction:column;gap:4px;min-width:0}
 .pf-who b{font:400 24px/1.05 var(--display);color:var(--ink);overflow:hidden;text-overflow:ellipsis}
 .pf-who span{font-size:14px;color:var(--muted)}
+.pf-who .pf-streak{display:flex;align-items:center;gap:6px;margin-top:6px;padding:4px 10px 4px 2px;border-radius:12px;background:#fdecc8;border:1px solid #efcf8e;color:var(--ink);align-self:flex-start}
+.pf-streak .candle{width:34px;height:34px}
+.pf-streak>span{display:flex;flex-direction:column;line-height:1.15}
+.pf-streak b{font:800 14px var(--body);color:#a3460b}
+.pf-streak small{font-size:12px;color:var(--muted);font-weight:700}
 .pf-sec{padding:12px 14px;margin-top:12px}
 .pf-sec .lbl{display:block;margin:0 0 8px;font:800 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .pf-input{width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;border-radius:12px;border:2px solid var(--edge);background:var(--card-hi);color:var(--ink);font:700 18px var(--body)}
