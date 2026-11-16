@@ -191,11 +191,12 @@ function doDig(p){
 // Seegang: jeder gibt 1 zufällige Handkarte weiter, ungerade Runde nach links (zum nächsten Platz), gerade nach rechts
 function seegang(){
   const ps=S.players.filter(q=>!q.dead), n=ps.length; if(n<2) return;
-  const left=S.turn%2===1, give=ps.map(q=>q.hand.length ? q.hand[rnd(q.hand.length)] : null);
+  const left=S.turn%2===1, give=ps.map(q=>q.hand.length && !hasCls(q,'pirat') ? q.hand[rnd(q.hand.length)] : null);
   ps.forEach((q,i)=>{ if(give[i]) take(q,give[i]); });
   ps.forEach((q,i)=>{ const to=ps[(i+(left?1:n-1))%n]; if(give[i]) to.hand.push(give[i]); });
   const mine=give[ps.indexOf(me())], got=give[(ps.indexOf(me())+(left?n-1:1))%n];
   log(`Seegang! Das Schiff kippt nach ${left?'links':'rechts'}: Alle geben eine zufällige Handkarte weiter.${me().human && (mine||got) ? ` Du gibst ${mine?`<b>${cardLabel(mine)}</b>`:'nichts'} ab und bekommst ${got?`<b>${cardLabel(got)}</b>`:'nichts'}.` : ''}`,'sys');
+  const fest=ps.filter(q=>hasCls(q,'pirat')); if(fest.length) log(`Seefest: ${fest.map(q=>nm(q)).join(' und ')} ${fest.length>1?'geben':V(fest[0],'gibst','gibt')} als ${fest.length>1?'Piraten':'Pirat'} nichts ab.`,'sys');
   ruleOnce('seegang','Seegang: Alle geben 1 zufällige Handkarte an den Nachbarn weiter, in ungerader Runde nach links, in gerader nach rechts.');
   fx('seegang',{left}); render();
 }
@@ -229,7 +230,8 @@ const CLASSES = {
   krieger:{n:'Krieger',txt:'Du gewinnst bei Gleichstand. Im Kampf bis zu 3 Karten abwerfen: je +1.'},
   zauberer:{n:'Zauberer',txt:'Misslingt ein Fluchtwurf: bis zu 3 Karten abwerfen, je +1 auf den Wurf.'},
   dieb:{n:'Dieb',txt:'1 Karte abwerfen: Ein anderer Spieler bekommt im Kampf −2 (einmal pro Kampf).'},
-  priester:{n:'Priester',txt:'Gegen Untote bis zu 3 Karten abwerfen: je +3.'}
+  priester:{n:'Priester',txt:'Gegen Untote bis zu 3 Karten abwerfen: je +3.'},
+  pirat:{n:'Pirat',w:5,txt:'Plündern: Gewinnst du einen Kampf ohne Helfer, ziehst du 1 Schatz mehr. Seefest: Bei Seegang gibst du keine Karte ab.'}
 };
 const ENH = [
   {n:'Stinksauer',v:5,trm:1,x:2},
@@ -550,7 +552,7 @@ function cardPool(){
   MONSTERS.forEach(m=>add(Object.assign({k:'monster'},m),'door',m.x||1));
   CURSES.forEach(c=>add(Object.assign({k:'curse'},c),'door',c.x||1));
   Object.keys(RACES).forEach(r=>add({k:'race',r,n:RACES[r].n,txt:RACES[r].txt},'door',2));
-  Object.keys(CLASSES).forEach(c=>add({k:'class',c,n:CLASSES[c].n,txt:CLASSES[c].txt},'door',2));
+  Object.keys(CLASSES).filter(c=>!CLASSES[c].w).forEach(c=>add({k:'class',c,n:CLASSES[c].n,txt:CLASSES[c].txt},'door',2));
   ENH.forEach(e=>add(Object.assign({k:'enh'},e),'door',e.x||1));
   add({k:'wander',n:'Ungebetener Gast',txt:'Spiele diese Karte mit einem Monster von deiner Hand in einen fremden Kampf. Das Monster kämpft mit.'},'door',2);
   ITEMS.forEach(i=>add(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
@@ -575,6 +577,7 @@ function cardPool(){
   ONESHOTS_W4.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W4.forEach(n=>addW({k:'levelup',n,w:4,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   MONSTERS_W5.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
+  addW({k:'class',c:'pirat',w:5,n:CLASSES.pirat.n,txt:CLASSES.pirat.txt},'door',2);
   CURSES_W5.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
   ITEMS_W5.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
   ONESHOTS_W5.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
@@ -1354,7 +1357,8 @@ async function winCombat(C){
   log(`${nm(f)} ${V(f,'besiegst','besiegt')} ${monNames(C)}${h?` mit Hilfe von ${nmD(h)}`:''} und ${V(f,'steigst','steigt')} ${lv} ${pl(lv,'Stufe','Stufen')} auf: Stufe ${Math.min(f.lvl,WINLVL())}.`,'good');
   if(f.lvl>=WINLVL()){ f.lvl=WINLVL(); S.winner=f.id; log(f.human ? `Stufe ${WINLVL()}! Du hast gewonnen!` : `${f.name} erreicht Stufe ${WINLVL()} und gewinnt das Spiel.`, f.human?'good':'bad'); render(); return; }
   if(h && hasRace(h,'elf')){ const g=Math.min(C.mons.length,Math.max(0,WINLVL()-1-h.lvl)); if(g>0){ h.lvl+=g; log(`${nm(h)} ${V(h,'steigst','steigt')} als Elf-Helfer auf: Stufe ${h.lvl}.`,'good'); ruleOnce('elfhelp','Elfen steigen auf, wenn sie jemandem helfen, ein Monster zu besiegen.'); } }
-  const n=treasuresOf(C), drawn=[];
+  const loot=!h && hasCls(f,'pirat') ? 1 : 0, n=treasuresOf(C)+loot, drawn=[];
+  if(loot){ log(`Plündern: ${nm(f)} ${V(f,'ziehst','zieht')} als Pirat 1 Schatz mehr.`,'good'); ruleOnce('pirat','Piraten teilen nicht gern: Wer als Pirat ohne Helfer gewinnt, zieht 1 Schatz mehr.'); }
   for(let i=0;i<n;i++){ const t=(f.human || (h && h.human)) ? luckyTr() : drawTr(); if(t) drawn.push(t); }
   if(h){
     shuffle(drawn);
@@ -1655,7 +1659,7 @@ function chooseSell(p,cands){
 function bestRC(p,kind){
   const cards=p.hand.filter(c=>c.k===kind); if(!cards.length) return null;
   const items=[...p.hand,...p.pack,...p.eq].filter(c=>c.k==='item' && c.req);
-  const score=c=>items.filter(i=>kind==='race'?i.req.race===c.r:i.req.cls===c.c).reduce((s,i)=>s+i.b,0)+((kind==='race'&&c.r==='elf')||(kind==='class'&&c.c==='krieger')?0.5:0);
+  const score=c=>items.filter(i=>kind==='race'?i.req.race===c.r:i.req.cls===c.c).reduce((s,i)=>s+i.b,0)+((kind==='race'&&c.r==='elf')||(kind==='class'&&c.c==='krieger')?0.5:(kind==='class'&&c.c==='pirat')?0.4:0);
   return cards.sort((a,b)=>score(b)-score(a))[0];
 }
 function gainWhy(p,it){

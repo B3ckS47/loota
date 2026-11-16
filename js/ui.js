@@ -1519,6 +1519,7 @@ function powerTip(p){
   const n=[];
   if(hasCls(p,'krieger')) n.push('Gewinnt bei Gleichstand und darf im Kampf bis zu 3 Karten für je +1 abwerfen.');
   if(hasCls(p,'priester')) n.push('Gegen Untote je abgeworfener Karte +3 (höchstens 3 Karten).');
+  if(hasCls(p,'pirat')) n.push('Pirat: Allein gewonnen gibt es 1 Schatz mehr. Bei Seegang gibt er nichts ab.');
   if(p.spore) n.push(`Sporenwolke: im Kampf −${p.spore}, bis ein Kampf gewonnen ist.`);
   n.push('Im Kampf kommen noch Einmal-Gegenstände, ein Helfer und Monsterboni dazu.');
   return `<b class="tip-h">Kampfstärke = Stufe + ausgerüstete Gegenstände</b>${tipRows(rows,power(p))}<span class="tip-n">${n.join(' ')}</span>`;
@@ -1539,7 +1540,7 @@ function handTip(p){
 }
 const ABIL={
   elf:['steigt beim Helfen auf'], zwerg:['6 Handkarten','beliebig viele Große'], halbling:['1× pro Zug doppelt verkaufen','Fluchtwurf wiederholen'],
-  krieger:['gewinnt bei Gleichstand','Karten abwerfen: +1'], zauberer:['Fluchtzauber: Karten abwerfen'], dieb:['in den Rücken fallen: −2'], priester:['gegen Untote: +3 je Karte']
+  krieger:['gewinnt bei Gleichstand','Karten abwerfen: +1'], zauberer:['Fluchtzauber: Karten abwerfen'], dieb:['in den Rücken fallen: −2'], priester:['gegen Untote: +3 je Karte'], pirat:['allein gewonnen: +1 Schatz','seefest bei Seegang']
 };
 
 /* ================= Ziehen und Ablegen: Karten aufs Spielfeld ================= */
