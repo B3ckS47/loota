@@ -179,6 +179,9 @@
         <div class="trow"><span>Stationen überspringen</span><button class="switch" type="button" role="switch" data-toggle="test" aria-label="Stationen überspringen"></button></div>
         <p class="hint">Im Storymodus bekommt jede Station einen Knopf zum Überspringen, auch gesperrte. Übersprungene Stationen zählen mit allen Sternen.</p>
         <button class="btn small danger" type="button" data-go="resetstory">Storymodus zurücksetzen</button>
+        <div class="trow"><span>Auftrags-Serie<small id="cheat-streak">Aktuell 0 Tage</small></span></div>
+        <div class="btnrow2"><button class="btn small" type="button" data-go="streakplus">Serie +1 Tag</button><button class="btn small" type="button" data-go="streakreset">Serie auf 0</button></div>
+        <p class="hint">Am 3. Tag gibt es eine Holztruhe, alle 7 Tage eine Goldtruhe. So kannst du die Truhen ausprobieren.</p>
       </div>
       <div class="panel about">
         <h3 class="lbl">Über die App</h3>
@@ -268,6 +271,7 @@
         <input id="pf-name" class="pf-input" type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Wie sollen dich die anderen nennen?">
         <p class="hint" id="pf-name-hint">2 bis 16 Zeichen. Später kann das dein Name für Partien gegen andere sein.</p>
       </div>
+      <div class="chips pf-filter" id="pf-filter" role="group" aria-label="Optik nach Herkunft filtern"></div>
       <div class="panel pf-sec">
         <h4 class="lbl">Titel</h4>
         <div class="pf-titles" id="pf-titles"></div>

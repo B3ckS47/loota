@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-78b94cb875';
+const CACHE = 'loota-69adc9f8b9';
 const FILES = [
 "./",
 "index.html",
@@ -16,14 +16,6 @@ const FILES = [
 "fonts/grenze-gotisch-latin-700-normal.woff2",
 "fonts/kalam-latin-400-normal.woff2",
 "fonts/kalam-latin-700-normal.woff2",
-"fonts/lilita-one-latin-400-normal.woff2",
-"fonts/nunito-latin-400-italic.woff2",
-"fonts/nunito-latin-400-normal.woff2",
-"fonts/nunito-latin-500-normal.woff2",
-"fonts/nunito-latin-600-normal.woff2",
-"fonts/nunito-latin-700-normal.woff2",
-"fonts/nunito-latin-800-normal.woff2",
-"fonts/nunito-latin-900-normal.woff2",
 "art/einmal-champignon.webp",
 "art/einmal-flasche-drachenschnaps.webp",
 "art/einmal-fusspilzsalbe.webp",

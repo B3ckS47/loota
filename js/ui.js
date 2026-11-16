@@ -58,6 +58,18 @@ function cosmeticSource(id) {
   const sh = shopItem(id); if (sh) return `${cosmeticName(id)}: im Krämerladen für ${sh.price} Münzen, wenn er im Angebot ist.`;
   return 'Schaltest du im Storymodus frei.';
 }
+// Herkunft einer Optik für den Filter im Charakter-Bildschirm: start, w1…, laden, truhe
+function cosmeticGroup(id) {
+  if (!id) return 'start';
+  for (const w of WORLDS) {
+    if (w.starReward && w.starReward.id === id) return w.id;
+    for (const st of w.stations) if (st.reward === id || (st.shop || []).some(x => x.id === id) || (st.choices || []).some(c => (c.rewards || []).includes(id) || c.reward === id)) return w.id;
+  }
+  if (id === STREAK_FRAME) return 'truhe';
+  if (shopItem(id)) return 'laden';
+  return 'start';
+}
+const PF_GROUPS = () => [['alle', 'Alle'], ['start', 'Start'], ...WORLDS.map(w => [w.id, `Welt ${w.n}`]), ['laden', 'Krämerladen'], ['truhe', 'Truhen']];
 function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portrait && cosOpen(q)) || PORTRAITS[0]; return x[2]; }
 function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]; return f[2]; }
 function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
@@ -69,10 +81,12 @@ function renderProfile() {
     `<span class="pf-streak">${candleHtml(streakNow() > 0)}<span><b>Längste Serie: ${streakBest()} ${streakBest() === 1 ? 'Tag' : 'Tage'}</b><small>Aktuell: ${streakNow()} ${streakNow() === 1 ? 'Tag' : 'Tage'}</small></span></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
-  patch($('#pf-portraits'), ALL_PORTRAITS.map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join(''));
-  patch($('#pf-frames'), ALL_FRAMES.map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i><span>${l}</span></button>`; }).join(''));
+  const fg = UI.pfFilter || 'alle', inG = id => fg === 'alle' || cosmeticGroup(id) === fg, none = '<p class="hint pf-empty">Hier gibt es nichts in dieser Gruppe.</p>';
+  patch($('#pf-filter'), PF_GROUPS().map(([k, l]) => `<button type="button" class="chip" data-pffilter="${k}" aria-pressed="${fg === k}">${l}</button>`).join(''));
+  patch($('#pf-portraits'), (ALL_PORTRAITS.filter(x => inG(x[3])).map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join('')) || none);
+  patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i><span>${l}</span></button>`; }).join('')) || none);
   // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
-  const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k));
+  const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k) && inG('title:' + k));
   patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +
     `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} gibt es im Storymodus und im Krämerladen.</p>`);
 }
@@ -357,6 +371,7 @@ function renderSaveInfo() {
   const s = load(K_SAVE);
   $('#save-info').textContent = s ? `Gespeichert am ${new Date(s.ts).toLocaleString('de-DE', {dateStyle: 'short', timeStyle: 'short'})}: Runde ${s.S.turn}, du auf Stufe ${s.S.players[0].lvl}.` : 'Kein gespeichertes Spiel.';
   $('#app-version').textContent = 'Version ' + APP_VERSION;
+  const sk = streakNow(), cw = chestsWaiting().length; $('#cheat-streak').textContent = `Aktuell ${sk} ${sk === 1 ? 'Tag' : 'Tage'} · Rekord ${streakBest()}${cw ? ` · ${cw} ${cw === 1 ? 'Truhe' : 'Truhen'} bereit` : ''}`;
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   $('#install-hint').textContent = standalone ? 'Die App ist installiert.' : ios ? 'Installieren am iPhone: In Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“.' : 'Installieren: Im Browser-Menü „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.';
 }
@@ -1325,6 +1340,8 @@ function go(a) {
     case 'storygo': storyGo(); break;
     case 'playnow': playNow(); break;
     case 'chest': showChest(); break;
+    case 'streakplus': { const n = cheatStreak(); if (!chestsWaiting().length || n % 7 && n !== 3) toast(`Serie: ${n} ${n === 1 ? 'Tag' : 'Tage'}`); renderSaveInfo(); break; }
+    case 'streakreset': resetStreak(); toast('Serie auf 0 gesetzt'); renderSaveInfo(); break;
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
@@ -1361,6 +1378,7 @@ document.addEventListener('click', e => {
     if (e.clientY < cta.top - 2) { Snd.sfx('tap'); buzz(8); go('story'); return; }
   }
   let el;
+  if ((el = t.closest('[data-pffilter]'))) { UI.pfFilter = el.dataset.pffilter; renderProfile(); return; }
   if (t.closest('[data-chest]')) { showChest(); return; }
   if ((el = t.closest('.t-card[data-mode]'))) { if (SET.mode !== el.dataset.mode) { SET.mode = el.dataset.mode; saveSettings(); } renderTitle(); return; }
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }

@@ -484,9 +484,16 @@ function bumpStreak() {
   if (s.last === today) return;
   s.n = s.last === dayOffset(-1) ? s.n + 1 : 1; s.last = today;
   s.best = Math.max(s.best || 0, s.n);   // Rekord fürs Profil
+  streakChest(s);
+}
+// Serienziel erreicht: Truhe dazulegen (3. Tag Holz, alle 7 Tage Gold)
+function streakChest(s) {
   const t = s.n === 3 ? 'holz' : s.n % 7 === 0 ? 'gold' : null;
   if (t) { const d = dailyState(); (d.chests = d.chests || []).push({t, n: s.n}); DAILY_NOTIFY && DAILY_NOTIFY(`Serie: ${s.n} Tage! Eine ${CHESTS[t].n} wartet auf dich.`, 0); }
 }
+// Testphase: Serie um einen Tag verlängern bzw. auf 0 setzen
+function cheatStreak() { const s = dailyState().streak; s.n = streakNow() + 1; s.last = dayKey(); s.best = Math.max(s.best || 0, s.n); streakChest(s); saveDaily(); return s.n; }
+function resetStreak() { const d = dailyState(); d.streak.n = 0; d.streak.last = null; d.chests = []; saveDaily(); }
 // Von der Engine gemeldet: k = Zähler, n = Menge
 function dailyTrack(k, n = 1) {
   const st = dailyState(); let gain = 0;
