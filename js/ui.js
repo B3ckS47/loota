@@ -87,6 +87,10 @@ const K_SET = 'loota.settings', K_SAVE = 'loota.save';
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
 function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 function clearSave() { try { localStorage.removeItem(K_SAVE); } catch (e) {} }
+// Laufende Storymodus-Station: eigener Spielstand, damit das freie Spiel nicht überschrieben wird (Rätsel und Probespiel sind zu kurz dafür)
+const K_STORYSAVE = 'loota.storysave';
+function storySave() { const d = load(K_STORYSAVE); return d && d.st && d.S && stationById(d.st) ? d : null; }
+function clearStorySave() { try { localStorage.removeItem(K_STORYSAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
 const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall', test: false}, SAVED_SET || {});
@@ -111,7 +115,10 @@ let GAME_TABLE = 'taverne', GAME_THEME = 'taverne';
 const MOOD_WORLD = {keller: 'w2', wald: 'w3'};
 const moodOk = v => !MOOD_WORLD[v] || !!STORY.worlds[MOOD_WORLD[v]];
 function freeMood() { GAME_TABLE = moodOk(SET.table) ? SET.table : 'taverne'; GAME_THEME = moodOk(SET.theme) ? SET.theme : 'taverne'; }
-CHECKPOINT_HANDLER = () => { if (SCN) return; store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
+CHECKPOINT_HANDLER = () => {
+  if (SCN) { if (!SCN.fight && !SCN.tut && STORY_RUN) store(K_STORYSAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION, scn: SCN, st: STORY_RUN.st, table: GAME_TABLE, theme: GAME_THEME}); return; }
+  store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION});
+};
 
 /* ================= Bildschirme ================= */
 /* ================= Deck-Baukasten ================= */
@@ -254,7 +261,8 @@ window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, 
 function renderTitle() {
   const save = load(K_SAVE), active = GAME_ON && S && S.winner == null;
   const cw = currentWorld(), si = $('#story-info');
-  if (si) si.textContent = `Welt ${cw.n} · ${worldStars(cw)} von ${worldMaxStars(cw)} Sternen`;
+  const ss = storySave(), sst = ss && stationById(ss.st);
+  if (si) si.textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : `Welt ${cw.n} · ${worldStars(cw)} von ${worldMaxStars(cw)} Sternen`;
   const btn = $('#btn-continue');
   btn.hidden = !(active || save);
   if (active && S.scn) { const st = stationById(S.scn); $('#continue-info').textContent = st ? `Storymodus · ${st.no} ${st.name}` : 'Storymodus'; }
@@ -770,7 +778,7 @@ const SHEET_VIEWS = {
   },
   pause() {
     if (S && S.scn) { const st = stationById(S.scn);
-      return {head: h3(st ? `${st.no} · ${esc(st.name)}` : 'Pause'), body: `${st ? `<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>` : ''}<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="storymap">Station abbrechen</button></div><p class="hint">Im Storymodus wird nicht zwischengespeichert. Brichst du ab, startest du die Station neu.</p>`}; }
+      return {head: h3(st ? `${st.no} · ${esc(st.name)}` : 'Pause'), body: `${st ? `<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>` : ''}<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="storymap">Zur Storykarte</button></div><p class="hint">${SCN && !SCN.fight && !SCN.tut ? 'Die Station wird zu Beginn jedes deiner Züge gespeichert. Auf der Storykarte kannst du sie später fortsetzen.' : 'Rätsel und Probespiel werden nicht gespeichert. Verlässt du sie, startest du später neu.'}</p>`}; }
     return {head: h3('Pause'), body: `<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="cards">Alle Karten</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div><p class="hint">Dein Spiel wird zu Beginn jedes deiner Züge gespeichert.</p>`};
   },
   sel() {
@@ -869,7 +877,7 @@ FX_HANDLER = (t, d) => {
     case 'dice': Snd.sfx('dice'); W.diceHideAt = 0; break;
     case 'diceland': Snd.sfx('diceland'); buzz(20); W.diceHideAt = performance.now() + 1500; setTimeout(render, 1550); break;
     case 'gameover':
-      if (S && S.scn && STORY_RUN && !STORY_RUN.done) { STORY_RUN.done = true; const res = finishStation(stationById(STORY_RUN.st), S); setTimeout(() => showStoryEnd(res), 1000); }
+      if (S && S.scn && STORY_RUN && !STORY_RUN.done) { STORY_RUN.done = true; clearStorySave(); const res = finishStation(stationById(STORY_RUN.st), S); setTimeout(() => showStoryEnd(res), 1000); }
       else if (!(S && S.scn)) { setTimeout(() => showEnd(d.winner), 1000); clearSave(); }
       break;
   }
@@ -952,8 +960,10 @@ const starSvg = on => `<img class="star${on ? ' on' : ''}" src="icons/stern-${on
 const ST_IMG = {puzzle: 'icons/st-puzzle.png', duel: 'icons/st-duel.png', event: 'icons/st-event.png', shop: 'icons/st-shop.png', boss: 'icons/st-boss.png', lock: 'icons/st-lock.png'};
 const medalIcon = t => t === 'tutorial' ? '<img class="mi face" src="icons/portrait-hilde.png" alt="">' : ST_IMG[t] ? `<img class="mi" src="${ST_IMG[t]}" alt="">` : `<svg viewBox="0 0 24 24">${ST_ICON[t] || LOCK_PATH}</svg>`;
 const coinImg = '<img src="icons/muenze-voll.png" alt="">';
+let SAVED_ST = null;   // Station mit gespeichertem Spielstand (für die Karte)
 function renderStory() {
   const open = openWorlds(), cw = open[open.length - 1];
+  SAVED_ST = (storySave() || {}).st || null;
   patch($('#st-coins'), `${coinImg}<b>${STORY.coins}</b>`);
   const head = w => `<span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${STORY.worlds[w.id] ? ' · abgeschlossen' : ''}</span>`;
   patch($('#st-head'), head(open[0]));
@@ -990,8 +1000,9 @@ function worldMapHTML(w, next) {
   const nodes = w.stations.map(st => {
     const un = stationUnlocked(st), dn = !!STORY.done[st.id], s = starsOf(st.id), mx = maxStars(st);
     const stars = mx ? `<span class="sn-stars">${Array.from({length: mx}, (_, i) => starSvg(!!s[i])).join('')}</span>` : '';
-    return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}" data-station="${st.id}" style="left:${X(st)}%;top:${Y(st)}${art ? '%' : 'px'}" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
-      `<span class="sn-medal">${medalIcon(un ? st.type : 'lock')}<i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${stars}</button>`;
+    const run = SAVED_ST === st.id;
+    return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}${run ? ' paused' : ''}" data-station="${st.id}" style="left:${X(st)}%;top:${Y(st)}${art ? '%' : 'px'}" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
+      `<span class="sn-medal">${medalIcon(un ? st.type : 'lock')}<i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${run ? '<span class="sn-run">angefangen</span>' : stars}</button>`;
   }).join('');
   const last = w.stations[w.stations.length - 1];
   if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
@@ -1015,6 +1026,7 @@ function openStation(id) {
 }
 function startStation(id) {
   const st = stationById(id); if (!st || !st.scn || !stationUnlocked(st)) return;
+  clearStorySave();
   const scn = scenarioFor(st);
   const w = worldById(st.world);
   scn.counts = variantCounts(w.deck, scn.variant || 'standard'); delete scn.variant;
@@ -1030,6 +1042,29 @@ function startStation(id) {
   STACK.length = 0; STACK.push('title', 'story');
   setScreen('game');
   newGame(false);
+}
+function resumeStation() {
+  const d = storySave(); if (!d) return;
+  if (GAME_ON && S && S.scn === d.st && S.winner == null) { closeAllSheets(); setScreen('game'); return; }
+  SCN = d.scn; STORY_RUN = {st: d.st, done: false}; TUT = null;
+  GAME_TABLE = d.table || 'taverne'; GAME_THEME = d.theme || 'taverne';
+  $$('.endov').forEach(x => x.remove()); while (SHEETS.length) SHEETS.pop(); renderSheet(true);
+  applySettings();
+  UI.bots = d.bots || (d.scn.bots || []).length; UI.diff = d.diff || 'normal';
+  W.reset(); GAME_ON = true;
+  STACK.length = 0; STACK.push('title', 'story');
+  setScreen('game');
+  resumeGame(d);
+}
+// Eine andere Station läuft noch: vor dem Start fragen, ob deren Spielstand verloren gehen darf
+async function askStartStation(id) {
+  const d = storySave();
+  if (d && d.st !== id) {
+    const o = stationById(d.st);
+    const ok = await confirmDialog('Andere Station läuft noch', `„${esc(o.no + ' · ' + o.name)}“ ist noch nicht fertig gespielt. Startest du hier, geht der Spielstand dort verloren.`, 'Trotzdem starten', 'Abbrechen');
+    if (!ok) return;
+  }
+  startStation(id);
 }
 function pickChoice(v) {
   const s = topSheet(); if (!s || s.id !== 'station') return;
@@ -1103,7 +1138,9 @@ SHEET_VIEWS.station = s => {
     const goals = [['Station schaffen', !!stars[0]], ...(st.extras || []).map((e, i) => [e.t, !!stars[i + 1]])];
     body += `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>`;
     if (st.reward) body += `<p class="st-reward">Belohnung: ${esc(cosmeticName(st.reward))}${owns(st.reward) ? ' · hast du schon' : ''}</p>`;
-    body += `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Los geht’s'}</button>${testBtn}</div>`;
+    const sv = storySave(), mine = sv && sv.st === st.id;
+    body += mine ? `<p class="st-saved">Angefangen: Runde ${sv.S.turn}, du bist auf Stufe ${sv.S.players[0].lvl}.</p><div class="acts"><button type="button" class="btn primary" data-story-resume>Fortsetzen</button><button type="button" class="btn" data-story-start="${st.id}">Neu starten</button>${testBtn}</div>`
+      : `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Los geht’s'}</button>${testBtn}</div>`;
   }
   return {head: h3(`${esc(st.no)} · ${esc(st.name)}`), body};
 };
@@ -1131,7 +1168,7 @@ function go(a) {
     case 'continue': continueGame(); break;
     case 'setup': show('setup'); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
-    case 'resetstory': confirmDialog('Storymodus zurücksetzen?', 'Alle Stationen, Sterne, Münzen und Belohnungen aus dem Storymodus gehen verloren.', 'Zurücksetzen', 'Abbrechen').then(ok => { if (ok) { resetStory(); toast('Storymodus zurückgesetzt'); } }); break;
+    case 'resetstory': confirmDialog('Storymodus zurücksetzen?', 'Alle Stationen, Sterne, Münzen und Belohnungen aus dem Storymodus gehen verloren.', 'Zurücksetzen', 'Abbrechen').then(ok => { if (ok) { resetStory(); clearStorySave(); toast('Storymodus zurückgesetzt'); } }); break;
     case 'reroll': ROSTER = rollRoster(); renderFoes(); Snd.sfx('deal'); break;
     case 'story': show('story'); break;
     case 'storymap': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (GAME_ON && S && S.scn && S.winner == null) { TOKEN++; } if (S && S.scn) GAME_ON = false; STACK.length = 0; STACK.push('title'); setScreen('story'); break;
@@ -1198,7 +1235,8 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('frame:' + el.dataset.frame)); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
-  if ((el = t.closest('[data-story-start]'))) { startStation(el.dataset.storyStart); return; }
+  if ((el = t.closest('[data-story-start]'))) { askStartStation(el.dataset.storyStart); return; }
+  if ((el = t.closest('[data-story-resume]'))) { resumeStation(); return; }
   if ((el = t.closest('[data-story-choice]'))) { pickChoice(el.dataset.storyChoice); return; }
   if ((el = t.closest('[data-buy]'))) { buyItem(el.dataset.buy); return; }
   if ((el = t.closest('[data-storyclose]'))) { closeAllSheets(); return; }

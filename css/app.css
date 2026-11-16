@@ -813,3 +813,8 @@ img.star{object-fit:contain}
 .mebar .lv em.neg{font-style:normal;color:#ff9b8a}
 .oc .os .neg{color:#b3261e}
 .oc .os img.spi{border-radius:50%;object-fit:cover}
+
+/* Angefangene Station: auf der Karte markiert, im Stationsblatt mit Fortsetzen */
+.snode .sn-run{display:block;margin:3px auto 0;width:max-content;padding:2px 8px;border-radius:999px;background:#2f6b2a;color:#fff;font:800 11px/1.2 var(--body);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.snode.paused .sn-medal{box-shadow:0 0 0 3px #4caf50,0 0 12px rgba(76,175,80,.8)}
+.st-saved{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:#e6f2df;color:#24461f;font-weight:700}
