@@ -456,7 +456,10 @@ function dailyState() {
 }
 // Laufende Serie: zählt, solange gestern oder heute mindestens ein Auftrag erledigt wurde
 function streakNow() { const s = dailyState().streak; return s.last === dayKey() || s.last === dayOffset(-1) ? s.n : 0; }
-function streakNext(n) { return n < 3 ? {at: 3, l: '20 Münzen'} : n < 7 ? {at: 7, l: owns(STREAK_FRAME) ? '40 Münzen' : 'Rahmen „Wochenstammgast“'} : {at: Math.ceil((n + 1) / 7) * 7, l: '40 Münzen'}; }
+// Nächstes Serienziel nach n Tagen: bei 3 Tagen 20 Münzen, alle 7 Tage der Rahmen (sonst 40 Münzen)
+function streakGoal(at) { return at === 3 ? {c: 20, l: '20 Münzen'} : owns(STREAK_FRAME) ? {c: 40, l: '40 Münzen'} : {fr: STREAK_FRAME, l: 'Rahmen „Wochenstammgast“'}; }
+function streakNext(n) { const at = n < 3 ? 3 : n < 7 ? 7 : Math.ceil((n + 1) / 7) * 7; return Object.assign({at, from: at === 3 ? 0 : at === 7 ? 3 : at - 7}, streakGoal(at)); }
+function streakToday() { return dailyState().streak.last === dayKey(); }
 function bumpStreak() {
   const s = dailyState().streak, today = dayKey();
   if (s.last === today) return;

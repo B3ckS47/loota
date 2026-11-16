@@ -21,6 +21,8 @@
   <!-- ============ Startbildschirm ============ -->
   <section id="scr-title" class="screen" aria-label="Startbildschirm">
     <canvas id="motes" aria-hidden="true"></canvas>
+    <button class="cbtn cb-l" type="button" data-go="daily" aria-label="Aufträge"><img src="icons/sym-auftraege.png" alt=""><span class="cb-chip" id="daily-info"></span></button>
+    <button class="cbtn cb-r" type="button" data-go="shop" aria-label="Krämerladen"><img src="icons/sym-laden.png" alt=""><span class="cb-chip" id="shop-info"></span></button>
     <div class="sign" role="img" aria-label="Loota">
       <span class="sign-small">Fantasy-Kartenspiel</span>
       <span class="sign-big">Loota</span>
@@ -30,10 +32,6 @@
       <button class="btn primary" type="button" data-go="continue" id="btn-continue" hidden>Weiterspielen<small id="continue-info"></small></button>
       <button class="btn story" type="button" data-go="story">Storymodus<small id="story-info">Welt 1 · Rund um die Taverne</small></button>
       <button class="btn" type="button" data-go="setup">Freies Spiel</button>
-      <div class="menu-row">
-        <button class="btn ib" type="button" data-go="daily"><img src="icons/sym-auftraege.png" alt=""><span>Aufträge<small id="daily-info"></small></span></button>
-        <button class="btn ib" type="button" data-go="shop"><img src="icons/sym-laden.png" alt=""><span>Krämerladen<small id="shop-info"></small></span></button>
-      </div>
       <div class="menu-row">
         <button class="btn" type="button" data-go="rules">Regeln</button>
         <button class="btn" type="button" data-go="cards">Karten</button>

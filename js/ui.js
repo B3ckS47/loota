@@ -266,8 +266,9 @@ function renderTitle() {
   const ss = storySave(), sst = ss && stationById(ss.st);
   if (si) si.textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : `Welt ${cw.n} · ${worldStars(cw)} von ${worldMaxStars(cw)} Sternen`;
   const ds = dailyState(), dn = ds.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, sk = streakNow();
-  if ($('#daily-info')) $('#daily-info').textContent = `${dn} von 3 erledigt${sk ? ` · Serie ${sk}` : ''}`;
-  if ($('#shop-info')) $('#shop-info').textContent = `${STORY.coins} Münzen`;
+  const di = $('#daily-info'), si2 = $('#shop-info');
+  if (di) { di.textContent = dn >= 3 ? '✓ 3/3' : `${dn}/3`; di.classList.toggle('done', dn >= 3); di.parentElement.setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk}` : ''}`); }
+  if (si2) { si2.innerHTML = `${coinImg}${STORY.coins}`; si2.parentElement.setAttribute('aria-label', `Krämerladen: ${STORY.coins} Münzen`); }
   const btn = $('#btn-continue');
   btn.hidden = !(active || save);
   if (active && S.scn) { const st = stationById(S.scn); $('#continue-info').textContent = st ? `Storymodus · ${st.no} ${st.name}` : 'Storymodus'; }
@@ -1060,15 +1061,30 @@ function missionToast(text, coins) {   // auch über offenen Blättern sichtbar
 }
 TRACK_HANDLER = (k, n) => dailyTrack(k, n);
 DAILY_NOTIFY = (text, coins) => missionToast(text, coins);
+// Serie: Kerze (brennt nur bei laufender Serie) und Fortschritt bis zum nächsten Ziel, ein Feld pro Tag
+function candleHtml(on) { return `<span class="candle${on ? ' on' : ''}" aria-hidden="true"><i class="glow"></i><img src="icons/sym-serie-aus.png" alt=""><img class="flame" src="icons/sym-serie-flamme.png" alt=""></span>`; }
+function streakBox(sk) {
+  const today = sk > 0 && streakToday(), days = n => `${n} ${n === 1 ? 'Tag' : 'Tage'}`;
+  const hit = today && (sk === 3 || (sk >= 7 && sk % 7 === 0));   // heute ein Ziel erreicht: Leiste bleibt bis morgen voll
+  const nx = streakNext(hit ? sk - 1 : sk), fill = sk - nx.from, len = nx.at - nx.from;
+  const bar = Array.from({length: len}, (_, i) => `<i class="${i < fill ? 'f' : i === fill && !today ? 't' : ''}"></i>`).join('');
+  const goal = `<span class="sk-goal${hit ? ' ok' : ''}">${hit ? '✓' : nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>Rahmen` : `${coinImg}${nx.c}`}</span>`;
+  const lbl = hit ? `Ziel erreicht! Nächstes Ziel am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
+  const txt = !sk ? 'Erledige heute einen Auftrag, dann zündet Hilde die Kerze an. Jeder Tag in Folge lässt die Serie wachsen.'
+    : today ? 'Heute geschafft! Erledige morgen wieder einen Auftrag, dann wächst die Serie weiter.'
+    : 'Heute noch offen: Erledige einen Auftrag, sonst erlischt die Kerze um Mitternacht.';
+  return `<div class="streakbox${sk ? ' lit' : ''}">${candleHtml(sk > 0)}<div class="sk-main"><b>${sk ? `Serie: ${days(sk)}` : 'Noch keine Serie'}</b>` +
+    `<div class="sk-row"><span class="sk-bar">${bar}</span>${goal}</div><span class="sk-l">${lbl}</span><span class="sk-txt">${txt}</span></div></div>`;
+}
 SHEET_VIEWS.daily = () => {
-  const st = dailyState(), sk = streakNow(), nx = streakNext(sk);
+  const st = dailyState(), sk = streakNow();
   const notes = st.list.map((e, i) => {
     const m = missionById(e.id); if (!m) return '';
     const done = e.p >= m.n, pct = Math.round(e.p / m.n * 100), prog = m.k === 'gold' ? `${fmt(e.p)} / ${fmt(m.n)} Gold` : `${e.p} / ${m.n}`;
     return `<div class="note d${m.d}${done ? ' done' : ''}"><span class="nl">${MISSION_LEVEL[m.d]}<span class="nc">${coinImg}+${MISSION_COINS[m.d]}</span></span><b>${esc(m.t)}</b>` +
       `<span class="nbar"><i style="width:${pct}%"></i></span><span class="np">${done ? '<em class="stamp">Erledigt</em>' : prog}${!done && !st.rer ? `<button type="button" class="btn small" data-reroll="${i}">Tauschen</button>` : ''}</span></div>`;
   }).join('');
-  const streak = `<div class="streakbox"><img src="icons/sym-serie.png" alt=""><span><b>${sk ? `Serie: ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : 'Noch keine Serie'}</b><span>${sk ? 'Erledige morgen wieder einen Auftrag, dann wächst sie weiter.' : 'Erledige an mehreren Tagen hintereinander mindestens einen Auftrag.'} Am ${nx.at}. Tag: ${esc(nx.l)}.</span></span></div>`;
+  const streak = streakBox(sk);
   return {head: h3('Hildes Auftragsbrett'),
     body: `<img class="scene" src="art/szene-auftragsbrett.webp" alt=""><div class="say"><img src="icons/portrait-hilde.png" alt=""><p>„Ich hab da ein paar Aufträge für dich. Jeden Tag neue, versprochen.“</p></div><div class="notes">${notes}</div>${streak}` +
       `<p class="hint">Neue Aufträge in ${untilMidnight()}. Sie zählen im freien Spiel und im Storymodus, nicht in Rätseln und im Probespiel.${st.rer ? '' : ' Einen Auftrag pro Tag darfst du tauschen.'}</p>` +
@@ -1078,12 +1094,12 @@ function cosPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
   if (k === 'portrait') return `<img class="sp-pt" src="${c.src}" alt="">`;
   if (k === 'frame') return `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
-  return `<span class="sp-ti">${esc(c)}</span>`;
+  return '';   // Titel brauchen kein Bild, der Name steht daneben
 }
 SHEET_VIEWS.shop = () => {
   const st = dailyState();
   const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), poor = STORY.coins < it.price, [k] = id.split(':');
-    return `<div class="sitem${own ? ' own' : ''}">${cosPreview(id)}<span class="si-t"><b>${esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
+    return `<div class="sitem${own ? ' own' : ''}${k === 'title' ? ' ti' : ''}">${cosPreview(id)}<span class="si-t"><b>${esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
       (own ? '<em class="stamp">Gekauft</em>' : `<button type="button" class="btn small${poor ? '' : ' primary'}" data-shopbuy="${id}"${poor ? ' disabled' : ''}>${coinImg}${it.price}</button>`) + '</div>'; }).join('');
   return {head: h3('Krämerladen'),
     body: `<img class="scene" src="art/szene-kraemerladen.webp" alt=""><div class="say"><img src="icons/portrait-kuno.png" alt=""><p>Krämer Kuno: „Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
