@@ -391,6 +391,23 @@ function canEquip(p,c){
   }
   return {ok:true};
 }
+// Gegenstände von der Hand in den Rucksack: zählen dann nicht mehr als Handkarten, bringen aber keinen Bonus.
+// Es gilt nur die Grenze für Große Gegenstände (einer, außer Zwerge).
+function canStash(p,c){
+  if(c.k!=='item') return {ok:false, why:'Nur Gegenstände kommen in den Rucksack.'};
+  if(c.big && !hasRace(p,'zwerg')){
+    const other=[...p.eq,...p.pack].find(i=>i.big && i.uid!==c.uid);
+    if(other) return {ok:false, why:`Du hast schon einen Großen Gegenstand (${other.n}). Nur Zwerge dürfen mehrere haben.`};
+  }
+  return {ok:true};
+}
+function stash(p,c){ take(p,c); p.pack.push(c); }
+function stashItem(c){
+  const p=me(), cs=canStash(p,c); if(!cs.ok){ log(cs.why,'sys'); return; }
+  stash(p,c); log(`${c.n} kommt in den Rucksack.`);
+  ruleOnce('stash','Gegenstände im Rucksack zählen nicht zu deinen Handkarten, bringen aber keinen Bonus. Anlegen kannst du sie in deinem Zug außerhalb von Kämpfen.');
+}
+const stashable = p => p.hand.filter(c=>c.k==='item' && canStash(p,c).ok);
 function equip(p,c){
   take(p,c); const moved=[];
   if(['kopf','ruestung','schuhe'].includes(c.slot)){
@@ -626,8 +643,15 @@ async function humanTurn(p){
   while(true){
     const v=await ask(()=>{ const over=p.hand.length-handLimit(p);
       return {title:'Phase 4 · Almosen', text: over>0 ? `Du hast ${p.hand.length} Karten, erlaubt sind ${handLimit(p)}.` : 'Dein Zug ist fast vorbei. Lege noch aus, was du brauchst.', hint:hintCharity(p),
-        opts: over>0 ? [{l:`${over} ${pl(over,'Karte','Karten')} abgeben`,v:'give',kind:'primary'}] : [{l:'Zug beenden',v:'end',kind:'primary'}]}; }, 'charity');
+        opts: over>0 ? [...(stashable(p).length ? [{l:'In den Rucksack',v:'stash'}] : []), {l:`${over} ${pl(over,'Karte','Karten')} abgeben`,v:'give',kind:'primary'}] : [{l:'Zug beenden',v:'end',kind:'primary'}]}; }, 'charity');
     if(v==='end') break;
+    if(v==='stash'){
+      const ok=stashable(p);
+      const sel=await selectCards({ctx:'stash', title:'In den Rucksack', text:'Wähle Gegenstände von deiner Hand. Im Rucksack zählen sie nicht als Handkarten, bringen aber keinen Bonus.', min:1, max:ok.length, cancel:true,
+        filter:(c,w)=>w==='hand' && ok.includes(c), confirm:()=> 'In den Rucksack'});
+      if(sel) sel.map(findCard).filter(Boolean).forEach(stashItem);
+      continue;
+    }
     const over=p.hand.length-handLimit(p);
     if(over<=0) continue;
     const sel=await selectCards({ctx:'charity', title:'Almosen', text:`Wähle ${over} ${pl(over,'Karte','Karten')}, die du abgibst.`, min:over, max:over, cancel:true,
@@ -666,7 +690,7 @@ function hintCharity(p){
   const lim=handLimit(p), over=p.hand.length-lim;
   if(over<=0) return [`Du hast ${p.hand.length} von höchstens ${lim} Karten. Alles gut.`];
   const t=charityTargets(p);
-  return [`Spiele vorher aus, was geht: Gegenstände anlegen, verkaufen, Flüche verteilen. Sonst gibst du ${over} ${pl(over,'Karte','Karten')} ab.`,
+  return [`Spiele vorher aus, was geht: Gegenstände anlegen, in den Rucksack legen, verkaufen, Flüche verteilen. Sonst gibst du ${over} ${pl(over,'Karte','Karten')} ab.`,
     t ? `Die Karten bekommt ${t.map(x=>x.name).join(' und ')} (niedrigste Stufe).` : 'Du hast selbst (mit) die niedrigste Stufe, also werden sie abgelegt.'];
 }
 function doCharity(p,cards){
@@ -762,7 +786,8 @@ async function botTurn(p){
   if(S.winner!=null) return;
   await botManage(p);
   S.phase=4;
-  const over=p.hand.length-handLimit(p);
+  let over=p.hand.length-handLimit(p);
+  for(const it of stashable(p)){ if(over<=0) break; stash(p,it); over--; log(`${p.name} legt ${it.n} in den Rucksack.`); }
   if(over>0){ const give=p.hand.slice().sort((a,b)=>keepValue(p,a)-keepValue(p,b)).slice(0,over); doCharity(p,give); }
   await sleep(spd(0.6));
 }
@@ -1179,7 +1204,7 @@ function cardActions(c, where){
   if(where==='hand'){
     switch(c.k){
       case 'item': {
-        if(free){ const ce=canEquip(p,c); A.push({l:'Ausrüsten', fn:()=>doEquip(c), dis: ce.ok?false:ce.why}); }
+        if(free){ const ce=canEquip(p,c), cs=canStash(p,c); A.push({l:'Ausrüsten', fn:()=>doEquip(c), dis: ce.ok?false:ce.why}); A.push({l:'In den Rucksack legen', fn:()=>stashItem(c), dis: cs.ok?false:cs.why}); }
         else if(myTurn && C) A.push({info:'Im Kampf darfst du keine Gegenstände anlegen.'});
         else A.push({info:'Gegenstände legst du nur im eigenen Zug außerhalb von Kämpfen an.'});
         sellAct(); break;
@@ -1357,6 +1382,7 @@ function adviseFree(p,charity){
     if(pick.length){ const v=sellValue(p,pick), lv=Math.min(v.lv,WINLVL()-1-p.lvl);
       return {sell:true, picks:pick.map(c=>c.uid), text:`Verkaufe ${names(pick)}.`, why:`${pl(pick.length,'Den','Die')} nutzt du gerade nicht.${dblWhy(v)} Zusammen ${fmt(v.sum)} Gold ergeben ${lv} ${pl(lv,'Stufe','Stufen')}.`}; }
   }
+  if(charity){ const st=stashable(p)[0]; if(st) return {uid:st.uid, act:'In den Rucksack legen', text:`Leg ${st.n} in den Rucksack.`, why:'Im Rucksack zählt er nicht mehr als Handkarte. So musst du weniger abgeben, und verkaufen kannst du ihn später trotzdem.'}; }
   for(const c of p.hand.filter(c=>c.k==='curse')){
     const t=curseTargetAdv(p,c,charity);
     if(t) return {uid:c.uid, act:`Auf ${t.name}`, text:`Spiel den Fluch „${c.n}“ auf ${t.name}.`, why: charity ? `Du musst ohnehin Karten loswerden. Besser ein Fluch auf ${t.name} (Stufe ${t.lvl}) als ein Geschenk.` : `${t.name} liegt mit Stufe ${t.lvl} vorn. Den Führenden zu bremsen ist die beste Verwendung für Flüche.`};

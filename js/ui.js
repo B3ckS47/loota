@@ -619,7 +619,7 @@ function renderMe() {
     `<span class="mstats"><button type="button" class="mstat" data-go="equip" aria-label="Kampfstärke ${power(p)}"><img src="${ICON.kampf}" alt="">${power(p)}</button>` +
     `<button type="button" class="mstat" data-go="equip" aria-label="Weglaufen ${sign(runBonus(p))}"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</button>` +
     `<button type="button" class="mstat${over ? ' warn' : ''}" data-go="equip" aria-label="Handkarten ${p.hand.length} von ${handLimit(p)}"><img src="${ICON.hand}" alt="">${p.hand.length}/${handLimit(p)}</button>` +
-    `<button type="button" class="mstat" data-go="equip" aria-label="Ausrüstung"><img src="${ICON.slot.pack}" alt=""></button></span>`);
+    `<button type="button" class="mstat packbtn" data-go="equip" aria-label="Ausrüstung und Rucksack"><img src="${ICON.slot.pack}" alt="">${p.pack.length || ''}</button></span>`);
 }
 function renderHand() {
   const el = $('#hand'), p = me();
@@ -1262,7 +1262,8 @@ function dragIntents(c) {
   const C = S.combat;
   switch (c.k) {
     case 'item': case 'race': case 'class': case 'levelup':
-      acts.forEach(a => I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis, sub: c.k === 'item' && !a.dis ? equipSub(me(), c) : ''})); break;
+      acts.forEach(a => /Rucksack/.test(a.l) ? I.push({zones: ['pack'], label: a.l, run: a.fn, dis: a.dis, sub: a.dis ? '' : 'zählt dann nicht mehr als Handkarte'})
+        : I.push({zones: ['table'], label: a.l.replace(/^Benutzen: /, ''), run: a.fn, dis: a.dis, sub: c.k === 'item' && !a.dis ? equipSub(me(), c) : ''})); break;
     case 'oneshot':
       acts.forEach(a => { const mon = /Monster/.test(a.l), z = [mon ? 'monside' : 'fighter']; if (a.kind === 'primary') z.push('table'); I.push({zones: z, label: a.l, run: a.fn, dis: a.dis, pv: c.b ? {side: mon ? 'm' : 'p', b: {l: c.n, v: mon ? c.b : osP(c, C)}} : null}); }); break;
     case 'enh':
@@ -1302,6 +1303,7 @@ const Drag = (() => {
     const el = document.elementFromPoint(x, y); if (!el) return null;
     let z;
     if ((z = el.closest('.oc[data-opp]'))) return {key: 'opp:' + z.dataset.opp, el: z};
+    if ((z = el.closest('#mebar .packbtn'))) return {key: 'pack', el: z};
     // Ohne geteiltes Feld gehören die beiden Stärke-Anzeigen unten einfach zum Spielfeld
     if (el.closest('#table .side')) return {key: 'table', el: $('#table')};
     if ((z = el.closest('#table .art[data-uid]'))) return {key: 'art:' + z.dataset.uid, el: z, art: true};
@@ -1316,6 +1318,7 @@ const Drag = (() => {
   }
   function zoneEls(key) {
     if (key === 'table') return [$('#table')];
+    if (key === 'pack') return [$('#mebar .packbtn')];
     if (key === 'fighter') return [$('#table .side.me')];
     if (key === 'monside') return [$('#table .side.mon')];
     if (key.startsWith('opp:')) return [$(`.oc[data-opp="${key.slice(4)}"]`)];
@@ -1335,7 +1338,7 @@ const Drag = (() => {
     const g = st.el.cloneNode(true);
     g.classList.remove('new', 'can', 'rec'); g.classList.add('ghost'); g.removeAttribute('data-uid');
     g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
-    const lab = document.createElement('span'); lab.className = 'dlabel'; g.appendChild(lab);
+    const lab = document.createElement('span'); lab.className = 'dlabel'; document.body.appendChild(lab);
     document.body.appendChild(g); st.g = g; st.lab = lab; st.r = r;
     st.el.classList.add('lifted');
     try { st.el.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1358,6 +1361,12 @@ const Drag = (() => {
     if (st.labKey !== key) { st.labKey = key; st.lab.innerHTML = esc(txt) + (it && it.sub ? `<small>${esc(it.sub)}</small>` : ''); }
     st.lab.classList.toggle('show', !!txt && !st.split);
     st.lab.classList.toggle('no', !!(it && it.dis));
+    if (txt && !st.split) {   // Beschriftung am Bildschirmrand nicht abschneiden
+      const gr = st.g.getBoundingClientRect(), lw = st.lab.offsetWidth, lh = st.lab.offsetHeight;
+      const left = Math.min(Math.max((gr.left + gr.right) / 2 - lw / 2, 6), innerWidth - 6 - lw);
+      const top = gr.bottom + 8 + lh < innerHeight - 6 ? gr.bottom + 8 : Math.max(6, gr.top - lh - 8);
+      st.lab.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+    }
   }
   function setPv(pv) { UI.pv = pv; const hud = $('#table .hud'); if (hud && S && S.combat) paintHud(hud, S.combat); }
   function splitOverlay(intents) {
@@ -1377,6 +1386,7 @@ const Drag = (() => {
     if (UI.pv) setPv(null);
     (st.marked || []).forEach(z => z.classList.remove('dz', 'dzh'));
     if (st.el) st.el.classList.remove('lifted');
+    if (st.lab) st.lab.remove();
   }
   function flyBack(g, r) {
     g.style.transition = 'transform .28s cubic-bezier(.3,.8,.3,1.1)';
