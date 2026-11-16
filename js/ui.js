@@ -1134,8 +1134,8 @@ function streakTrack(sk) {
     return `<span class="sk-dot ${cl}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s"><em>${nx.from + i}</em></span>`; }).join('');
   // am Ende eine Truhe: wartet eine aufs Öffnen, wackelt sie; heute erreicht und schon offen: offene Truhe, grün umrandet
   const wait = chestsWaiting()[0];
-  const goal = wait ? `<span class="sk-goal ready" style="--f:1" data-chest><img src="icons/truhe-${wait.t}-zu.png" alt="${CHESTS[wait.t].n}"><em>Öffnen!</em></span>`
-    : `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1"><img src="icons/truhe-${nx.chest}-${hit ? 'auf' : 'zu'}.png" alt=""><em>Tag ${nx.at}</em></span>`;
+  const goal = wait ? `<span class="sk-goal ready" style="--f:1" data-chest><img src="icons/truhe-${wait.t}-klein.png" alt="${CHESTS[wait.t].n}"><em>Öffnen!</em></span>`
+    : `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1"><img src="icons/truhe-${nx.chest}-klein.png" alt=""><em>Tag ${nx.at}</em></span>`;
   const lbl = wait ? `Deine ${CHESTS[wait.t].n} ist bereit. Tippe sie an!` : hit ? `Ziel erreicht! Nächste Truhe am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
   const track = `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div>`;
   return {today, track, html: `${track}<span class="sk-l">${lbl}</span>`};
