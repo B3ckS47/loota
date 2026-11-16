@@ -71,7 +71,9 @@ function cosmeticGroup(id) {
   if (shopItem(id)) return 'laden';
   return 'start';
 }
-const PF_GROUPS = () => [['alle', 'Alle'], ['start', 'Start'], ...WORLDS.map(w => [w.id, `Welt ${w.n}`]), ['laden', 'Krämerladen'], ['truhe', 'Truhen']];
+// Seiten zum Durchblättern im Charakter-Bildschirm: [Schlüssel, Titel, Unterzeile]
+const PF_GROUPS = () => [['start', 'Start', 'Von Anfang an dabei'], ...WORLDS.map(w => [w.id, `Welt ${w.n}`, w.name]), ['laden', 'Krämerladen', 'Wechselndes Angebot'], ['truhe', 'Truhen', 'Belohnung für Auftrags-Serien']];
+function pfPage() { const g = PF_GROUPS(), i = g.findIndex(x => x[0] === UI.pfFilter); return i < 0 ? 0 : i; }
 function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portrait && cosOpen(q)) || PORTRAITS[0]; return x[2]; }
 function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]; return f[2]; }
 function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
@@ -83,8 +85,10 @@ function renderProfile() {
     `<span class="pf-streak">${candleHtml(streakNow() > 0)}<span><b>Längste Serie: ${streakBest()} ${streakBest() === 1 ? 'Tag' : 'Tage'}</b><small>Aktuell: ${streakNow()} ${streakNow() === 1 ? 'Tag' : 'Tage'}</small></span></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
-  const fg = UI.pfFilter || 'alle', inG = id => fg === 'alle' || cosmeticGroup(id) === fg, none = '<p class="hint pf-empty">Hier gibt es nichts in dieser Gruppe.</p>';
-  patch($('#pf-filter'), PF_GROUPS().map(([k, l]) => `<button type="button" class="chip" data-pffilter="${k}" aria-pressed="${fg === k}">${l}</button>`).join(''));
+  const G = PF_GROUPS(), pi = pfPage(), [fg, gl, gs] = G[pi], inG = id => cosmeticGroup(id) === fg, none = '<p class="hint pf-empty">Hier gibt es nichts auf dieser Seite.</p>';
+  const items = [...ALL_PORTRAITS.map(x => x[3]), ...ALL_FRAMES.map(x => x[3]), ...Object.keys(COSMETICS.title).map(k => 'title:' + k)].filter(inG), got = items.filter(id => !id || owns(id)).length;
+  const arrow = (d, dis) => `<button type="button" class="pf-arr" data-pfpage="${d}" aria-label="${d < 0 ? 'Vorherige' : 'Nächste'} Seite"${dis ? ' disabled' : ''}><svg viewBox="0 0 24 24"><path d="${d < 0 ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}"/></svg></button>`;
+  patch($('#pf-filter'), arrow(-1, pi === 0) + `<div class="pf-pg"><b>${esc(gl)}</b><small>${esc(gs)} · ${got} von ${items.length}</small><span class="pf-dots">${G.map((g, i) => `<i class="${i === pi ? 'on' : ''}"></i>`).join('')}</span></div>` + arrow(1, pi === G.length - 1));
   patch($('#pf-portraits'), (ALL_PORTRAITS.filter(x => inG(x[3])).map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join('')) || none);
   patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i><span>${l}</span></button>`; }).join('')) || none);
   // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
@@ -92,6 +96,14 @@ function renderProfile() {
   patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +
     `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} gibt es im Storymodus und im Krämerladen.</p>`);
 }
+// Wischen über Titel, Porträts und Rahmen blättert ebenfalls
+(() => { let x0 = null, y0 = 0;
+  document.addEventListener('touchstart', e => { x0 = e.target.closest && e.target.closest('#scr-profile .pf-pager, #scr-profile .pf-sec:not(:first-of-type)') ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; }, {passive: true});
+  document.addEventListener('touchend', e => { if (x0 == null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    const G = PF_GROUPS(), i = Math.max(0, Math.min(G.length - 1, pfPage() + (dx < 0 ? 1 : -1))); if (G[i][0] === G[pfPage()][0]) return;
+    UI.pfFilter = G[i][0]; renderProfile(); buzz(8); }, {passive: true});
+})();
 document.addEventListener('input', e => {
   if (e.target.id !== 'pf-name') return;
   const v = e.target.value.trim(), hint = $('#pf-name-hint');
@@ -1434,7 +1446,7 @@ document.addEventListener('click', e => {
     if (e.clientY < cta.top - 2) { Snd.sfx('tap'); buzz(8); go('story'); return; }
   }
   let el;
-  if ((el = t.closest('[data-pffilter]'))) { UI.pfFilter = el.dataset.pffilter; renderProfile(); return; }
+  if ((el = t.closest('[data-pfpage]'))) { const G = PF_GROUPS(), i = Math.max(0, Math.min(G.length - 1, pfPage() + Number(el.dataset.pfpage))); UI.pfFilter = G[i][0]; renderProfile(); buzz(8); return; }
   if (t.closest('[data-chest]')) { showChest(); return; }
   if ((el = t.closest('.t-card[data-mode]'))) { if (SET.mode !== el.dataset.mode) { SET.mode = el.dataset.mode; saveSettings(); } renderTitle(); return; }
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
