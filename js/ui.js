@@ -1512,9 +1512,22 @@ function tutUpdate() {
   if (!L) { box.hidden = true; return; }
   patch(box, `<img src="icons/portrait-hilde.png" alt=""><div class="tt"><b>Hilde</b><p>${esc(L.text)}</p>${L.ok ? '<button type="button" class="btn small" data-tutok>Verstanden</button>' : ''}</div>`);
   box.dataset.lesson = L.id; box.hidden = false;
-  const t = $('#table'); if (t) box.style.top = Math.round(t.getBoundingClientRect().top + 6) + 'px';
   if (L.hl) { let h = L.hl(); (Array.isArray(h) ? h : [h]).forEach(sel => { if (sel) $$(sel).forEach(e => e.classList.add('tut-hl')); }); }
+  tutPlace(); clearTimeout(TUT.pt); TUT.pt = setTimeout(tutPlace, 500);   // nach Einblend-Animationen noch einmal
 }
+// Oben oder unten auf dem Spielfeld, je nachdem, wo nichts Wichtiges verdeckt wird (Kampfanzeige, Hervorgehobenes)
+function tutPlace() {
+  const box = $('#tutor'), t = $('#table'); if (!box || box.hidden || !t || !S) return;
+  const tr = t.getBoundingClientRect(), bh = box.offsetHeight;
+  const rects = els => [...els].map(e => e.getBoundingClientRect()).filter(r => r.height && r.bottom > tr.top && r.top < tr.bottom);
+  const hard = rects([...$$('.tut-hl'), ...(S.combat ? $$('#table .hud') : [])]), soft = rects($$('#table .art-top'));   // Kampfanzeige muss frei bleiben, Monstername möglichst
+  const top = tr.top + 6, bottom = Math.max(top, tr.bottom - bh - 6);
+  const cands = [top, ...soft.map(r => r.bottom + 4), bottom];
+  const ok = (y, list) => y >= top && y <= bottom && !list.some(r => r.top < y + bh && r.bottom > y);
+  const y = cands.find(c => ok(c, [...hard, ...soft])) ?? cands.find(c => ok(c, hard)) ?? top;
+  box.style.top = Math.round(y) + 'px';
+}
+window.addEventListener('resize', () => tutPlace());
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

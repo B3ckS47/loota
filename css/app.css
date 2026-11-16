@@ -152,8 +152,8 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .topbar{display:flex;align-items:center;gap:8px;padding:8px 10px 4px;color:var(--on-wood)}
 .tb-mid{flex:1;min-width:0;text-align:center}
 .tb-title{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 rgba(0,0,0,.6)}
-.phasedots{display:flex;justify-content:center;gap:10px;margin-top:3px;height:24px}
-.phasedots img{width:22px;height:22px;opacity:.35;filter:grayscale(.7);transition:transform .25s, opacity .25s}
+.phasedots{display:flex;justify-content:center;gap:9px;width:max-content;margin:3px auto 0;padding:2px 10px;height:26px;border-radius:999px;background:rgba(251,243,223,.85);border:1px solid rgba(110,70,35,.45);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.phasedots img{width:22px;height:22px;opacity:.4;filter:grayscale(.7);transition:transform .25s, opacity .25s}
 .phasedots img.on{opacity:1;filter:drop-shadow(0 0 4px rgba(255,220,150,.9));transform:scale(1.2)}
 .phasedots img.done{opacity:.7;filter:none}
 
@@ -797,9 +797,11 @@ img.star{object-fit:contain}
 .tutor p{margin:0;font:600 14px/1.35 var(--body);color:var(--ink)}
 .tutor .btn{align-self:flex-start;margin-top:4px;pointer-events:auto}
 @keyframes tutIn{from{opacity:0;transform:translate(-50%,-8px)}}
-.tut-hl{position:relative;z-index:4;animation:tutPulse 1.3s ease-in-out infinite}
+.tut-hl{animation:tutPulse 1.3s ease-in-out infinite}
 @keyframes tutPulse{0%,100%{box-shadow:0 0 0 2px rgba(243,200,115,.95),0 0 10px rgba(243,200,115,.45)}50%{box-shadow:0 0 0 4px rgba(243,200,115,1),0 0 22px rgba(243,200,115,.85)}}
-#hand .mc.tut-hl{transform:translateY(-6px)}
+/* Handkarten: nicht anheben (die Hand schneidet oben ab), Rahmen innen pulsieren lassen */
+#hand .mc.tut-hl{animation:tutPulseIn 1.3s ease-in-out infinite;outline:3px solid #f3c873;outline-offset:-3px}
+@keyframes tutPulseIn{0%,100%{outline-color:rgba(243,200,115,.75)}50%{outline-color:#ffd77a;outline-width:4px}}
 .sn-medal img.mi.face{width:44px;height:44px;border-radius:50%;object-fit:cover;filter:none}
 .smap-in.pic .sn-medal img.mi.face{width:36px;height:36px}
 
