@@ -307,6 +307,7 @@ function renderTitle() {
   // Serie wie im Auftragsbrett: Kerze, Schiene mit Tagespunkten und Belohnung
   patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span><small id="daily-info" hidden>${dn} von 3</small>`);
   $('#t-daily').setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : ''}`);
+  $('#t-daily').classList.toggle('dark', !sk);   // ohne Serie: Brett ohne Kerzenschein
   const wait = chestsWaiting().length;
   $('#t-daily').dataset.go = wait ? 'chest' : 'daily';
   $('#tn-daily').hidden = dn > 0 && !wait;

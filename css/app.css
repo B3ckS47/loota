@@ -1035,3 +1035,4 @@ input[type=range]{accent-color:#ff8a1f}
 .t-daily .sk-goal{background:#2a1a10;border-color:#d9a24a}
 .t-daily .sk-goal.ok{border-color:#56c24c}
 .t-daily .sk-goal.ok em{color:#86dc78}
+.t-daily.dark{background-image:url(../art/serie-brett-aus.webp)}
