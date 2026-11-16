@@ -1089,3 +1089,12 @@ input[type=range]{accent-color:#ff8a1f}
 .wr-list dt{font:700 20px/1.1 var(--display);color:#5a2b1a;margin:10px 0 2px}
 .wr-list dt:first-child{margin-top:0}
 .wr-list dd{margin:0}
+/* ===== Welt 5: Schiffsdeck und Seegang ===== */
+#app.tbl-schiff{background:linear-gradient(rgba(14,8,4,.12),rgba(14,8,4,.12)), url(../art/hintergrund-schiff.webp) center/cover no-repeat, #3a2717}
+#app.kipp-l #scr-game{animation:kipp-l 1.2s ease-in-out}
+#app.kipp-r #scr-game{animation:kipp-r 1.2s ease-in-out}
+@keyframes kipp-l{0%,100%{transform:none}30%{transform:rotate(-4deg) translateX(-10px)}60%{transform:rotate(2deg)}80%{transform:rotate(-1deg)}}
+@keyframes kipp-r{0%,100%{transform:none}30%{transform:rotate(4deg) translateX(10px)}60%{transform:rotate(-2deg)}80%{transform:rotate(1deg)}}
+.reduce #app.kipp-l #scr-game,.reduce #app.kipp-r #scr-game{animation:none}
+.seg[data-set]{flex-wrap:wrap}
+.seg[data-set] button{flex:1 1 30%}

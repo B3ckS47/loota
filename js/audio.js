@@ -156,6 +156,15 @@ const Snd = (() => {
   function uke(ch, t, e, vol) { [0, 1, 2].forEach(i => pluck(ch[i] + 12, t + i * 0.018, 0.8 * e, vol)); }
   function surf(t, dur) { noise(t, dur, 0.035, 'lowpass', 280, 1100, {bus: musicBus, a: dur * 0.45, loop: true}); }
   function gull(t) { const f = 1300 + Math.random() * 300; tone(f, t, 0.22, 'sawtooth', 0.014, {bus: musicBus, to: f * 0.62, bp: 1500, q: 3, rev: 0.6}); tone(f * 1.05, t + 0.28, 0.18, 'sawtooth', 0.012, {bus: musicBus, to: f * 0.7, bp: 1500, q: 3, rev: 0.6}); }
+  // Schiff: Seemannslied mit Akkordeon, Bass im Schunkeltakt, dazu knarzendes Holz
+  const PM = [
+    [[62,2],[62,1],[66,2],[69,1]], [[71,2],[69,1],[66,3]], [[64,2],[64,1],[67,2],[71,1]], [[69,3],[66,3]],
+    [[62,2],[62,1],[66,2],[69,1]], [[74,2],[73,1],[71,3]], [[69,2],[66,1],[64,2],[61,1]], [[62,4],[0,2]]
+  ];
+  const P_CH = ['D', 'G', 'A', 'D', 'D', 'G', 'A', 'D'];
+  const PB_CH = ['Dm', 'C', 'Bb', 'A'];
+  function accordion(m, t, dur, vol) { const f = mtof(m); tone(f, t, dur, 'sawtooth', vol, {bus: musicBus, lp: 1500, a: 0.04, vib: 6, vibAmt: 4, rev: 0.25}); tone(f * 1.006, t, dur, 'square', vol * 0.4, {bus: musicBus, lp: 1100, a: 0.05}); }
+  function creak(t) { const f = 180 + Math.random() * 120; tone(f, t, 0.35, 'sawtooth', 0.012, {bus: musicBus, to: f * 1.4, bp: 700, q: 6, rev: 0.4}); }
   function drip(t) { const f = 1500 + Math.random() * 1100; tone(f, t, 0.09, 'sine', 0.045, {bus: musicBus, to: f * 1.6, rev: 0.85}); }
 
   function pluck(m, t, dur, vol) {
@@ -181,6 +190,25 @@ const Snd = (() => {
       drum(t, 0.14);
       if (Math.random() < 0.6) drip(t + Math.random() * 6 * e);
       if (Math.random() < 0.25) drip(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'schiff' && mood === 'tavern') {
+      const idx = bar % 8, ch = CH[P_CH[idx]];
+      let x = 0;
+      PM[idx].forEach(([m, len]) => { if (m) accordion(m, t + x * e, len * e * 0.92, 0.05); x += len; });
+      bassN(ch[0] - 12, t, 1.2 * e, 0.2); bassN(ch[2] - 12, t + 3 * e, 1.2 * e, 0.15);
+      [0, 1, 2].forEach(i => pluck(ch[i], t + 1.5 * e + i * 0.02, e, 0.035)); [0, 1, 2].forEach(i => pluck(ch[i], t + 4.5 * e + i * 0.02, e, 0.03));
+      drum(t, 0.3); drum(t + 3 * e, 0.2, false);
+      if (bar % 4 === 0) surf(t, 12 * e);
+      if (Math.random() < 0.3) creak(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'schiff') {
+      const ch = CH[PB_CH[bar % 4]];
+      for (let i = 0; i < 6; i++) bassN(ch[0] - 12, t + i * e, 0.8 * e, i % 3 === 0 ? 0.27 : 0.15);
+      drum(t, 0.45); drum(t + 2 * e, 0.2, false); drum(t + 3 * e, 0.38); drum(t + 5 * e, 0.22, false);
+      if (bar % 2 === 0) [0, 1, 2].forEach(i => accordion(ch[i] + 12, t + i * 0.02, 2.4 * e, 0.035));
+      else { accordion(ch[2] + 12, t + 3 * e, e, 0.045); accordion(ch[1] + 12, t + 4 * e, e, 0.045); accordion(ch[0] + 12, t + 5 * e, e, 0.045); }
       return;
     }
     if (theme === 'strand' && mood === 'tavern') {
@@ -251,7 +279,7 @@ const Snd = (() => {
   }
   function tick() {
     if (!ctx || !playing) return;
-    const e = mood === 'tavern' ? ({keller: 0.26, wald: 0.21, strand: 0.2}[theme] || 0.19) : ({keller: 0.13, wald: 0.14, strand: 0.14}[theme] || 0.15);
+    const e = mood === 'tavern' ? ({keller: 0.26, wald: 0.21, strand: 0.2, schiff: 0.22}[theme] || 0.19) : ({keller: 0.13, wald: 0.14, strand: 0.14, schiff: 0.14}[theme] || 0.15);
     while (nextT < ctx.currentTime + 0.25) {
       if (pendingMood !== mood || pendingTheme !== theme) { mood = pendingMood; theme = pendingTheme; bar = 0; }
       scheduleBar(nextT, e);
@@ -274,7 +302,7 @@ const Snd = (() => {
     startMusic() { if (st.music) startMusic(); },
     stopMusic,
     mood(m) { pendingMood = m; },
-    theme(t) { pendingTheme = ['keller', 'wald', 'strand'].includes(t) ? t : 'taverne'; },
+    theme(t) { pendingTheme = ['keller', 'wald', 'strand', 'schiff'].includes(t) ? t : 'taverne'; },
     suspend() { if (ctx && ctx.state === 'running') ctx.suspend(); },
     resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
     get ready() { return !!ctx; }

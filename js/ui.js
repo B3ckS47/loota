@@ -12,7 +12,8 @@ const ICON = {
   portrait: {Du: 'icons/portrait-du.png', Berta: 'icons/portrait-berta.png', Kalle: 'icons/portrait-kalle.png', Uschi: 'icons/portrait-uschi.png',
     Rosi: 'icons/portrait-rosi.png', Fridolin: 'icons/portrait-fridolin.png', Gustav: 'icons/portrait-gustav.png', Hilde: 'icons/portrait-hilde.png',
     Flora: 'icons/portrait-flora.png', Trudi: 'icons/portrait-trudi.png', Walter: 'icons/portrait-walter.png',
-    Bruno: 'icons/portrait-bruno.png', Gesine: 'icons/portrait-gesine.png', Sunny: 'icons/portrait-sunny.png'}
+    Bruno: 'icons/portrait-bruno.png', Gesine: 'icons/portrait-gesine.png', Sunny: 'icons/portrait-sunny.png',
+    Walburga: 'icons/portrait-walburga.png', Pepe: 'icons/portrait-pepe.png', Sardella: 'icons/portrait-sardella.png'}
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
 const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
@@ -130,7 +131,7 @@ let GAME_ON = false;
 // Tischfläche und Musik der laufenden Partie: im Storymodus von der Welt, im freien Spiel aus den Optionen
 let GAME_TABLE = 'taverne', GAME_THEME = 'taverne';
 // Tischflächen und Musik der Welten werden mit dem Abschluss der Welt freigeschaltet
-const MOOD_WORLD = {keller: 'w2', wald: 'w3', strand: 'w4'};
+const MOOD_WORLD = {keller: 'w2', wald: 'w3', strand: 'w4', schiff: 'w5'};
 const moodOk = v => !MOOD_WORLD[v] || !!STORY.worlds[MOOD_WORLD[v]];
 function freeMood() { GAME_TABLE = moodOk(SET.table) ? SET.table : 'taverne'; GAME_THEME = moodOk(SET.theme) ? SET.theme : 'taverne'; }
 CHECKPOINT_HANDLER = () => {
@@ -154,10 +155,12 @@ const DECKS = [
   {id: 'wald', name: 'Pilzwald-Deck', icon: 'Pilzkönigin Morchella', desc: 'Bovisten, Hexenringe und die Pilzkönigin: 20 Waldkarten plus alles aus dem Grunddeck, was in einen Wald passt.',
     base: waldCount, unlocked: () => !!STORY.worlds.w3, lockTxt: 'Das Pilzwald-Deck schaltest du frei, wenn du im Storymodus Welt 3 abschließt.'},
   {id: 'strand', name: 'Strand-Deck', icon: 'Krabbenbaron Kneifer', desc: 'Quallen, Haie und der Krabbenbaron, dazu Ebbe und Flut: 19 Strandkarten plus alles aus dem Grunddeck, was an einen Strand passt.',
-    base: strandCount, unlocked: () => !!STORY.worlds.w4, lockTxt: 'Das Strand-Deck schaltest du frei, wenn du im Storymodus Welt 4 abschließt.'}
+    base: strandCount, unlocked: () => !!STORY.worlds.w4, lockTxt: 'Das Strand-Deck schaltest du frei, wenn du im Storymodus Welt 4 abschließt.'},
+  {id: 'meer', name: 'Meeres-Deck', icon: 'Käpt’n Achtarm', desc: 'Wale, Kraken, Piraten und Seegang, dazu die Schatzkarte: 30 Meereskarten plus alles aus dem Grunddeck, was aufs Meer passt.',
+    base: meerCount, unlocked: () => !!STORY.worlds.w5, lockTxt: 'Das Meeres-Deck schaltest du frei, wenn du im Storymodus Welt 5 abschließt.'}
 ];
 // Karten einer Welt tauchen in der Kartenliste erst auf, wenn ihr Deck freigeschaltet ist
-const cardOpen = c => !c.w || deckById({2: 'keller', 3: 'wald', 4: 'strand'}[c.w]).unlocked();
+const cardOpen = c => !c.w || deckById({2: 'keller', 3: 'wald', 4: 'strand', 5: 'meer'}[c.w]).unlocked();
 const VARIANTS = [
   ['standard', 'Standard', 'Die ausgewogene Mischung.', (p, b) => b],
   ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', (p, b) => !b ? 0 : p.tpl.k === 'monster' ? b + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? b - 1 : p.tpl.k === 'enh' ? b + 1 : b],
@@ -256,7 +259,7 @@ function setScreen(name) {
   updatePaused();
   Snd.mood(name === 'game' && S && S.combat ? 'combat' : 'tavern');
   Snd.theme(name === 'game' ? GAME_THEME : 'taverne');
-  ['keller', 'wald', 'strand'].forEach(t => $('#app').classList.toggle('tbl-' + t, name === 'game' && GAME_TABLE === t));
+  ['keller', 'wald', 'strand', 'schiff'].forEach(t => $('#app').classList.toggle('tbl-' + t, name === 'game' && GAME_TABLE === t));
   if (name !== 'game') $('#app').classList.remove('flut');
   if (name === 'title') renderTitle();
   if (name === 'setup') { renderFoes(); renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
@@ -280,7 +283,7 @@ window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, 
 
 /* ================= Startbildschirm ================= */
 // Ausschnitt der Weltkarte oben auf dem Startbildschirm (senkrechte Lage im Bild)
-const HERO_Y = {w1: '68%', w2: '6%', w3: '88%', w4: '52%'};
+const HERO_Y = {w1: '68%', w2: '6%', w3: '88%', w4: '52%', w5: '30%'};
 const nextStation = w => w.stations.find(st => st.type !== 'shop' && !STORY.done[st.id] && stationUnlocked(st));
 const freeGame = () => { const act = GAME_ON && S && S.winner == null && !S.scn; const sv = !act && load(K_SAVE); return act ? {turn: S.turn, lvl: S.players[0].lvl, live: true} : sv ? {turn: sv.S.turn, lvl: sv.S.players[0].lvl} : null; };
 function renderTitle() {
@@ -630,7 +633,7 @@ function adviceBox() {
 /* Aktionsleiste: eine Zeile Kontext, darunter wenige kompakte Buttons */
 const SHORT_OPT = [
   [/^Fertig: Monster besiegen$/, 'Monster besiegen'], [/^Aufgeben und weglaufen$/, 'Weglaufen'], [/^Um Hilfe bitten$/, 'Hilfe holen'],
-  [/^Krieger: .*/, 'Krieger +1'], [/^Priester: .*/, 'Priester +3'], [/^Dieb: .*/, 'Dieb −2'], [/^Nebelpulver einsetzen$/, 'Nebelpulver'],
+  [/^Krieger: .*/, 'Krieger +1'], [/^Priester: .*/, 'Priester +3'], [/^Dieb: .*/, 'Dieb −2'], [/^Nebelpulver einsetzen$/, 'Nebelpulver'], [/^Kompass einsetzen$/, 'Kompass'],
   [/^(.+) \(Kampfstärke (\d+)\)$/, '$1 ($2)'], [/^Helfen \(für (\d+) (Schatz|Schätze)\)$/, 'Helfen: $1 $2'], [/^Glücksamulett einsetzen$/, 'Amulett einsetzen']
 ];
 function shortOpt(l, ctx) {
@@ -943,6 +946,8 @@ function burstAt(sel, n) { const el = $(sel); if (!el) return; const r = el.getB
 FX_HANDLER = (t, d) => {
   switch (t) {
     case 'tide': Snd.sfx(d.flut ? 'wave' : 'ebb'); if (d.flut) buzz([20, 60, 20]); break;
+    case 'seegang': { Snd.sfx('wave'); buzz([30, 80, 30]); const a = $('#app'); a.classList.remove('kipp-l', 'kipp-r'); void a.offsetWidth; a.classList.add(d.left ? 'kipp-l' : 'kipp-r'); setTimeout(() => a.classList.remove('kipp-l', 'kipp-r'), 1300); if (CUR === 'game') toast(`Seegang! Alle geben eine Karte nach ${d.left ? 'links' : 'rechts'} weiter.`); break; }
+    case 'dig': Snd.sfx('coin'); if (d.p.human) { banner('Schatz!', 'good'); burstAt('#hand', 24); } break;
     case 'newgame': W.reset(); break;
     case 'turn': if (d.p.human) { Snd.sfx('page'); buzz(15); if (W.renderedOnce) toast('Du bist am Zug'); } break;
     case 'interfere': Snd.sfx('evil'); buzz(40); toast(`${esc(d.by.name)} greift ein!`); break;
@@ -1118,6 +1123,7 @@ function startStation(id) {
   const w = worldById(st.world);
   scn.stars = st.type === 'tutorial' ? null : ['Station schaffen', ...(st.extras || []).map(e => e.t)];
   scn.counts = variantCounts(w.deck, scn.variant || 'standard'); delete scn.variant;
+  if (scn.more) { Object.assign(scn.counts, scn.more); delete scn.more; }
   // Der Endgegner einer Welt (ab Welt 2) kommt nur im Bosskampf ins Deck
   const fin = w.id !== 'w1' && w.stations.find(x => x.final), bossName = fin && fin.scn && fin.scn.boss;
   if (bossName && !scn.boss) scn.counts[bossName] = 0;
@@ -1307,11 +1313,11 @@ SHEET_VIEWS.buyworld = s => {
   const w = worldById(s.w); if (!w) return null;
   const faces = [...new Set(w.stations.filter(st => st.scn && typeof st.scn === 'object' && st.scn.bots).flatMap(st => st.scn.bots))].filter(n => ICON.portrait[n]);
   const owned = worldOwned(w), rest = w.stations.filter(st => st.type !== 'shop').length;
-  const offers = OFFERS.filter(o => o.worlds.includes(w.id)).map(o => `<button type="button" class="btn${o.worlds.length > 1 ? ' primary' : ''} bw-offer" data-offer="${o.id}"><b>${esc(o.n)}</b><span>${SET.test ? 'Gratis (Testphase)' : esc(o.price)}</span>${o.note ? `<small>${esc(o.note)}</small>` : ''}</button>`).join('');
+  const offers = OFFERS.filter(o => o.worlds.includes(w.id) && (o.worlds.length === 1 || o.worlds.some(x => x !== w.id && !worldOwned(worldById(x))))).map(o => `<button type="button" class="btn${o.worlds.length > 1 ? ' primary' : ''} bw-offer" data-offer="${o.id}"><b>${esc(o.n)}</b><span>${SET.test ? 'Gratis (Testphase)' : esc(o.price)}</span>${o.note ? `<small>${esc(o.note)}</small>` : ''}</button>`).join('');
   return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `<div class="bw-map" style="background-image:url(${w.map})"><span class="bw-faces">${faces.map(n => `<img src="${ICON.portrait[n]}" alt="${esc(n)}">`).join('')}</span></div>` +
     `<p class="bw-lead">${esc(w.intro.split('. ').slice(0, 3).join('. '))}.</p>` +
-    `<ul class="bw-list"><li><b>${rest} Stationen</b> mit Rätseln, Duellen und Krabbenbaron Kneifer als Boss</li><li><b>Ebbe und Flut:</b> eine neue Spielregel, die den ganzen Tisch verändert</li><li><b>Neue Optik:</b> 4 Titel, 3 Rahmen und ein Porträt zum Sammeln</li><li><b>Danach fürs freie Spiel:</b> ${esc(w.unlocks.join(', '))}</li></ul>` +
-    (owned ? `<p class="bw-own">Gehört dir. Viel Spaß am Strand!</p><div class="acts"><button type="button" class="btn primary" data-storyclose>Los geht’s</button></div>`
+    `<ul class="bw-list"><li><b>${rest} Stationen</b> mit Rätseln, Duellen und ${esc(w.sell.boss)} als Boss</li><li><b>${esc(w.sell.rule.split(':')[0])}:</b>${esc(w.sell.rule.split(':').slice(1).join(':'))}</li><li><b>${w.sell.cards} neue Karten</b> und neue Optik: ${esc(w.sell.loot)} zum Sammeln</li><li><b>Danach fürs freie Spiel:</b> ${esc(w.unlocks.join(', '))}</li></ul>` +
+    (owned ? `<p class="bw-own">Gehört dir. Viel Spaß!</p><div class="acts"><button type="button" class="btn primary" data-storyclose>Los geht’s</button></div>`
       : `<div class="bw-offers">${offers}</div><p class="hint">${SET.test ? 'Testphase: Du kannst die Welt hier gratis freischalten. Echte Käufe kommen mit der Play-Store-Version.' : 'Einmal kaufen, für immer spielen. Kaufen geht bald in der Play-Store-Version.'}</p>`)};
 };
 async function buyOffer(id) {
@@ -1567,6 +1573,7 @@ function dragIntents(c) {
       break;
     }
     case 'curse': {
+      if (c.eff && c.eff.t === 'seegang') { const a = acts.find(x => x.fn); if (a) I.push({zones: ['table'], label: 'Seegang auslösen', run: a.fn}); break; }
       /* direkt auf einen Gegner oben, oder irgendwo aufs Spielfeld und danach das Ziel wählen */
       const ts = [];
       acts.forEach(a => { const t = S.players.find(x => !x.human && a.l === `Auf ${x.name} spielen`); if (t) { ts.push([t, a]); I.push({zones: ['opp:' + t.id], label: `Fluch auf ${t.name}`, run: a.fn}); } });

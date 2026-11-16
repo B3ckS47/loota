@@ -134,6 +134,71 @@ function tideNow(){ if(!S || !S.tides) return null; return S.spring || S.turn%2=
 const isFlut = () => tideNow()==='flut';
 const isEbbe = () => tideNow()==='ebbe';
 const hasShade = p => p.eq.some(i=>i.shade && usable(p,i));
+/* Welt 5 (Auf hoher See): nur im Meeres-Deck. pirat und tiefsee = Monster-Merkmale, Seegang = Ereignis für alle,
+   Schatzkarte = zwei Hälften, zusammen 3 Schätze */
+const MONSTERS_W5 = [
+  {n:'Sardinen-Schwarm',lvl:1,tr:1,x:2,bad:{t:'hand',n:1},txt:'Kommt immer in Massen.',badTxt:'Wirf 1 zufällige Handkarte ab.'},
+  {n:'Einsiedlerkrebs mit Mietrückstand',lvl:2,tr:1,bad:{t:'slot',s:'ruestung'},txt:'Sucht ein neues Zuhause.',badTxt:'Er zieht in deine Rüstung ein: Verliere sie.'},
+  {n:'Kugelfisch mit Wutproblem',lvl:3,tr:1,puff:3,bad:{t:'lvl',n:1},txt:'Bläst sich auf: +3, wenn dir jemand hilft.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Tintenfisch-Taschendieb',lvl:4,tr:1,tiefsee:true,bad:{t:'cheap',n:2},txt:'Tiefsee. Acht Arme, acht Taschen.',badTxt:'Er klaut deine 2 billigsten Gegenstände.'},
+  {n:'Zitteraal am Steuer',lvl:5,tr:1,vs:{race:'zwerg',val:2},bad:{t:'hand',n:2},txt:'Zwerge tragen zu viel Metall: +2 gegen Zwerge.',badTxt:'Wirf 2 zufällige Handkarten ab.'},
+  {n:'Geisterpirat Gismo',lvl:6,tr:2,pirat:true,undead:true,bad:{t:'lvl',n:1},txt:'Pirat, untot. Spukt seit 300 Jahren an Deck.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Pirat mit zwei Holzbeinen',lvl:7,tr:2,pirat:true,run:2,bad:{t:'multi',l:[{t:'slot',s:'schuhe'},{t:'lvl',n:1}]},txt:'Pirat. So langsam, dass Weglaufen +2.',badTxt:'Verliere dein Schuhwerk und 1 Stufe.'},
+  {n:'Seekranke Seeschlange',lvl:8,tr:2,tiefsee:true,vs:{race:'elf',val:3},bad:{t:'lvl',n:1},txt:'Tiefsee. Elfen werden auch seekrank: +3 gegen Elfen.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Muschel-Mimik',lvl:9,tr:2,bad:{t:'best'},txt:'Sieht aus wie eine Perlmuschel.',badTxt:'Verliere deinen besten Gegenstand.'},
+  {n:'Wal mit Schluckauf',lvl:10,tr:3,run:-1,bad:{t:'hand',n:99},txt:'Verschluckt dich und spuckt dich wieder aus: Weglaufen −1.',badTxt:'Wirf deine ganze Hand ab.'},
+  {n:'Schwertfisch-Fechtmeister',lvl:11,tr:3,vs:{cls:'zauberer',val:3},bad:{t:'lvl',n:2},txt:'Zauberer fuchteln zu langsam: +3 gegen Zauberer.',badTxt:'Verliere 2 Stufen.'},
+  {n:'Riesenkrake Klara',lvl:13,tr:3,tiefsee:true,noHelp:true,np:3,bad:{t:'lvl',n:2},txt:'Tiefsee. Zu viele Arme: Niemand darf helfen. Verfolgt niemanden bis Stufe 3.',badTxt:'Verliere 2 Stufen.'},
+  {n:'Käpt’n Achtarm',lvl:16,tr:4,up:2,pirat:true,tiefsee:true,np:4,bad:{t:'multi',l:[{t:'lvl',n:2},{t:'best'}]},txt:'Pirat, Tiefsee. Acht Arme, acht Säbel. Bringt 2 Stufen. Verfolgt niemanden bis Stufe 4.',badTxt:'Verliere 2 Stufen und deinen besten Gegenstand.'}
+].map(m=>Object.assign({w:5},m));
+const CURSES_W5 = [
+  {n:'Seegang',w:5,x:2,eff:{t:'seegang'},txt:'Das Schiff schaukelt: Alle geben 1 zufällige Handkarte an den Nachbarn weiter, in ungerader Runde nach links, in gerader nach rechts. Von der Hand jederzeit spielbar.'},
+  {n:'Seekrank',w:5,eff:{t:'chill',n:2},txt:'Im nächsten Kampf −2.'},
+  {n:'Über die Planke',w:5,eff:{t:'lvl',n:1},txt:'Verliere 1 Stufe.'}
+];
+const ITEMS_W5 = [
+  {n:'Augenklappe',w:5,slot:'kopf',b:1,g:200,piratb:3,flv:'Piraten halten dich für einen von ihnen.'},
+  {n:'Taucherhelm',w:5,slot:'kopf',b:1,g:400,tiefb:3,diver:true,flv:'In der Tiefsee kein Weglauf-Malus.'},
+  {n:'Enterhaken',w:5,slot:'hand',hands:1,b:2,g:300,piratb:4},
+  {n:'Piratensäbel',w:5,slot:'hand',hands:1,b:3,g:500},
+  {n:'Holzbein',w:5,slot:'schuhe',b:2,g:200,run:-1,flv:'Stabil, aber nicht schnell.'},
+  {n:'Rettungsweste',w:5,slot:'ruestung',b:2,g:300,run:1}
+];
+const ONESHOTS_W5 = [
+  {n:'Rumfass',w:5,x:2,b:3,g:200,txt:'+3, für jede Seite.'},
+  {n:'Kanonenkugel',w:5,b:2,g:300,pOnly:true,vs:{tag:'pirat',val:5},txt:'Gegen Piraten +5, sonst +2. Nur für die kämpfende Seite.'},
+  {n:'Fischbrötchen',w:5,b:2,g:100,txt:'+2, für jede Seite.'},
+  {n:'Kompass',w:5,escape:true,g:200,txt:'Beim Weglaufen statt zu würfeln: Du entkommst automatisch, vor allen Monstern des Kampfes.'},
+  {n:'Schatzkarte (linke Hälfte)',w:5,b:0,g:100,map:'l',txt:'Zusammen mit der rechten Hälfte: in deinem Zug den Schatz ausgraben und 3 Schätze ziehen.'},
+  {n:'Schatzkarte (rechte Hälfte)',w:5,b:0,g:100,map:'r',txt:'Zusammen mit der linken Hälfte: in deinem Zug den Schatz ausgraben und 3 Schätze ziehen.'}
+];
+const LEVELUPS_W5 = ['Seebeine bekommen','Land in Sicht!'];
+const MEER_GRUND = {'Übellaunige Möwe':1,'Schleimige Socke':1,'Steuerprüfer-Gespenst':1,'Durchgedrehter Saugroboter':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,'Hydra mit Migräne':1,
+  'Pechsträhne':2,'Windböe':1,'Rost':1,'Identitätskrise':1,'Taschendieb-Gnom':1};
+function meerCount(p){ if(p.tpl.w===5) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return MEER_GRUND[p.tpl.n]||0; return p.def; }
+// Schatzkarte: beide Hälften auf der Hand
+const mapSet = p => { const l=p.hand.find(c=>c.map==='l'), r=p.hand.find(c=>c.map==='r'); return l && r ? [l,r] : null; };
+function canDig(p){ if(!mapSet(p)) return {ok:false, why:'Dafür brauchst du beide Hälften der Schatzkarte.'}; return {ok:true}; }
+function doDig(p){
+  const set=mapSet(p); if(!set) return;
+  set.forEach(c=>{ take(p,c); discard(c); });
+  const got=[]; for(let i=0;i<3;i++){ const t=drawTr(); if(t){ p.hand.push(t); got.push(t); } }
+  if(p.human){ stat('dig'); track('dig'); }
+  log(p.human ? `Du legst die Schatzkarte zusammen und gräbst den Schatz aus: ${got.map(c=>`<b>${cardLabel(c)}</b>`).join(', ')}.` : `${p.name} gräbt mit der Schatzkarte einen Schatz aus und zieht ${got.length} Schätze.`,'good');
+  ruleOnce('dig','Schatzkarte: Beide Hälften zusammen ablegen bringt 3 Schätze.');
+  fx('dig',{p}); render();
+}
+// Seegang: jeder gibt 1 zufällige Handkarte weiter, ungerade Runde nach links (zum nächsten Platz), gerade nach rechts
+function seegang(){
+  const ps=S.players.filter(q=>!q.dead), n=ps.length; if(n<2) return;
+  const left=S.turn%2===1, give=ps.map(q=>q.hand.length ? q.hand[rnd(q.hand.length)] : null);
+  ps.forEach((q,i)=>{ if(give[i]) take(q,give[i]); });
+  ps.forEach((q,i)=>{ const to=ps[(i+(left?1:n-1))%n]; if(give[i]) to.hand.push(give[i]); });
+  const mine=give[ps.indexOf(me())], got=give[(ps.indexOf(me())+(left?n-1:1))%n];
+  log(`Seegang! Das Schiff kippt nach ${left?'links':'rechts'}: Alle geben eine zufällige Handkarte weiter.${me().human && (mine||got) ? ` Du gibst ${mine?`<b>${cardLabel(mine)}</b>`:'nichts'} ab und bekommst ${got?`<b>${cardLabel(got)}</b>`:'nichts'}.` : ''}`,'sys');
+  ruleOnce('seegang','Seegang: Alle geben 1 zufällige Handkarte an den Nachbarn weiter, in ungerader Runde nach links, in gerader nach rechts.');
+  fx('seegang',{left}); render();
+}
 // Pilzpfanne: drei verschiedene Speisepilze (mit Sammelkorb zwei) gegen 1 Stufe, nie für die Siegstufe
 function pfanneSet(p){
   const need=p.eq.some(i=>i.korb && usable(p,i)) ? 2 : 3, pick=[];
@@ -339,7 +404,37 @@ const ART = {
   "Schwimmflügel":"art/gegenstand-schwimmfluegel.webp",
   "Sonnencreme LSF 50":"art/einmal-sonnencreme.webp",
   "Kokosnuss":"art/einmal-kokosnuss.webp",
-  "Den Strandkorb erobert":"art/stufe-den-strandkorb-erobert.webp"
+  "Den Strandkorb erobert":"art/stufe-den-strandkorb-erobert.webp",
+  "Sardinen-Schwarm":"art/monster-sardinen-schwarm.webp",
+  "Einsiedlerkrebs mit Mietrückstand":"art/monster-einsiedlerkrebs.webp",
+  "Kugelfisch mit Wutproblem":"art/monster-kugelfisch.webp",
+  "Tintenfisch-Taschendieb":"art/monster-tintenfisch-taschendieb.webp",
+  "Zitteraal am Steuer":"art/monster-zitteraal.webp",
+  "Geisterpirat Gismo":"art/monster-geisterpirat-gismo.webp",
+  "Pirat mit zwei Holzbeinen":"art/monster-pirat-holzbeine.webp",
+  "Seekranke Seeschlange":"art/monster-seeschlange.webp",
+  "Muschel-Mimik":"art/monster-muschel-mimik.webp",
+  "Wal mit Schluckauf":"art/monster-wal-schluckauf.webp",
+  "Schwertfisch-Fechtmeister":"art/monster-schwertfisch.webp",
+  "Riesenkrake Klara":"art/monster-riesenkrake-klara.webp",
+  "Käpt’n Achtarm":"art/monster-kaeptn-achtarm.webp",
+  "Seegang":"art/fluch-seegang.webp",
+  "Seekrank":"art/fluch-seekrank.webp",
+  "Über die Planke":"art/fluch-ueber-die-planke.webp",
+  "Augenklappe":"art/gegenstand-augenklappe.webp",
+  "Taucherhelm":"art/gegenstand-taucherhelm.webp",
+  "Enterhaken":"art/gegenstand-enterhaken.webp",
+  "Piratensäbel":"art/gegenstand-piratensaebel.webp",
+  "Holzbein":"art/gegenstand-holzbein.webp",
+  "Rettungsweste":"art/gegenstand-rettungsweste.webp",
+  "Rumfass":"art/einmal-rumfass.webp",
+  "Kanonenkugel":"art/einmal-kanonenkugel.webp",
+  "Fischbrötchen":"art/einmal-fischbroetchen.webp",
+  "Kompass":"art/einmal-kompass.webp",
+  "Schatzkarte (linke Hälfte)":"art/besonders-schatzkarte-links.webp",
+  "Schatzkarte (rechte Hälfte)":"art/besonders-schatzkarte-rechts.webp",
+  "Seebeine bekommen":"art/stufe-seebeine-bekommen.webp",
+  "Land in Sicht!":"art/stufe-land-in-sicht.webp"
 };
 function artKey(c){ if(c.k==='item') return c.slot; return {monster:'monster',curse:'curse',race:'race',class:'cls',enh:'enh',wander:'wander',oneshot:'potion',levelup:'levelup',amulet:'none'}[c.k]; }
 
@@ -392,7 +487,11 @@ const STYLES = {
   // Welt 4: Strandbewohner
   Bruno: {help:1.2, curse:1.1, intf:0.9, whistle:true, l:'hilft gern, verflucht aber jeden, der aus einem Kampf wegläuft'},
   Gesine: {help:1, curse:0.9, intf:1.6, greedy:true, l:'klaut gern: hilft nur gegen fast alle Schätze und mischt sich ständig ein'},
-  Sunny: {help:1.4, cheap:true, curse:0.3, intf:0.5, lazy:true, l:'hilft billig und flucht kaum, sucht aber selten selbst Ärger'}
+  Sunny: {help:1.4, cheap:true, curse:0.3, intf:0.5, lazy:true, l:'hilft billig und flucht kaum, sucht aber selten selbst Ärger'},
+  // Welt 5: auf hoher See
+  Walburga: {help:1.6, cheap:true, curse:0.4, intf:0.2, lazy:true, l:'hilft jedem gern und billig, ist aber langsam und mischt sich kaum ein'},
+  Pepe: {help:1, curse:1.1, intf:1.1, mimic:true, l:'macht nach: verflucht, wen zuletzt ein Fluch traf, und hilft gern, wenn gerade jemand geholfen hat'},
+  Sardella: {help:1, curse:0.9, intf:1.2, greedy:true, maps:true, l:'gierig: hilft nur gegen fast alle Schätze und sammelt Schatzkarten'}
 };
 // Spielweisen für zufällige Gegner im freien Spiel
 const BOT_STYLES = [
@@ -475,6 +574,11 @@ function cardPool(){
   ITEMS_W4.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
   ONESHOTS_W4.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W4.forEach(n=>addW({k:'levelup',n,w:4,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  MONSTERS_W5.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
+  CURSES_W5.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
+  ITEMS_W5.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ONESHOTS_W5.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
+  LEVELUPS_W5.forEach(n=>addW({k:'levelup',n,w:5,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   return P;
 }
 // Stückzahlen pro Kartenname; null = Empfehlung. Wird von der Oberfläche vor einem neuen Spiel gesetzt.
@@ -612,7 +716,7 @@ function sideStrength(C){
   const parts=[{l:`${f.human?'Deine':f.name+'s'} Stufe`,v:f.lvl,keep:true},{l:`${f.human?'Deine':f.name+'s'} Gegenstände`,v:itemBonus(f)}];
   if(C.h!=null){ const h=P(C.h); s+=power(h); parts.push({l:`Helfer: ${h.human?'du':h.name} (Stufe ${h.lvl} + Gegenst.)`,v:power(h)}); }
   const sides=[f, C.h!=null?P(C.h):null];
-  [['und','undead','gegen Untote'],['pilzb','pilz','gegen Pilze'],['meerb','meer','gegen Meeresmonster']].forEach(([k,tag,l])=>{ if(C.mons.some(m=>m.c[tag])) sides.forEach(q=>q && q.eq.forEach(i=>{ if(i[k] && usable(q,i)){ const v=i[k]-(i.b||0); s+=v; parts.push({l:`${i.n} ${l}`,v}); } })); });
+  [['und','undead','gegen Untote'],['pilzb','pilz','gegen Pilze'],['meerb','meer','gegen Meeresmonster'],['piratb','pirat','gegen Piraten'],['tiefb','tiefsee','gegen Tiefseemonster']].forEach(([k,tag,l])=>{ if(C.mons.some(m=>m.c[tag])) sides.forEach(q=>q && q.eq.forEach(i=>{ if(i[k] && usable(q,i)){ const v=i[k]-(i.b||0); s+=v; parts.push({l:`${i.n} ${l}`,v}); } })); });
   sides.forEach(q=>{ if(q && q.spore){ s-=q.spore; parts.push({l:`Sporenwolke (${q.human?'du':q.name})`,v:-q.spore}); } });
   sides.forEach(q=>{ if(q && q.sun){ s-=1; parts.push({l:`Sonnenbrand (${q.human?'du':q.name})`,v:-1}); } });
   C.pB.forEach(b=>{ s+=b.v; parts.push(b); });
@@ -625,6 +729,7 @@ function monStrength(C){
     m.enh.forEach(e=>{ v+=e.v; parts.push({l:`„${e.n}“`,v:e.v}); });
     const vs=vsBonus(m.c,C); if(vs){ v+=vs; parts.push({l:`Bonus gegen ${m.c.vs.race ? RACES[m.c.vs.race].n+'en' : CLASSES[m.c.vs.cls].n}`,v:vs}); }
     if(isFlut() && m.c.meer){ v+=3; parts.push({l:'Flut (Meer)',v:3}); }
+    if(m.c.puff && C.h!=null){ v+=m.c.puff; parts.push({l:'Bläst sich auf (Helfer da)',v:m.c.puff}); }
     if(isFlut() && m.c.soft){ v-=m.c.soft; parts.push({l:'Flut weicht ihn auf',v:-m.c.soft}); }
     s+=v;
   });
@@ -887,9 +992,12 @@ async function botManage(p){
   if(p.cls!==c0) log(`${p.name} spielt die Klasse ${p.cls.n} aus.`);
   if(canPfanne(p).ok) doPfanne(p);
   if(p.sun){ const cr=p.hand.find(c=>c.cream); if(cr) useCream(p,cr); }
+  if(mapSet(p)) doDig(p);
   for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.'); } }
   botSell(p);
   for(const cu of p.hand.filter(c=>c.k==='curse')){
+    if(!p.hand.includes(cu)) continue;   // nach Seegang schon weitergewandert
+    if(cu.eff.t==='seegang'){ if(Math.random()<0.3){ take(p,cu); log(`${p.name} löst Seegang aus!`); discard(cu); seegang(); } continue; }
     const t=pickCurseTarget(p,cu);
     if(t && Math.random()<Math.min(0.95,0.75*diffF()*(styleOf(p).curse||1))){ take(p,cu); log(`${p.name} spielt den Fluch „${cu.n}“ auf ${nmA(t)}!`,'bad'); ruleOnce('cursehand','Flüche von der Hand darf man jederzeit auf jeden Spieler spielen.'); await sleep(spd(0.6)); await applyCurse(t,cu,p); }
   }
@@ -916,6 +1024,7 @@ function curseHits(t,c){
   if(e.t==='spore') return (t.spore||0)<2;
   if(e.t==='sun') return !t.sun && !hasShade(t);
   if(e.t==='sand') return !t.sand;
+  if(e.t==='seegang') return true;
   return true;
 }
 function pickCurseTarget(p,c){
@@ -923,6 +1032,8 @@ function pickCurseTarget(p,c){
   const others=S.players.filter(o=>o.id!==p.id && !o.dead && curseHits(o,c) && !(spare && o.human));
   if(!others.length) return null;
   if(styleOf(p).grudge){ const g=others.find(o=>o.id===S.lastUp); if(g) return g; }
+  if(c.eff.t==='seegang') return p;   // Seegang trifft alle, das Ziel ist egal
+  if(styleOf(p).mimic && S.lastCursed!=null){ const g=others.find(o=>o.id===S.lastCursed); if(g) return g; }
   if(styleOf(p).whistle && S.lastRan!=null){ const g=others.find(o=>o.id===S.lastRan); if(g) return g; }
   const max=Math.max(...others.map(o=>o.lvl));
   if(max<p.lvl - (styleOf(p).spite?1:0)) return null;
@@ -1074,6 +1185,7 @@ function botAcceptHelp(b,C,offer){
   let chance = offer===0 ? 0.2 : (total>0 && offer/total>=0.5 ? 0.9 : 0.65);
   if(leaderGap>=2) chance-=0.35;
   chance*=st.help||1;
+  if(st.mimic && S.lastHelped!=null && S.lastHelped!==b.id) chance*=1.6;
   if(st.fair && offer<Math.ceil(total/2)) chance*=0.4;
   if(Math.random()<chance) return {yes:true, why: offer>0 ? 'Abgemacht.' : 'Na gut, ausnahmsweise.'};
   return {yes:false, why: offer===0 ? 'Für nichts? Nein danke.' : 'Nicht dieses Mal.'};
@@ -1225,8 +1337,11 @@ function botPlayAgainst(b,C,threat){
 }
 async function winCombat(C){
   const f=P(C.f), h=C.h!=null?P(C.h):null, lv=levelsGained(C);
-  if(f.human){ track('win'); if(C.mons.some(m=>m.c.lvl>=10)) track('big'); ['undead','nager','pilz','meer'].forEach(t=>{ if(C.mons.some(m=>m.c[t])) track(t); }); if(isFlut() && C.mons.some(m=>m.c.meer)) stat('meerflut'); }
+  if(f.human){ track('win'); if(C.mons.some(m=>m.c.lvl>=10)) track('big'); ['undead','nager','pilz','meer','pirat'].forEach(t=>{ if(C.mons.some(m=>m.c[t])) track(t); }); if(isFlut() && C.mons.some(m=>m.c.meer)) stat('meerflut'); }
   if(h && h.human) track('helped');
+  if(h) S.lastHelped=h.id;
+  if(C.mons.some(m=>m.c.pirat) && Math.random()<1/3){ const has=new Set(f.hand.filter(c=>c.map).map(c=>c.map));
+    for(const st of [S.tr,S.trDisc]){ const i=st.findIndex(c=>c.map && !has.has(c.map)); if(i>=0){ const c=st.splice(i,1)[0]; f.hand.push(c); log(`Der Pirat hatte etwas in der Tasche: ${nm(f)} ${V(f,'findest','findet')} <b>${c.n}</b>.`,'good'); break; } } }
   fx('win',{p:f, mine: f.human || (h&&h.human)});
   f.lvl+=lv;
   const boss=C.mons.find(m=>m.c.boss);
@@ -1269,16 +1384,17 @@ function severe(bad){ if(bad.t==='death') return true; if(bad.t==='lvl') return 
 async function runAway(p,m,i=0,n=1){
   const left=n-i; S.lastRan=p.id;
   if(m.c.np && p.lvl<=m.c.np){ if(p.human) track('escape'); log(`${m.c.n} verfolgt niemanden bis Stufe ${m.c.np}. ${nm(p)} ${V(p,'entkommst','entkommt')} automatisch.`,'good'); ruleOnce('np','„Verfolgt niemanden bis Stufe X“: Wer diese Stufe oder niedriger hat, entkommt ohne Würfeln.'); return; }
-  const mod=runBonus(p)+(m.c.run||0);
+  const deep=m.c.tiefsee && !p.eq.some(i=>i.diver && usable(p,i)) ? -1 : 0;
+  const mod=runBonus(p)+(m.c.run||0)+deep;
   const need=5-mod;
   const nebel=p.hand.find(c=>c.escape);
   if(p.human){
-    const parts=[]; if(hasRace(p,'elf')) parts.push('Elf +1'); p.eq.forEach(i=>{ if(i.run && usable(p,i)) parts.push(`${i.n} +${i.run}`); if(isFlut() && i.flutRun && usable(p,i)) parts.push(`${i.n} bei Flut +${i.flutRun}`); }); if(isFlut()) parts.push('Flut +1'); if(p.sand) parts.push('Sand in der Badehose −2'); if(m.c.run) parts.push(`${m.c.n} ${sign(m.c.run)}`);
+    const parts=[]; if(hasRace(p,'elf')) parts.push('Elf +1'); p.eq.forEach(i=>{ if(i.run && usable(p,i)) parts.push(`${i.n} +${i.run}`); if(isFlut() && i.flutRun && usable(p,i)) parts.push(`${i.n} bei Flut +${i.flutRun}`); }); if(isFlut()) parts.push('Flut +1'); if(p.sand) parts.push('Sand in der Badehose −2'); if(deep) parts.push('Tiefsee −1'); if(m.c.run) parts.push(`${m.c.n} ${sign(m.c.run)}`);
     const v=await ask(()=>({title:`Weglaufen vor ${m.c.n}${n>1?` (Monster ${i+1} von ${n})`:''}`, text: need<=1 ? 'Mit deinen Boni klappt die Flucht auf jeden Fall.' : need>6 ? 'Mit diesen Mali schaffst du es nur mit Hilfe von Karten.' : `Du brauchst eine ${need}${need<6?' oder mehr':''}. Grundwert 5${parts.length?', '+parts.join(', '):''}.`,
-      hint:[`Misslingt es: ${m.c.badTxt}`, ...(n>1?['Bei mehreren Monstern läufst du vor jedem einzeln weg.']:[]), ...(nebel?[left>1?`Mit Nebelpulver entkommst du sicher, und zwar vor allen ${left} übrigen Monstern.`:'Mit Nebelpulver entkommst du sicher.']:[])],
-      opts:[{l:'Würfeln',v:'roll',kind:'primary'}, ...(nebel?[{l:'Nebelpulver einsetzen',v:'nebel'}]:[])]}), 'run', {m, left});
-    if(v==='nebel'){ take(p,nebel); discard(nebel); track('escape'); log(`Du verschwindest im Nebelpulver und entkommst${left>1?' allen übrigen Monstern':''}!`,'good'); return 'all'; }
-  } else if(nebel && (severe(m.c.bad) || left>1)){ take(p,nebel); discard(nebel); log(`${p.name} verschwindet im Nebelpulver und entkommt${left>1?' allen übrigen Monstern':''}.`,'good'); return 'all'; }
+      hint:[`Misslingt es: ${m.c.badTxt}`, ...(n>1?['Bei mehreren Monstern läufst du vor jedem einzeln weg.']:[]), ...(nebel?[left>1?`Mit ${nebel.n} entkommst du sicher, und zwar vor allen ${left} übrigen Monstern.`:`Mit ${nebel.n} entkommst du sicher.`]:[])],
+      opts:[{l:'Würfeln',v:'roll',kind:'primary'}, ...(nebel?[{l:`${nebel.n} einsetzen`,v:'nebel'}]:[])]}), 'run', {m, left});
+    if(v==='nebel'){ take(p,nebel); discard(nebel); track('escape'); log(nebel.n==='Kompass' ? `Der Kompass zeigt dir den Weg: Du entkommst${left>1?' allen übrigen Monstern':''}!` : `Du verschwindest im Nebelpulver und entkommst${left>1?' allen übrigen Monstern':''}!`,'good'); return 'all'; }
+  } else if(nebel && (severe(m.c.bad) || left>1)){ take(p,nebel); discard(nebel); log(nebel.n==='Kompass' ? `${p.name} folgt dem Kompass und entkommt${left>1?' allen übrigen Monstern':''}.` : `${p.name} verschwindet im Nebelpulver und entkommt${left>1?' allen übrigen Monstern':''}.`,'good'); return 'all'; }
   let roll=await rollDie(p), total=roll+mod;
   log(`${nm(p)} ${V(p,'würfelst','würfelt')} eine ${roll}${mod?` (${sign(mod)} = ${total})`:''}.`);
   if(total<5 && hasRace(p,'halbling') && p.hand.length){
@@ -1310,12 +1426,14 @@ async function rollDie(p){
 
 /* ================= Flüche und Niederlagen ================= */
 async function applyCurse(t,c,by){
+  if(c.eff.t==='seegang'){ discard(c); seegang(); return; }
   const am=t.hand.find(x=>x.k==='amulet');
   if(am){
     let use=true;
     if(t.human){ const v=await ask(()=>({title:`Fluch: ${c.n}`, text:`${c.txt} Du hast ein Glücksamulett.`, hint:['Das Amulett hebt den Fluch auf. Danach ist es weg.'], opts:[{l:'Glücksamulett einsetzen',v:'yes',kind:'primary'},{l:'Fluch hinnehmen',v:'no'}]}), 'amulet', {c}); use=v==='yes'; }
     if(use){ take(t,am); discard(am); discard(c); log(`${nm(t)} ${V(t,'wehrst','wehrt')} den Fluch mit dem Glücksamulett ab.`,'good'); return; }
   }
+  S.lastCursed=t.id;
   log(`Fluch „${c.n}“ trifft ${nmA(t)}: ${c.txt}`,'bad');
   if(t.human) stat('curses');
   fx('curse',{p:t});
@@ -1417,7 +1535,8 @@ function cardActions(c, where){
           if(inMine) A.push({l:`Für unsere Seite (+${vp})`, fn:()=>playOneShot(c,'p'), kind:'primary'});
           else A.push({l:`Für ${P(C.f).name} (+${vp})`, fn:()=>playOneShot(c,'p'), kind: c.pOnly?'primary':''});
           if(!c.pOnly) A.push({l:`Für das Monster (+${c.b})`, fn:()=>playOneShot(c,'m'), kind: inMine?'':'primary'});
-        } else if(c.escape) A.push({info:'Nebelpulver bietet dir das Spiel beim Weglaufen an.'});
+        } else if(c.escape) A.push({info:`${c.n} bietet dir das Spiel beim Weglaufen an.`});
+        else if(c.map){ const cd=canDig(p); A.push({l:'Schatz ausgraben: 3 Schätze', fn:()=>doDig(p), kind: cd.ok?'primary':'', dis: C ? 'Den Schatz gräbst du außerhalb von Kämpfen aus.' : cd.ok ? false : cd.why}); }
         else A.push({info:'Einmal-Gegenstände spielst du während eines Kampfes, auch in fremden.'});
         sellAct(); break;
       }
@@ -1434,6 +1553,7 @@ function cardActions(c, where){
       }
       case 'monster': A.push({info: myTurn && S.phase===2 && !C ? 'Zieh das Monster aufs Spielfeld oder tippe unten auf „Monster herausfordern“.' : 'Monster von der Hand spielst du bei „Monster herausfordern“ oder mit „Ungebetener Gast“ in fremde Kämpfe.'}); break;
       case 'curse': {
+        if(c.eff.t==='seegang'){ A.push({l:'Seegang auslösen: alle geben 1 Karte weiter', fn:()=>playSeegang(c), kind:'primary'}); break; }
         S.players.filter(x=>!x.human).forEach(t=>A.push({l:`Auf ${t.name} spielen`, fn:()=>playCurseOn(c,t)}));
         A.push({info:'Flüche von der Hand gehen jederzeit, auf jeden.'}); break;
       }
@@ -1487,6 +1607,7 @@ function playWander(w,m){
   ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.');
   C.asked[0]=true; markIntf();
 }
+function playSeegang(c){ const p=me(); take(p,c); discard(c); stat('played'); log('Du löst Seegang aus.'); seegang(); }
 function playCurseOn(c,t){
   const p=me(); take(p,c); track('curse');
   log(`Du spielst den Fluch „${c.n}“ auf ${t.name}.`);
@@ -1557,6 +1678,7 @@ function curseLoss(f,c){
   if(e.t==='spore') return 2;
   if(e.t==='sun') return t_sunLoss(f);
   if(e.t==='sand') return 1;
+  if(e.t==='seegang') return 0;
   if(e.t==='slot' && e.s==='hand'){ const it=f.eq.filter(i=>i.slot==='hand' && usable(f,i)).sort((a,b)=>(b.b||0)-(a.b||0))[0]; return it ? (it.b||0) : 0; }
   if(e.t==='slot'){ const it=f.eq.find(i=>i.slot===e.s); return it && usable(f,it) ? (it.b||0) : 0; }
   if(e.t==='lvl') return Math.min(e.n, f.lvl-1);
@@ -1681,9 +1803,9 @@ function adviseInterfere(p,C){
 function adviseRun(p,d){
   const m=d.m, need=5-(runBonus(p)+(m.c.run||0)), ch=Math.max(0,Math.min(6,7-need))/6, pc=Math.round(ch*100);
   const nebel=p.hand.find(c=>c.escape), left=d.left||1;
-  if(nebel && left>1 && ch<1) return {opt:'nebel', text:'Setz das Nebelpulver ein.', why:`Es bringt dich vor allen ${left} übrigen Monstern in Sicherheit. Sonst musst du ${left}-mal würfeln.`};
-  if(nebel && (severe(m.c.bad) || ch<=1/3)) return {opt:'nebel', text:'Setz das Nebelpulver ein.', why:`Ohne liegt deine Chance bei ${pc} %, und es droht: ${m.c.badTxt}`};
-  return {opt:'roll', text:'Würfle.', why:`Deine Chance: ${pc} %.${nebel?' Das Nebelpulver hebst du für Schlimmeres auf.':''}`};
+  if(nebel && left>1 && ch<1) return {opt:'nebel', text:`Setz ${nebel.n==='Kompass'?'den Kompass':'das Nebelpulver'} ein.`, why:`Es bringt dich vor allen ${left} übrigen Monstern in Sicherheit. Sonst musst du ${left}-mal würfeln.`};
+  if(nebel && (severe(m.c.bad) || ch<=1/3)) return {opt:'nebel', text:`Setz ${nebel.n==='Kompass'?'den Kompass':'das Nebelpulver'} ein.`, why:`Ohne liegt deine Chance bei ${pc} %, und es droht: ${m.c.badTxt}`};
+  return {opt:'roll', text:'Würfle.', why:`Deine Chance: ${pc} %.${nebel?` ${nebel.n==='Kompass'?'Den Kompass':'Das Nebelpulver'} hebst du für Schlimmeres auf.`:''}`};
 }
 function adviseSel(p){
   const s=UI.sel;
@@ -1772,6 +1894,9 @@ function cardMeaning(c){
       if(c.und) t += `, gegen Untote sogar +${c.und}`;
       if(c.pilzb) t += `, gegen Pilze sogar +${c.pilzb}`;
       if(c.meerb) t += `, gegen Meeresmonster sogar +${c.meerb}`;
+      if(c.piratb) t += `, gegen Piraten sogar +${c.piratb}`;
+      if(c.tiefb) t += `, gegen Tiefseemonster sogar +${c.tiefb}`;
+      if(c.diver) t += ', und in der Tiefsee kein Weglauf-Malus';
       if(c.flutRun) t += `, bei Flut +${c.flutRun} beim Weglaufen`;
       if(c.shade) t += ', schützt vor Sonnenbrand';
       t += `. Belegt ${slot}.`;
@@ -1779,9 +1904,10 @@ function cardMeaning(c){
       if(c.big) t += ' Großer Gegenstand: davon darf man nur einen haben, Zwerge beliebig viele.';
       return t + ` Verkaufswert ${fmt(c.g)} Gold.`;
     }
-    case 'oneshot': if(c.pOnly) return `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, aber nur für die kämpfende Seite, nicht für das Monster. ${c.txt} Danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
+    case 'oneshot': if(c.map) return `Schatzkarte: ${c.txt} Gräbst du den Schatz aus, kommen beide Hälften in die Ablage. Verkaufswert ${fmt(c.g)} Gold.`;
+      if(c.pOnly) return `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, aber nur für die kämpfende Seite, nicht für das Monster. ${c.txt} Danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
       return c.escape ? 'Einmal einsetzbar: Beim Weglaufen entkommt man damit ohne Würfeln, auch bei mehreren Monstern vor allen auf einmal. Danach wird die Karte abgelegt.' : `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, für jede Seite, auch für das Monster. +${c.b}, danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
-    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}${c.pilz?', Pilz':''}${c.meer?', Meer (bei Flut +3)':''}.${c.soft?` Bei Flut −${c.soft}.`:''}${c.noHelp?' Niemand darf helfen.':''} Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
+    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}${c.pilz?', Pilz':''}${c.meer?', Meer (bei Flut +3)':''}${c.pirat?', Pirat':''}${c.tiefsee?', Tiefsee (Weglaufen −1)':''}.${c.soft?` Bei Flut −${c.soft}.`:''}${c.noHelp?' Niemand darf helfen.':''} Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
     case 'curse': return 'Fluch. Beim Aufstoßen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen.';
     case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
@@ -1819,6 +1945,8 @@ function itemTxt(c){
   if(c.und) t.push(`Gegen Untote +${c.und} statt +${c.b}.`);
   if(c.pilzb) t.push(`Gegen Pilze +${c.pilzb} statt +${c.b}.`);
   if(c.meerb) t.push(`Gegen Meeresmonster +${c.meerb} statt +${c.b}.`);
+  if(c.piratb) t.push(`Gegen Piraten +${c.piratb} statt +${c.b}.`);
+  if(c.tiefb) t.push(`Gegen Tiefseemonster +${c.tiefb} statt +${c.b}.`);
   if(c.slot==='none') t.push('Belegt keinen Slot.');
   if(c.flv) t.push(c.flv);
   return t.join(' ');

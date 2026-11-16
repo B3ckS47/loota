@@ -23,6 +23,10 @@ const COSMETICS = {
     leuchtturmwaechter: 'Leuchtturmwächter',
     wellenreiter: 'Wellenreiter',
     strandkoenig: 'Herr der Strandkörbe',
+    leichtmatrose: 'Leichtmatrose',
+    krabbenbezwinger: 'Krabbenbezwinger',
+    seebaer: 'Seebär',
+    kaepten: 'Käpt’n des Stammtischs',
     // Krämerladen
     gluckspilz: 'Glückspilz',
     wuerfelkoenig: 'Würfelkönig',
@@ -43,6 +47,9 @@ const COSMETICS = {
     strandtuch: {n: 'Strandtuch', c: '#e2574c'},
     rettungsring: {n: 'Rettungsring', c: '#f26b3a'},
     meeresschaum: {n: 'Meeresschaum', c: '#9fe0dc'},
+    walblau: {n: 'Walblau', c: '#4a7fb5'},
+    dublonengold: {n: 'Dublonengold', c: '#d9a63a'},
+    korallenrot: {n: 'Korallenrot', c: '#e06650'},
     // Krämerladen und Serie
     bierdeckel: {n: 'Bierdeckel', c: '#d9b38c'},
     abendrot: {n: 'Abendrot', c: '#e8774a'},
@@ -58,6 +65,7 @@ const COSMETICS = {
     rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'},
     flora: {n: 'Fee Flora', src: 'icons/portrait-flora.png'},
     sunny: {n: 'Surfer Sunny', src: 'icons/portrait-sunny.png'},
+    walburga: {n: 'Wal Walburga', src: 'icons/portrait-walburga.png'},
     // Krämerladen: die Gegner aus Taverne, Keller und Wald
     berta: {n: 'Berta', src: 'icons/portrait-berta.png'},
     kalle: {n: 'Kalle', src: 'icons/portrait-kalle.png'},
@@ -68,7 +76,9 @@ const COSMETICS = {
     trudi: {n: 'Trüffelschwein Trudi', src: 'icons/portrait-trudi.png'},
     walter: {n: 'Waldschrat Walter', src: 'icons/portrait-walter.png'},
     bruno: {n: 'Bademeister Bruno', src: 'icons/portrait-bruno.png'},
-    gesine: {n: 'Möwe Gesine', src: 'icons/portrait-gesine.png'}
+    gesine: {n: 'Möwe Gesine', src: 'icons/portrait-gesine.png'},
+    pepe: {n: 'Papagei Pepe', src: 'icons/portrait-pepe.png'},
+    sardella: {n: 'Smutje Sardella', src: 'icons/portrait-sardella.png'}
   }
 };
 function cosmeticName(id) {
@@ -287,6 +297,7 @@ const WORLDS = [{
   intro: 'Hilde hängt ein Schild an die Tür: „Wegen Urlaub geschlossen!“ Drei Welten voller Ratten, Pilze und Drachen sind genug. Der ganze Stammtisch folgt dem Bach bis ans Meer. Doch am Strand ist kein Platz mehr frei: Krabbenbaron Kneifer hat jeden Strandkorb mit Handtüchern reserviert und kassiert Strandgebühr. Berta krempelt die Ärmel hoch: „Das wollen wir doch mal sehen.“',
   outro: 'Kneifer klappert mit den Scheren und gibt die Strandkörbe frei. Der Stammtisch liegt endlich in der Sonne. Doch als die Flut kommt, springt Kneifer auf ein Piratenschiff, und Uschi ist weg. Am Strand liegt nur noch ihr Wettbuch. Von draußen ruft jemand: „Lösegeld, oder sie spielt bei uns mit!“',
   rules: [['Ebbe und Flut', 'Sie wechseln mit jeder Runde, Runde 1 ist Ebbe. Den Stand siehst du am Wasser auf dem Tisch und am Symbol neben der Rundenzahl.'], ['Bei Flut', 'Monster mit dem Merkmal Meer haben +3, der Sandburg-Koloss weicht auf (−3). Weglaufen klappt mit +1, mit Schwimmflügeln mit +3.'], ['Bei Ebbe', 'Das Watt liegt frei: „Raum durchsuchen“ bringt einen Schatz statt einer Türkarte.'], ['Sonnenbrand', 'Bleibt, bis du einen Kampf gewinnst: −1 in jedem Kampf, und niemand hilft dir. Sonnencreme beseitigt ihn sofort, ein Sonnenschirm schützt davor.'], ['Sand in der Badehose', 'Weglaufen −2, bis du eine Stufe aufsteigst.']],
+  sell: {boss: 'Krabbenbaron Kneifer', rule: 'Ebbe und Flut: eine neue Spielregel, die den ganzen Tisch verändert', cards: 19, loot: '4 Titel, 3 Rahmen und ein Porträt'},
   unlocks: ['das Strand-Deck', 'die Tischfläche „Sandstrand“', 'die Strandmusik'],
   starReward: {n: 18, id: 'frame:meeresschaum'},
   finalTitle: 'Kneifer ist besiegt!',
@@ -344,14 +355,75 @@ const WORLDS = [{
       extras: [{t: 'Kneifer selbst besiegen', ok: st => st.bossBy === 0}, {t: 'Ohne Hilfe gegen Kneifer', ok: st => st.bossBy === 0 && !st.bossHelped}],
       reward: 'title:strandkoenig', final: true}
   ]
+}, {
+  id: 'w5', n: 5, name: 'Auf hoher See', face: 'icons/portrait-hilde.png', deck: 'meer', table: 'schiff', theme: 'schiff', map: 'art/karte-welt5.webp', mapRatio: 768 / 1376, paid: true,
+  fog: {show: 0.6, teaser: [[25, 18.3], [60, 38.3], [40, 51.7]], hint: 'Besiege Krabbenbaron Kneifer, dann geht es aufs Meer.'},
+  intro: 'Ohne Uschi ist der Stammtisch nur halb so laut. Hilde kramt eine alte Seekarte aus dem Keller, Sunny leiht euch sein Surfbrett, und Wal Walburga bietet an, euch zu ziehen. Irgendwo da draußen segelt Käpt’n Achtarm, ein Krake mit acht Säbeln und einem Holzbein, das er nicht braucht. Kneifer ist jetzt sein Bootsmann. „Uschi spielt Karten mit denen“, sagt Berta. „Die armen Piraten.“',
+  outro: 'Achtarm streicht die Flagge mit allen acht Armen. Uschi steht an Deck, einen Sack voller Dublonen über der Schulter. „Ich hab sie alle beim Kartenspielen ausgenommen. Warum hat das so lange gedauert?“ Walburga zieht das Schiff nach Hause. Am Abend sitzt der Stammtisch wieder bei Hilde, und an der Wand hängt jetzt eine Piratenflagge.',
+  rules: [['Seegang', 'Eine Ereigniskarte im Türstapel. Wird sie aufgedeckt, geben alle 1 zufällige Handkarte an den Nachbarn weiter: in ungerader Runde nach links, in gerader nach rechts. Verdeckt gezogen darfst du sie jederzeit von der Hand auslösen, auch mitten im Kampf.'], ['Schatzkarte', 'Im Schatzstapel liegen eine linke und eine rechte Hälfte. Hast du beide, gräbst du in deinem Zug den Schatz aus und ziehst 3 Schätze.'], ['Piraten', 'Augenklappe, Enterhaken und Kanonenkugel sind gegen Piraten stärker. Wer einen Piraten besiegt, findet manchmal eine Schatzkarten-Hälfte.'], ['Tiefsee', 'Tiefseemonster leben im Dunkeln: Weglaufen −1. Mit dem Taucherhelm gilt der Malus nicht, und es gibt +3 im Kampf.'], ['Käpt’n Achtarm', 'Der Boss steckt nur in der letzten Station im Türstapel. Wer ihn besiegt, gewinnt sofort.']],
+  sell: {boss: 'Käpt’n Achtarm', rule: 'Seegang und Schatzkarte: Karten wandern übers Deck, und ein Schatz will ausgegraben werden', cards: 30, loot: '4 Titel, 3 Rahmen und ein Porträt'},
+  unlocks: ['das Meeres-Deck', 'die Tischfläche „Schiffsdeck“', 'die Piratenmusik'],
+  starReward: {n: 18, id: 'frame:korallenrot'},
+  finalTitle: 'Uschi ist frei!',
+  stations: [
+    {id: 'w5s1', face: 'art/monster-tintenfisch-taschendieb.webp', ax: 25, ay: 11, no: '1', type: 'puzzle', name: 'Der Taschendieb', place: 'Anlegesteg', req: ['w4s8'],
+      text: 'Kaum habt ihr den Proviant auf Sunnys Surfbrett geladen, schlängelt sich ein Arm aus dem Wasser und greift nach dem Fischbrötchen. Dann noch einer. Und noch einer. Ein Tintenfisch mit Ganovenmaske, und er ist stinksauer, weil ihr ihn erwischt habt.',
+      goal: 'Besiege den stinksauren Tintenfisch-Taschendieb (Kampfstärke 9). Du hast Stufe 4, eine Augenklappe und drei Karten auf der Hand: Kampfstärke 5.',
+      scn: {fight: {mons: ['Tintenfisch-Taschendieb'], enh: ['Stinksauer']}, start: {lvl: 4, eq: ['Augenklappe'], hand: ['Rumfass', 'Fischbrötchen', 'Kanonenkugel'], deal: false}, bots: []},
+      extras: [{t: 'Mit höchstens zwei Karten gewinnen', ok: st => st.played <= 2}, {t: 'Die Kanonenkugel behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Kanonenkugel')}],
+      reward: 'title:leichtmatrose'},
+    {id: 'w5s2', luck: 0.15, face: 'icons/portrait-walburga.png', ax: 60, ay: 23, no: '2', type: 'duel', name: 'Walburgas Lied', place: 'Offenes Meer', req: ['w5s1'],
+      text: 'Walburga zieht euer Brett mit einem Seil übers Meer und singt dabei so laut, dass die Möwen abdrehen. „Zum Zeitvertreib eine Runde? Ich bin ganz schlecht, ehrlich!“ Sie ist nicht schlecht.',
+      goal: '1 gegen 1 gegen Walburga, mit dem Meeres-Deck: Erreiche Stufe 5 vor ihr.',
+      scn: {target: 5, bots: ['Walburga'], diff: 'gemuetlich'},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}],
+      reward: 'frame:walblau'},
+    {id: 'w5s3', face: 'icons/portrait-pepe.png', ax: 40, ay: 31, no: '3', type: 'event', name: 'Pepe plappert', place: 'Krähennest', req: ['w5s2'],
+      text: 'Ein Piratenschiff! Oben im Krähennest sitzt ein bunter Papagei und plappert: „Kombüse! Kombüse! Sardella kocht! Krrrah!“ Für ein kleines Geschenk verrät er bestimmt mehr.',
+      goal: 'Gib Pepe etwas und nimm, was er dir dafür zeigt. Es wirkt sich auf die nächste Station aus.',
+      choices: [
+        {v: 'helm', l: 'Den Taucherhelm nehmen', d: 'Du startest Station 4 mit dem Taucherhelm (+1, gegen Tiefsee +3, kein Weglauf-Malus).'},
+        {v: 'haken', l: 'Den Enterhaken nehmen', d: 'Du startest Station 4 mit dem Enterhaken (+2, gegen Piraten +4).'},
+        {v: 'coins', l: 'Die 30 Münzen nehmen', d: 'Du bekommst 30 Münzen.', coins: 30}
+      ]},
+    {id: 'w5s4', luck: 0.1, face: 'icons/portrait-sardella.png', ax: 58, ay: 37, no: '4', type: 'duel', name: 'Die Kombüse', place: 'Piratenschiff', req: ['w5s3'],
+      text: 'In der Kombüse rührt Smutje Sardella in einem Topf, aus dem ein Stiefel ragt. Pepe sitzt auf ihrer Schulter. „Blinde Passagiere? Wer gewinnt, darf bleiben. Wer verliert, schält Kartoffeln.“',
+      goal: 'Gegen Sardella und Pepe: Erreiche als Erster Stufe 6.',
+      scn: story => ({target: 6, bots: ['Sardella', 'Pepe'], diff: 'gemuetlich',
+        start: story.choice.w5s3 === 'helm' ? {eq: ['Taucherhelm']} : story.choice.w5s3 === 'haken' ? {eq: ['Enterhaken']} : undefined}),
+      extras: [{t: 'Einen Schatz ausgraben', ok: st => (st.dig || 0) >= 1}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
+    {id: 'w5s5', face: 'art/monster-krabbenbaron-kneifer.webp', ax: 14, ay: 44, no: '5', type: 'puzzle', name: 'Kneifers Revanche', place: 'Treibgut', req: ['w5s4'],
+      text: 'Auf einem treibenden Fass hockt Kneifer, grün im Gesicht vor Seekrankheit. Trotzdem hebt er die Scheren: „Ihr schon wieder! Diesmal kneife ich zurück!“ Seekrank ist er schwächer, aber stinksauer.',
+      goal: 'Besiege Kneifer (Kampfstärke 15: Stufe 15, seekrank −5, stinksauer +5). Du hast Stufe 5 und einen Piratensäbel: Kampfstärke 8.',
+      scn: {fight: {mons: ['Krabbenbaron Kneifer'], enh: ['Winzig', 'Stinksauer']}, start: {lvl: 5, eq: ['Piratensäbel'], hand: ['Rumfass', 'Fischbrötchen', 'Riesenböller'], deal: false}, bots: []},
+      extras: [{t: 'Mit genau zwei Karten gewinnen', ok: st => st.played === 2}, {t: 'Das Fischbrötchen behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Fischbrötchen')}],
+      reward: 'title:krabbenbezwinger'},
+    {id: 'w5s6a', face: 'icons/portrait-sardella.png', ax: 78, ay: 47, no: '6a', type: 'duel', name: 'Der Sturm', place: 'Sturmfront', hard: true, req: ['w5s5'],
+      text: 'Mitten im Sturm hält Sardella das Steuer, Pepe klammert sich an den Mast. Die Wellen schlagen über das Deck, und die Karten rutschen ständig vom Tisch. „Weiterspielen!“, brüllt Sardella. „Bei Seegang schmeckt alles besser!“',
+      goal: 'Gegen Sardella und Pepe mit dreimal so viel Seegang im Deck: Erreiche Stufe 7. Hier gibt es doppelte Münzen.',
+      scn: {target: 7, bots: ['Sardella', 'Pepe'], diff: 'normal', more: {'Seegang': 6}}, coinMul: 2,
+      extras: [{t: 'In weniger als 15 Runden', ok: (st, S) => S.turn < 15}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
+    {id: 'w5s6b', luck: 0.05, face: 'icons/portrait-walburga.png', ax: 53, ay: 63, no: '6b', type: 'duel', name: 'Die Schatzinsel', place: 'Insel', easy: true, req: ['w5s5'],
+      text: 'Auf einer winzigen Insel mit einem roten X im Sand döst Walburga im seichten Wasser. „Hier ist es so schön ruhig. Noch eine Runde, bevor ihr weiterfahrt?“',
+      goal: 'Gegen Walburga: Erreiche Stufe 6.',
+      scn: {target: 6, bots: ['Walburga'], diff: 'gemuetlich'},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
+    {id: 'w5s7', ax: 32, ay: 77, no: '7', type: 'shop', name: 'Fietes Floß', place: 'Riff', reqAny: ['w5s6a', 'w5s6b'],
+      text: 'Über dem Riff treibt Fischhändler Fiete auf seinem Floß, zwischen Kisten voller Muscheln und Fischbrötchen. „Moin! Alles frisch aus dem Meer, sogar die Rahmen.“',
+      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Achtarm.',
+      shop: [{id: 'title:seebaer', price: 30}, {id: 'frame:dublonengold', price: 40}, {id: 'portrait:walburga', price: 60}], onward: 'Weiter zu Achtarm'},
+    {id: 'w5s8', luck: 0.1, face: 'art/monster-kaeptn-achtarm.webp', ax: 75, ay: 86, no: '8', type: 'boss', name: 'Achtarms Flaggschiff', place: 'Flaggschiff', req: ['w5s7'],
+      text: 'Das schwarze Flaggschiff liegt vor euch, eine Krake als Galionsfigur. An Deck sitzt Uschi und mischt die Karten, Pepe und Sardella sind auch schon da. Achtarm lehnt am Mast und schwingt alle acht Säbel. „Wer mich besiegt, kriegt das Schiff. Und die Dame da gleich mit, die schuldet mir nämlich schon drei Truhen.“',
+      goal: 'Gegen Pepe, Sardella und Uschi. Achtarm steckt in der unteren Hälfte des Türstapels: Stufe 16, Pirat und Tiefsee. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
+      scn: {target: 10, bots: ['Pepe', 'Sardella', 'Uschi'], boss: 'Käpt’n Achtarm', bossLvl: 16, diff: 'normal'},
+      extras: [{t: 'Achtarm selbst besiegen', ok: st => st.bossBy === 0}, {t: 'Ohne Hilfe gegen Achtarm', ok: st => st.bossBy === 0 && !st.bossHelped}],
+      reward: 'title:kaepten', final: true}
+  ]
 }];
 
 // Welten, die noch kommen: auf der Karte im Nebel zu erahnen (map = späteres Musely-Bild)
 // map fehlt noch: dann zeigt der Nebel eine schlichte Fläche. teaser in Prozent des sichtbaren Ausschnitts
-const WORLDS_SOON = [
-  {id: 'w5', n: 5, name: 'Auf hoher See', map: null, ratio: 768 / 1376, show: 0.45, teaser: [[50, 30], [28, 52], [66, 74]],
-    hint: 'Besiege Krabbenbaron Kneifer, dann geht es aufs Meer.', soon: 'Folgt bald: Uschi ist auf einem Piratenschiff. Ahoi!'}
-];
+const WORLDS_SOON = [];
 // Welten, die gerade offen sind: Welt 1 immer, jede weitere nach Abschluss der vorigen
 const openWorlds = () => WORLDS.filter((w, i) => i === 0 || STORY.worlds[WORLDS[i - 1].id]);
 const currentWorld = () => { const o = openWorlds(); return o[o.length - 1]; };
@@ -381,7 +453,8 @@ const worldOwned = w => !w || !w.paid || !!PURCHASE.worlds[w.id];
 // Angebote: einzelne Welt oder das Paket mit der nächsten Kaufwelt (Preise vorläufig)
 const OFFERS = [
   {id: 'w4', worlds: ['w4'], n: 'Welt 4', price: '2,49 €'},
-  {id: 'w45', worlds: ['w4', 'w5'], n: 'Welt 4 und 5', price: '3,99 €', note: 'Welt 5 bekommst du, sobald sie fertig ist.'}
+  {id: 'w5', worlds: ['w5'], n: 'Welt 5', price: '2,49 €'},
+  {id: 'w45', worlds: ['w4', 'w5'], n: 'Welt 4 und 5', price: '3,99 €'}
 ];
 function unlockOffer(id) { const o = OFFERS.find(x => x.id === id); if (!o) return false; o.worlds.forEach(w => { PURCHASE.worlds[w] = true; }); savePurchase(); return true; }
 const allStations = () => WORLDS.flatMap(w => w.stations.map(st => Object.assign(st, {world: w.id})));
@@ -505,6 +578,8 @@ const MISSIONS = [
   {id: 'pilz', d: 1, k: 'pilz', n: 1, t: 'Besiege ein Pilz-Monster', w: 'w3'},
   {id: 'pfanne', d: 1, k: 'pfanne', n: 1, t: 'Koche eine Pilzpfanne', w: 'w3'},
   {id: 'meer', d: 1, k: 'meer', n: 1, t: 'Besiege ein Meeresmonster', w: 'w4'},
+  {id: 'pirat', d: 1, k: 'pirat', n: 1, t: 'Besiege einen Piraten', w: 'w5'},
+  {id: 'schatz', d: 1, k: 'dig', n: 1, t: 'Grabe einen Schatz aus', w: 'w5'},
   {id: 'sieg', d: 2, k: 'gamewon', n: 1, t: 'Gewinne eine Partie'},
   {id: 'gross', d: 2, k: 'big', n: 1, t: 'Besiege ein Monster ab Stufe 10'},
   {id: 'sauber', d: 2, k: 'cleanwin', n: 1, t: 'Gewinne eine Partie, ohne eine Stufe zu verlieren'},
@@ -515,7 +590,7 @@ const MISSION_COINS = [10, 15, 25], MISSION_LEVEL = ['Leicht', 'Mittel', 'Schwer
 const SHOP_POOL = [
   {id: 'portrait:berta', price: 60}, {id: 'portrait:kalle', price: 60}, {id: 'portrait:uschi', price: 60}, {id: 'portrait:hilde', price: 100},
   {id: 'portrait:fridolin', price: 80}, {id: 'portrait:gustav', price: 80}, {id: 'portrait:trudi', price: 80}, {id: 'portrait:walter', price: 80},
-  {id: 'portrait:bruno', price: 80}, {id: 'portrait:gesine', price: 80},
+  {id: 'portrait:bruno', price: 80}, {id: 'portrait:gesine', price: 80}, {id: 'portrait:pepe', price: 80}, {id: 'portrait:sardella', price: 80},
   {id: 'frame:bierdeckel', price: 40}, {id: 'frame:abendrot', price: 40}, {id: 'frame:mitternacht', price: 50}, {id: 'frame:eichenholz', price: 40},
   {id: 'frame:lavendel', price: 40}, {id: 'frame:perlmutt', price: 50},
   {id: 'title:gluckspilz', price: 30}, {id: 'title:wuerfelkoenig', price: 30}, {id: 'title:kartenhai', price: 30},
