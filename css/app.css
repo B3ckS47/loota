@@ -204,10 +204,12 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 #scr-game{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(110px,1fr) auto auto auto}
 #scr-game>*{min-width:0}
 .topbar{display:flex;align-items:center;gap:8px;padding:8px 10px 4px;color:var(--on-wood)}
-.tb-mid{flex:1;min-width:0;text-align:center}
-.tb-title{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 rgba(0,0,0,.6)}
-.phasedots{display:flex;justify-content:center;gap:9px;width:max-content;margin:3px auto 0;padding:2px 10px;height:26px;border-radius:999px;background:rgba(251,243,223,.85);border:1px solid rgba(110,70,35,.45);box-shadow:0 2px 6px rgba(0,0,0,.35)}
-.phasedots img{width:22px;height:22px;opacity:.4;filter:grayscale(.7);transition:transform .25s, opacity .25s}
+.tb-mid{flex:1;min-width:0;height:42px;display:flex;align-items:center;gap:0;padding:0 10px 0 4px;border-radius:12px;border:2px solid var(--edge);background:linear-gradient(var(--card-hi),var(--card));box-shadow:0 3px 0 var(--wood-dark);color:var(--ink)}
+.tb-title{flex:0 0 auto;min-width:30px;text-align:center;font:700 26px/1 var(--display);color:var(--ink)}
+.tb-mid.mine .tb-title{color:#b8420c}
+.tb-sep{flex:0 0 auto;width:2px;align-self:stretch;margin:8px 8px 8px 4px;border-radius:2px;background:var(--edge);opacity:.45}
+.phasedots{flex:1;min-width:0;display:flex;justify-content:space-around;align-items:center}
+.phasedots img{width:24px;height:24px;opacity:.4;filter:grayscale(.7);transition:transform .25s, opacity .25s}
 .phasedots img.on{opacity:1;filter:drop-shadow(0 0 4px rgba(255,220,150,.9));transform:scale(1.2)}
 .phasedots img.done{opacity:.7;filter:none}
 
@@ -1036,3 +1038,4 @@ input[type=range]{accent-color:#ff8a1f}
 .t-daily .sk-goal.ok{border-color:#56c24c}
 .t-daily .sk-goal.ok em{color:#86dc78}
 .t-daily.dark{background-image:url(../art/serie-brett-aus.webp)}
+@media (max-width:340px){.tb-mid{padding:0 6px 0 2px}.tb-title{font-size:22px;min-width:24px}.tb-sep{margin:8px 5px 8px 2px}.phasedots img{width:20px;height:20px}}

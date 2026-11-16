@@ -500,7 +500,10 @@ function renderSoundBtn() {
 }
 function renderTop() {
   const who = S.winner != null ? 'Spiel vorbei' : S.cur === 0 ? 'Dein Zug' : `${P(S.cur).name} ist am Zug`;
-  patch($('#tb-title'), SCN && SCN.fight ? 'Rätselkampf' : SCN ? `Ziel Stufe ${WINLVL()} · Runde ${S.turn}` : `Runde ${S.turn} · ${esc(who)}`);
+  // Mitte der Kopfleiste: nur Rundenzahl und die vier Phasen, der Text steht für Screenreader im Label
+  patch($('#tb-title'), String(S.turn));
+  const mid = $('#tb-mid'); mid.setAttribute('aria-label', SCN && SCN.fight ? 'Rätselkampf' : `${SCN ? `Ziel Stufe ${WINLVL()}, ` : ''}Runde ${S.turn}, ${who}${S.phase ? `, Phase: ${PHASES[S.phase - 1]}` : ''}`);
+  mid.classList.toggle('mine', S.cur === 0 && S.winner == null);
   patch($('#phasedots'), ICON.phase.map((src, i) => `<img src="${src}" alt="${PHASES[i]}" title="${PHASES[i]}" class="${S.phase === i + 1 ? 'on' : S.phase > i + 1 ? 'done' : ''}">`).join(''));
   const unread = Math.max(0, S.log.length - W.logSeen), badge = $('#log-badge');
   badge.hidden = unread === 0 || topSheet()?.id === 'log';
