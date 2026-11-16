@@ -1066,15 +1066,18 @@ function candleHtml(on) { return `<span class="candle${on ? ' on' : ''}" aria-hi
 function streakBox(sk) {
   const today = sk > 0 && streakToday(), days = n => `${n} ${n === 1 ? 'Tag' : 'Tage'}`;
   const hit = today && (sk === 3 || (sk >= 7 && sk % 7 === 0));   // heute ein Ziel erreicht: Leiste bleibt bis morgen voll
-  const nx = streakNext(hit ? sk - 1 : sk), fill = sk - nx.from, len = nx.at - nx.from;
-  const bar = Array.from({length: len}, (_, i) => `<i class="${i < fill ? 'f' : i === fill && !today ? 't' : ''}"></i>`).join('');
-  const goal = `<span class="sk-goal${hit ? ' ok' : ''}">${hit ? '✓' : nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>Rahmen` : `${coinImg}${nx.c}`}</span>`;
+  const nx = streakNext(hit ? sk - 1 : sk), len = nx.at - nx.from, fill = sk - nx.from, f = n => (n / len).toFixed(4);
+  // durchgehende Schiene, ein Punkt pro Tag, am Ende die Belohnung
+  const dots = Array.from({length: len - 1}, (_, k) => { const i = k + 1, cl = i <= fill ? 'f' : i === fill + 1 && !today ? 't' : '';
+    return `<span class="sk-dot ${cl}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s"><em>${nx.from + i}</em></span>`; }).join('');
+  const icon = hit ? '<b>✓</b>' : nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>` : coinImg;
+  const goal = `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1">${icon}<em>Tag ${nx.at}</em></span>`;
   const lbl = hit ? `Ziel erreicht! Nächstes Ziel am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
-  const txt = !sk ? 'Erledige heute einen Auftrag, dann zündet Hilde die Kerze an. Jeder Tag in Folge lässt die Serie wachsen.'
-    : today ? 'Heute geschafft! Erledige morgen wieder einen Auftrag, dann wächst die Serie weiter.'
-    : 'Heute noch offen: Erledige einen Auftrag, sonst erlischt die Kerze um Mitternacht.';
-  return `<div class="streakbox${sk ? ' lit' : ''}">${candleHtml(sk > 0)}<div class="sk-main"><b>${sk ? `Serie: ${days(sk)}` : 'Noch keine Serie'}</b>` +
-    `<div class="sk-row"><span class="sk-bar">${bar}</span>${goal}</div><span class="sk-l">${lbl}</span><span class="sk-txt">${txt}</span></div></div>`;
+  const txt = !sk ? 'Erledige heute einen Auftrag, dann zündet Hilde die Kerze an.'
+    : today ? 'Heute geschafft! Morgen geht es weiter.' : 'Heute noch offen. Sonst erlischt die Kerze um Mitternacht.';
+  return `<div class="streakbox${sk ? ' lit' : ''}"><div class="sk-head">${candleHtml(sk > 0)}<div class="sk-main">` +
+    `<b>${sk ? `<span class="sk-n">${sk}</span> ${sk === 1 ? 'Tag' : 'Tage'} in Folge` : 'Noch keine Serie'}</b><span class="sk-txt">${txt}</span></div></div>` +
+    `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div><span class="sk-l">${lbl}</span></div>`;
 }
 SHEET_VIEWS.daily = () => {
   const st = dailyState(), sk = streakNow();

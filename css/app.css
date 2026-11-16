@@ -849,22 +849,34 @@ img.star{object-fit:contain}
 .note .np{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px;color:#6b5434;min-height:28px}
 .stamp{font-style:normal;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#2f7a2a;border:2px solid #2f7a2a;border-radius:6px;padding:2px 7px;transform:rotate(-4deg)}
 .note.done b{text-decoration:line-through;text-decoration-color:rgba(60,40,20,.45)}
-.streakbox{display:flex;gap:10px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f6e7c4;border:1px solid #e0c58e}
-.streakbox.lit{background:linear-gradient(100deg,#fbe2b0,#f6e7c4 55%);border-color:#e3b864}
-.sk-main{flex:1;min-width:0;display:grid;gap:5px}
-.sk-main>b{font-size:16px}
-.sk-txt{font-size:14px;line-height:1.35}
-/* Fortschritt bis zum nächsten Serienziel: ein Feld pro Tag, am Ende die Belohnung */
-.sk-row{display:flex;align-items:center;gap:6px}
-.sk-bar{flex:1;display:flex;gap:3px;height:12px}
-.sk-bar i{flex:1;border-radius:999px;background:#e6d2a8;box-shadow:inset 0 1px 2px rgba(80,50,20,.25)}
-.sk-bar i.f{background:linear-gradient(#ffd36b,#f08a1c);box-shadow:inset 0 -2px 0 rgba(150,60,0,.35),0 0 6px rgba(255,170,50,.6)}
-.sk-bar i.t{background:#f3dfb6;box-shadow:inset 0 0 0 2px #f0a43a;animation:pulse 1.4s ease-in-out infinite}
-.sk-goal{flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 4px;border-radius:999px;background:#fff6e0;border:1.5px solid #e0b25c;font:800 12px/1.3 var(--body);color:#8a5a00}
-.sk-goal img{width:16px;height:16px}
-.sk-goal .skf{width:14px;height:14px;border-radius:50%;border:3px solid var(--c);background:#f3e3c3}
-.sk-goal.ok{background:#4c9a3f;border-color:#3a7a2f;color:#fff}
-.sk-l{font-size:12.5px;font-weight:700;color:#7a5a2c}
+.streakbox{display:grid;gap:10px;margin-top:14px;padding:12px 14px 12px;border-radius:16px;background:#fffaf0;box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 6px 18px -8px rgba(90,50,10,.35);border:1px solid #efdfbf}
+.streakbox.lit{background:radial-gradient(120% 90% at 0% 0%,#ffe7b8 0%,#fff6e4 45%,#fffaf0 100%)}
+.sk-head{display:flex;gap:12px;align-items:center}
+.sk-main{flex:1;min-width:0;display:grid;gap:2px}
+.sk-main>b{font-size:16px;line-height:1.2}
+.sk-n{font:700 30px/1 var(--display);color:#d9590b;margin-right:2px;vertical-align:-3px}
+.sk-txt{font-size:13.5px;line-height:1.35;color:#6b5434}
+/* Fortschritt: durchgehende Schiene mit einem Punkt pro Tag, die Belohnung am Ende */
+.sk-track{--l:10px;--r:17px;position:relative;height:50px;margin:0 2px}
+.sk-rail{position:absolute;left:var(--l);right:var(--r);top:12px;height:8px;border-radius:999px;background:#eedfc0;box-shadow:inset 0 1px 2px rgba(90,60,20,.18)}
+.sk-rail i{position:absolute;left:0;top:0;bottom:0;width:calc(var(--f) * 100%);border-radius:inherit;background:linear-gradient(90deg,#ffc94d,#ff8a1f 70%,#f2661a);box-shadow:0 0 10px rgba(255,140,30,.55);animation:sk-grow .9s cubic-bezier(.25,.8,.3,1) both}
+@keyframes sk-grow{from{width:0}}
+.sk-dot,.sk-goal{position:absolute;top:16px;left:calc(var(--l) + (100% - var(--l) - var(--r)) * var(--f));transform:translate(-50%,-50%)}
+.sk-dot{width:16px;height:16px;border-radius:50%;background:#e2cfa6;border:3px solid #fffaf0;box-shadow:0 1px 3px rgba(80,50,15,.25)}
+.sk-dot.f{background:#ff8a1f;animation:sk-pop .35s ease-out var(--d) both}
+.sk-dot.t{background:#fffaf0;border-color:#ff9a2e;animation:sk-ring 1.6s ease-in-out infinite}
+@keyframes sk-pop{0%{transform:translate(-50%,-50%) scale(.4);background:#e2cfa6}70%{transform:translate(-50%,-50%) scale(1.25)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes sk-ring{0%,100%{box-shadow:0 0 0 0 rgba(255,154,46,.55)}50%{box-shadow:0 0 0 6px rgba(255,154,46,0)}}
+.sk-dot em,.sk-goal em{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);font:700 11px/1 var(--body);font-style:normal;color:#9a8058;white-space:nowrap}
+.sk-dot.f em{color:#c25a12}
+.sk-goal{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:#fff;border:2px solid #f0b04a;box-shadow:0 3px 8px -2px rgba(150,90,20,.45)}
+.sk-goal img{width:20px;height:20px}
+.sk-goal em{top:calc(100% + 2px)}
+.sk-goal .skf{width:18px;height:18px;border-radius:50%;border:4px solid var(--c);background:#f3e3c3}
+.sk-goal.t{animation:sk-ring 1.6s ease-in-out infinite}
+.sk-goal.ok{background:#4c9a3f;border-color:#3d8132;color:#fff;font-size:16px;animation:sk-pop .4s ease-out 1s both}
+.sk-goal.ok em{color:#3d8132}
+.sk-l{font-size:12.5px;font-weight:700;color:#7a5a2c;text-align:center}
 /* Kerze: Körper, Schein und Flamme übereinander */
 .candle{position:relative;flex:0 0 auto;width:68px;height:68px}
 .candle>img{position:absolute;inset:0;width:100%;height:100%}
