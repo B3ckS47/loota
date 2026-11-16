@@ -289,8 +289,8 @@ function renderTitle() {
   $('#free-info').textContent = fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2 oder 3 Bots';
   // Aufträge mit Serie
   const ds = dailyState(), dn = ds.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, sk = streakNow();
-  // Serie wie im Auftragsbrett: Kerze, Schiene mit Tagespunkten und Belohnung, darunter was als Nächstes kommt
-  patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).html}</span><small id="daily-info" hidden>${dn} von 3</small>`);
+  // Serie wie im Auftragsbrett: Kerze, Schiene mit Tagespunkten und Belohnung
+  patch($('#t-daily'), `${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span><small id="daily-info" hidden>${dn} von 3</small>`);
   $('#t-daily').setAttribute('aria-label', `Aufträge: ${dn} von 3 erledigt${sk ? `, Serie ${sk} ${sk === 1 ? 'Tag' : 'Tage'}` : ''}`);
   $('#tn-daily').hidden = dn > 0;
 }
@@ -1114,10 +1114,11 @@ function streakTrack(sk) {
   const nx = streakNext(hit ? sk - 1 : sk), len = nx.at - nx.from, fill = sk - nx.from, f = n => (n / len).toFixed(4);
   const dots = Array.from({length: len - 1}, (_, k) => { const i = k + 1, cl = i <= fill ? 'f' : i === fill + 1 && !today ? 't' : '';
     return `<span class="sk-dot ${cl}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s"><em>${nx.from + i}</em></span>`; }).join('');
-  const icon = hit ? '<b>✓</b>' : nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>` : coinImg;
+  const icon = nx.fr ? `<span class="skf" style="--c:${COSMETICS.frame[nx.fr.split(':')[1]].c}"></span>` : coinImg;   // erreicht: dasselbe Symbol, grün umrandet
   const goal = `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1">${icon}<em>Tag ${nx.at}</em></span>`;
   const lbl = hit ? `Ziel erreicht! Nächstes Ziel am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
-  return {today, html: `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div><span class="sk-l">${lbl}</span>`};
+  const track = `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div>`;
+  return {today, track, html: `${track}<span class="sk-l">${lbl}</span>`};
 }
 function streakBox(sk) {
   const tr = streakTrack(sk);

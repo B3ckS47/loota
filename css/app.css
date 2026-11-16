@@ -117,8 +117,7 @@ img{-webkit-user-drag:none;user-select:none}
 .t-daily{position:relative;z-index:1;margin:12px 16px 0;display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:16px;background:#fff4dc;border:2px solid #e9cf9c;box-shadow:inset 0 0 0 3px #fffaf0,0 12px 22px -10px rgba(0,0,0,.8);color:#3a2414;text-align:left;font-family:var(--round);cursor:pointer;transition:transform .12s}
 .t-daily .candle{width:52px;height:52px}
 .td-main{flex:1;display:flex;flex-direction:column;min-width:0}
-.t-daily .sk-track{height:47px;margin:0}
-.t-daily .sk-l{font-size:12px;margin-top:1px}
+.t-daily .sk-track{height:46px;margin:0 2px 0 0}
 .t-nav{position:relative;z-index:2;margin:14px 12px 10px;height:66px;flex:0 0 auto;border-radius:26px;background:#241912;border:1px solid rgba(255,190,110,.18);box-shadow:0 10px 30px -10px rgba(0,0,0,.85);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center}
 .t-nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:0;border:0;background:none;color:#b39a78;font:800 11.5px var(--round);cursor:pointer}
 .t-nav button>img{width:30px;height:30px;margin-top:-2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));transition:transform .12s}
@@ -918,7 +917,7 @@ img.star{object-fit:contain}
 .sk-goal em{top:calc(100% + 2px)}
 .sk-goal .skf{width:18px;height:18px;border-radius:50%;border:4px solid var(--c);background:#f3e3c3}
 .sk-goal.t{animation:sk-ring 1.6s ease-in-out infinite}
-.sk-goal.ok{background:#4c9a3f;border-color:#3d8132;color:#fff;font-size:16px;animation:sk-pop .4s ease-out 1s both}
+.sk-goal.ok{border:3px solid #3f9a3a;box-shadow:0 0 0 3px rgba(63,154,58,.25),0 3px 8px -2px rgba(40,90,30,.45);animation:sk-pop .4s ease-out 1s both}
 .sk-goal.ok em{color:#3d8132}
 .sk-l{font-size:12.5px;font-weight:700;color:#7a5a2c;text-align:center}
 /* Kerze: Körper, Schein und Flamme übereinander */
