@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-93471ed27c';
+const CACHE = 'loota-86afd785dd';
 const FILES = [
 "./",
 "index.html",
@@ -243,7 +243,6 @@ const FILES = [
 "icons/portrait-walter.png",
 "icons/portrait-zauberer.png",
 "icons/portrait-zwerg.png",
-"icons/rahmen-gold.webp",
 "icons/rahmen-kupferkessel.webp",
 "icons/rahmen-rettungsring.webp",
 "icons/st-boss.png",

@@ -1120,3 +1120,15 @@ html.pf-art .pf-big{width:88px;height:88px;border:0;box-shadow:0 8px 18px -6px r
 html.pf-art .mebar .pt{border:0}
 .pf-fr i.frimg{position:relative;width:32px;height:32px;margin:-6px -2px -6px -4px;background-color:transparent;background-position:center;background-size:contain;background-repeat:no-repeat;box-shadow:none;border-radius:0}
 .pf-fr i.frimg svg{position:absolute;inset:0;margin:auto}
+
+/* Eigene Leiste im Spiel: helle Karte wie bei den Gegnern */
+.mebar{margin:6px 8px 4px;padding:6px 8px;border-radius:12px;background-color:var(--card);border:2px solid var(--edge);box-shadow:0 3px 0 var(--wood-dark);color:var(--ink)}
+.mebar .lv b{text-shadow:none;color:var(--ink)}
+.mebar .lv em.neg{color:#b3261e}
+.mebar .mstat{background:var(--card-hi);border:1.5px solid var(--edge);color:var(--ink)}
+.mebar .mstat.warn{background:var(--red);border-color:var(--red);color:#fff}
+.mebar .coins i{opacity:.75}
+.mebar .coins i.goal{opacity:.6}
+.mebar .coins i.on,.mebar .coins i.goal.on{opacity:1}
+.mebar{padding-left:10px}
+html:not(.pf-art) .mebar .pt{box-shadow:0 0 0 1.5px rgba(59,42,28,.55)}

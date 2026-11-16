@@ -79,7 +79,7 @@ function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && co
 function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
 function myName() { return PROFILE.name || 'Du'; }
 // Rahmen mit eigener Grafik (Ring, der über dem Porträt liegt); alle anderen bleiben ein farbiger Rand
-const FRAME_ART = new Set(['gold', 'kupferkessel', 'rettungsring']);
+const FRAME_ART = new Set(['kupferkessel', 'rettungsring']);
 const frameArt = k => FRAME_ART.has(k) ? `icons/rahmen-${k}.webp` : '';
 function myFrameKey() { return (ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0])[0]; }
 function applyProfile() {
