@@ -71,6 +71,7 @@ const Snd = (() => {
     fl.Q.value = o.q || 1;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (o.a || 0.004)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    if (o.loop) src.loop = true;
     src.connect(fl); fl.connect(g); g.connect(o.bus || sfxBus);
     if (o.rev) { const rg = ctx.createGain(); rg.gain.value = o.rev; g.connect(rg); rg.connect(revIn); }
     src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
@@ -102,6 +103,8 @@ const Snd = (() => {
     curse(t)   { [311, 330, 466].forEach((f, i) => tone(f, t + i * 0.06, 0.9, 'sawtooth', 0.05, {lp: 1100, vib: 5 + i, vibAmt: 8, a: 0.05, rev: 0.6})); tone(78, t, 0.9, 'sine', 0.25); },
     death(t)   { [[220, 1], [440 * 1.19, 0.5], [660 * 1.33, 0.3], [880 * 1.5, 0.2]].forEach(([f, v]) => tone(f, t, 2.4, 'sine', 0.16 * v, {rev: 0.8})); tone(110, t, 1.2, 'sine', 0.2, {rev: 0.5}); },
     victory(t) { const n = [523, 659, 784, 1047, 784, 1047]; n.forEach((f, i) => brass(f, t + i * 0.14, i === 5 ? 1.1 : 0.15, 0.14)); [523, 659, 784].forEach(f => tone(f, t + 0.7, 1.2, 'triangle', 0.06, {rev: 0.5})); },
+    wave(t)    { noise(t, 1.6, 0.22, 'lowpass', 300, 1900, {a: 0.6, loop: true}); noise(t + 0.9, 0.9, 0.12, 'highpass', 2500, 900, {a: 0.05, loop: true, rev: 0.4}); },
+    ebb(t)     { noise(t, 1.2, 0.12, 'lowpass', 1600, 260, {a: 0.08, loop: true}); },
     defeat(t)  { [294, 277, 262, 247].forEach((f, i) => tone(f, t + i * 0.35, 0.5, 'triangle', 0.12, {rev: 0.5})); tone(123, t + 1.4, 1.4, 'sine', 0.2, {rev: 0.6}); }
   };
   function sfx(name, v) {
@@ -142,6 +145,17 @@ const Snd = (() => {
   function flute(m, t, dur, vol) { const f = mtof(m); tone(f, t, dur, 'sine', vol, {bus: musicBus, vib: 5, vibAmt: 3, a: 0.05, rev: 0.45}); tone(f * 2, t, dur * 0.8, 'triangle', vol * 0.12, {bus: musicBus, lp: 3000, rev: 0.4}); }
   function bird(t) { const f = 2200 + Math.random() * 900; tone(f, t, 0.07, 'sine', 0.035, {bus: musicBus, to: f * 1.35, rev: 0.6}); tone(f * 1.1, t + 0.09, 0.06, 'sine', 0.03, {bus: musicBus, to: f * 1.5, rev: 0.6}); }
   function cricket(t) { for (let i = 0; i < 3; i++) noise(t + i * 0.045, 0.02, 0.02, 'bandpass', 4800, null, {bus: musicBus, q: 6}); }
+  // Strand: Steeldrum über Ukulele, dazu Wellen und Möwen
+  const SM = [
+    [[67,2],[71,1],[74,2],[71,1]], [[72,2],[71,1],[69,3]], [[71,2],[69,1],[67,2],[64,1]], [[62,3],[0,3]],
+    [[67,2],[71,1],[74,2],[76,1]], [[74,2],[72,1],[71,3]], [[69,2],[71,1],[72,2],[69,1]], [[67,4],[0,2]]
+  ];
+  const S_CH = ['G', 'C', 'Em', 'D', 'G', 'C', 'D', 'G'];
+  const SB_CH = ['G', 'Em', 'C', 'D'];
+  function steel(m, t, dur, vol) { const f = mtof(m); tone(f, t, dur * 1.3, 'sine', vol, {bus: musicBus, a: 0.003, rev: 0.4}); tone(f * 2.01, t, dur * 0.45, 'sine', vol * 0.3, {bus: musicBus, a: 0.003}); tone(f * 3.98, t, dur * 0.2, 'sine', vol * 0.08, {bus: musicBus, a: 0.002}); }
+  function uke(ch, t, e, vol) { [0, 1, 2].forEach(i => pluck(ch[i] + 12, t + i * 0.018, 0.8 * e, vol)); }
+  function surf(t, dur) { noise(t, dur, 0.035, 'lowpass', 280, 1100, {bus: musicBus, a: dur * 0.45, loop: true}); }
+  function gull(t) { const f = 1300 + Math.random() * 300; tone(f, t, 0.22, 'sawtooth', 0.014, {bus: musicBus, to: f * 0.62, bp: 1500, q: 3, rev: 0.6}); tone(f * 1.05, t + 0.28, 0.18, 'sawtooth', 0.012, {bus: musicBus, to: f * 0.7, bp: 1500, q: 3, rev: 0.6}); }
   function drip(t) { const f = 1500 + Math.random() * 1100; tone(f, t, 0.09, 'sine', 0.045, {bus: musicBus, to: f * 1.6, rev: 0.85}); }
 
   function pluck(m, t, dur, vol) {
@@ -167,6 +181,25 @@ const Snd = (() => {
       drum(t, 0.14);
       if (Math.random() < 0.6) drip(t + Math.random() * 6 * e);
       if (Math.random() < 0.25) drip(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'strand' && mood === 'tavern') {
+      const idx = bar % 8, ch = CH[S_CH[idx]];
+      let x = 0;
+      SM[idx].forEach(([m, len]) => { if (m) steel(m, t + x * e, len * e, 0.08); x += len; });
+      bassN(ch[0] - 12, t, 1.4 * e, 0.17); bassN(ch[2] - 12, t + 3 * e, 1.4 * e, 0.12);
+      uke(ch, t + 1 * e, e, 0.03); uke(ch, t + 2 * e, e, 0.02); uke(ch, t + 4 * e, e, 0.03); uke(ch, t + 5 * e, e, 0.02);
+      rim(t + 3 * e, 0.035);
+      if (bar % 2 === 0) surf(t, 12 * e);
+      if (Math.random() < 0.18) gull(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'strand') {
+      const ch = CH[SB_CH[bar % 4]];
+      for (let i = 0; i < 6; i++) bassN(ch[0] - 12, t + i * e, 0.8 * e, i % 3 === 0 ? 0.26 : 0.14);
+      drum(t, 0.42); drum(t + 3 * e, 0.32); rim(t + 1 * e, 0.05); rim(t + 4 * e, 0.05); rim(t + 5 * e, 0.07);
+      if (bar % 2 === 0) [0, 1, 2].forEach(i => steel(ch[i] + 12, t + i * 0.04, 1.6 * e, 0.05));
+      else { steel(ch[2] + 12, t + 3 * e, e, 0.06); steel(ch[1] + 12, t + 4 * e, e, 0.06); steel(ch[0] + 12, t + 5 * e, e, 0.06); }
       return;
     }
     if (theme === 'wald' && mood === 'tavern') {
@@ -218,7 +251,7 @@ const Snd = (() => {
   }
   function tick() {
     if (!ctx || !playing) return;
-    const e = mood === 'tavern' ? ({keller: 0.26, wald: 0.21}[theme] || 0.19) : ({keller: 0.13, wald: 0.14}[theme] || 0.15);
+    const e = mood === 'tavern' ? ({keller: 0.26, wald: 0.21, strand: 0.2}[theme] || 0.19) : ({keller: 0.13, wald: 0.14, strand: 0.14}[theme] || 0.15);
     while (nextT < ctx.currentTime + 0.25) {
       if (pendingMood !== mood || pendingTheme !== theme) { mood = pendingMood; theme = pendingTheme; bar = 0; }
       scheduleBar(nextT, e);
@@ -241,7 +274,7 @@ const Snd = (() => {
     startMusic() { if (st.music) startMusic(); },
     stopMusic,
     mood(m) { pendingMood = m; },
-    theme(t) { pendingTheme = ['keller', 'wald'].includes(t) ? t : 'taverne'; },
+    theme(t) { pendingTheme = ['keller', 'wald', 'strand'].includes(t) ? t : 'taverne'; },
     suspend() { if (ctx && ctx.state === 'running') ctx.suspend(); },
     resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
     get ready() { return !!ctx; }

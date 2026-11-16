@@ -96,6 +96,44 @@ const LEVELUPS_W3 = ['Aus dem Wald zurückgefunden'];
 const WALD_GRUND = {'Wütender Gartenzwerg':1,'Schleimige Socke':1,'Schwarm Stechmücken':1,'Kellerassel XXL':1,'Rentner-Ritter':1,'Pilzkönig':1,'Vampir-Kaninchen':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,
   'Pechsträhne':2,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
 function waldCount(p){ if(p.tpl.w===3) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return WALD_GRUND[p.tpl.n]||0; return p.def; }
+/* Welt 4 (Sommerpause, Strand): nur im Strand-Deck. meer = Monster-Merkmal (bei Flut +3), sun = Sonnenbrand,
+   sand = Sand in der Badehose. Ebbe und Flut wechseln mit jeder Runde, solange Strandkarten im Spiel sind. */
+const MONSTERS_W4 = [
+  {n:'Sandfloh-Schwarm',lvl:1,tr:1,x:2,bad:{t:'hand',n:1},txt:'Springt überall hin.',badTxt:'Wirf 1 zufällige Handkarte ab.'},
+  {n:'Möwen-Bande',lvl:2,tr:1,moewe:true,bad:{t:'cheap'},txt:'Klaut alles, was nach Pommes riecht. Gegen die Kokosnuss machtlos.',badTxt:'Sie klauen deinen billigsten Gegenstand.'},
+  {n:'Quallen-Gang',lvl:3,tr:1,x:2,meer:true,bad:{t:'sun'},txt:'Meer. Brennt wie Feuer.',badTxt:'Du bekommst Sonnenbrand: −1 in jedem Kampf, und niemand hilft dir, bis du einen Kampf gewinnst.'},
+  {n:'Strandkorb-Mimik',lvl:4,tr:1,run:-2,bad:{t:'slot',s:'schuhe'},txt:'Klappt zu: Weglaufen −2.',badTxt:'Verliere dein Schuhwerk.'},
+  {n:'Seeigel-Igel',lvl:5,tr:1,meer:true,vs:{race:'halbling',val:3},bad:{t:'lvl',n:1},txt:'Meer. Halblinge laufen barfuß: +3 gegen Halblinge.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Betrunkener Klabautermann',lvl:6,tr:2,meer:true,run:-1,bad:{t:'multi',l:[{t:'lvl',n:1},{t:'slot',s:'kopf'}]},txt:'Meer. Torkelt unberechenbar: Weglaufen −1.',badTxt:'Verliere 1 Stufe und deine Kopfbedeckung.'},
+  {n:'Bademeister-Golem',lvl:8,tr:2,vs:{cls:'krieger',val:3},bad:{t:'class'},txt:'„Hier wird nicht gerauft!“ +3 gegen Krieger.',badTxt:'Verliere deine Klasse.'},
+  {n:'Hai mit Schwimmflügeln',lvl:10,tr:3,meer:true,run:-2,bad:{t:'lvl',n:2},txt:'Meer. Schwimmt schneller als du: Weglaufen −2.',badTxt:'Verliere 2 Stufen.'},
+  {n:'Sandburg-Koloss',lvl:12,tr:3,soft:3,np:3,bad:{t:'multi',l:[{t:'slot',s:'ruestung'},{t:'lvl',n:1}]},txt:'Bei Flut weicht er auf: dann −3. Verfolgt niemanden bis Stufe 3.',badTxt:'Verliere deine Rüstung und 1 Stufe.'},
+  {n:'Krabbenbaron Kneifer',lvl:15,tr:4,up:2,meer:true,np:4,bad:{t:'multi',l:[{t:'lvl',n:2},{t:'hands'}]},txt:'Meer. Kassiert für jeden Fußbreit Sand. Bringt 2 Stufen. Verfolgt niemanden bis Stufe 4.',badTxt:'Verliere 2 Stufen und alles, was du in den Händen hältst.'}
+].map(m=>Object.assign({w:4},m));
+const CURSES_W4 = [
+  {n:'Sonnenbrand',w:4,x:2,eff:{t:'sun'},txt:'Bleibt, bis du einen Kampf gewinnst: So lange −1 in jedem Kampf, und niemand hilft dir.'},
+  {n:'Sand in der Badehose',w:4,eff:{t:'sand'},txt:'Weglaufen −2, bis du eine Stufe aufsteigst.'}
+];
+const ITEMS_W4 = [
+  {n:'Schnorchel',w:4,slot:'kopf',b:1,g:300,meerb:3,flv:'Unter Wasser sieht man die Quallen kommen.'},
+  {n:'Sonnenschirm',w:4,slot:'hand',hands:1,b:2,g:300,shade:true,flv:'Schützt vor Sonnenbrand.'},
+  {n:'Flip-Flops',w:4,slot:'schuhe',b:1,run:1,g:200},
+  {n:'Schwimmflügel',w:4,slot:'none',b:0,g:300,flutRun:2,flv:'Bei Flut +2 beim Weglaufen.'}
+];
+const ONESHOTS_W4 = [
+  {n:'Sonnencreme LSF 50',w:4,b:2,g:200,pOnly:true,cream:true,txt:'+2 für die kämpfende Seite. Wer Sonnenbrand hat, ist ihn damit sofort los, auch außerhalb von Kämpfen.'},
+  {n:'Kokosnuss',w:4,x:2,b:3,g:200,vs:{tag:'moewe',val:5},txt:'+3, gegen die Möwen-Bande sogar +5. Für jede Seite spielbar.'}
+];
+const LEVELUPS_W4 = ['Den Strandkorb erobert'];
+// Was aus dem Grunddeck mit an den Strand darf (Name -> Stückzahl); Schätze kommen alle mit
+const STRAND_GRUND = {'Übellaunige Möwe':1,'Schleimige Socke':1,'Schwarm Stechmücken':2,'Rentner-Ritter':1,'Steuerprüfer-Gespenst':1,'Durchgedrehter Saugroboter':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,'Troll unter der Autobahnbrücke':1,
+  'Pechsträhne':2,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Taschendieb-Gnom':1};
+function strandCount(p){ if(p.tpl.w===4) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return STRAND_GRUND[p.tpl.n]||0; return p.def; }
+// Gezeiten: null ohne Strandkarten, sonst 'ebbe' in ungeraden und 'flut' in geraden Runden (Springflut: immer Flut)
+function tideNow(){ if(!S || !S.tides) return null; return S.spring || S.turn%2===0 ? 'flut' : 'ebbe'; }
+const isFlut = () => tideNow()==='flut';
+const isEbbe = () => tideNow()==='ebbe';
+const hasShade = p => p.eq.some(i=>i.shade && usable(p,i));
 // Pilzpfanne: drei verschiedene Speisepilze (mit Sammelkorb zwei) gegen 1 Stufe, nie für die Siegstufe
 function pfanneSet(p){
   const need=p.eq.some(i=>i.korb && usable(p,i)) ? 2 : 3, pick=[];
@@ -282,7 +320,26 @@ const ART = {
   "Pfifferling":"art/einmal-pfifferling.webp",
   "Champignon":"art/einmal-champignon.webp",
   "Fußpilzsalbe":"art/einmal-fusspilzsalbe.webp",
-  "Aus dem Wald zurückgefunden":"art/stufe-aus-dem-wald-zurueckgefunden.webp"
+  "Aus dem Wald zurückgefunden":"art/stufe-aus-dem-wald-zurueckgefunden.webp",
+  "Sandfloh-Schwarm":"art/monster-sandfloh-schwarm.webp",
+  "Möwen-Bande":"art/monster-moewen-bande.webp",
+  "Quallen-Gang":"art/monster-quallen-gang.webp",
+  "Strandkorb-Mimik":"art/monster-strandkorb-mimik.webp",
+  "Seeigel-Igel":"art/monster-seeigel-igel.webp",
+  "Betrunkener Klabautermann":"art/monster-betrunkener-klabautermann.webp",
+  "Bademeister-Golem":"art/monster-bademeister-golem.webp",
+  "Hai mit Schwimmflügeln":"art/monster-hai-mit-schwimmfluegeln.webp",
+  "Sandburg-Koloss":"art/monster-sandburg-koloss.webp",
+  "Krabbenbaron Kneifer":"art/monster-krabbenbaron-kneifer.webp",
+  "Sonnenbrand":"art/fluch-sonnenbrand.webp",
+  "Sand in der Badehose":"art/fluch-sand-in-der-badehose.webp",
+  "Schnorchel":"art/gegenstand-schnorchel.webp",
+  "Sonnenschirm":"art/gegenstand-sonnenschirm.webp",
+  "Flip-Flops":"art/gegenstand-flip-flops.webp",
+  "Schwimmflügel":"art/gegenstand-schwimmfluegel.webp",
+  "Sonnencreme LSF 50":"art/einmal-sonnencreme.webp",
+  "Kokosnuss":"art/einmal-kokosnuss.webp",
+  "Den Strandkorb erobert":"art/stufe-den-strandkorb-erobert.webp"
 };
 function artKey(c){ if(c.k==='item') return c.slot; return {monster:'monster',curse:'curse',race:'race',class:'cls',enh:'enh',wander:'wander',oneshot:'potion',levelup:'levelup',amulet:'none'}[c.k]; }
 
@@ -331,7 +388,11 @@ const STYLES = {
   // Welt 3: Waldbewohner
   Flora: {help:1.5, cheap:true, curse:0.6, intf:1.4, envy:true, l:'hilft gern und billig, mischt sich aber gegen jeden ein, der vor ihr liegt'},
   Trudi: {help:1, curse:0.8, intf:0.9, greedy:true, collect:true, cautious:true, seek:0.4, l:'sammelt Speisepilze für die Pilzpfanne und hilft nur gegen viele Schätze'},
-  Walter: {help:0, curse:1.6, intf:1, grudge:true, noHelp:true, noWhy:'Pssst! Ich helfe niemandem. Ruhe im Wald!', l:'verflucht den, der zuletzt aufgestiegen ist, und hilft nie'}
+  Walter: {help:0, curse:1.6, intf:1, grudge:true, noHelp:true, noWhy:'Pssst! Ich helfe niemandem. Ruhe im Wald!', l:'verflucht den, der zuletzt aufgestiegen ist, und hilft nie'},
+  // Welt 4: Strandbewohner
+  Bruno: {help:1.2, curse:1.1, intf:0.9, whistle:true, l:'hilft gern, verflucht aber jeden, der aus einem Kampf wegläuft'},
+  Gesine: {help:1, curse:0.9, intf:1.6, greedy:true, l:'klaut gern: hilft nur gegen fast alle Schätze und mischt sich ständig ein'},
+  Sunny: {help:1.4, cheap:true, curse:0.3, intf:0.5, lazy:true, l:'hilft billig und flucht kaum, sucht aber selten selbst Ärger'}
 };
 // Spielweisen für zufällige Gegner im freien Spiel
 const BOT_STYLES = [
@@ -409,6 +470,11 @@ function cardPool(){
   ITEMS_W3.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
   ONESHOTS_W3.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W3.forEach(n=>addW({k:'levelup',n,w:3,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  MONSTERS_W4.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
+  CURSES_W4.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
+  ITEMS_W4.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ONESHOTS_W4.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
+  LEVELUPS_W4.forEach(n=>addW({k:'levelup',n,w:4,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   return P;
 }
 // Stückzahlen pro Kartenname; null = Empfehlung. Wird von der Oberfläche vor einem neuen Spiel gesetzt.
@@ -462,7 +528,7 @@ function usable(p,it){
 function reqName(it){ if(!it.req) return ''; return it.req.cls ? CLASSES[it.req.cls].n : RACES[it.req.race].n; }
 function itemBonus(p){ return p.eq.filter(i=>usable(p,i)).reduce((s,i)=>s+(i.b||0),0); }
 function power(p){ return p.lvl + itemBonus(p); }
-function runBonus(p){ let b=hasRace(p,'elf')?1:0; p.eq.forEach(i=>{ if(i.run && usable(p,i)) b+=i.run; }); return b; }
+function runBonus(p){ let b=hasRace(p,'elf')?1:0; const fl=isFlut(); p.eq.forEach(i=>{ if(i.run && usable(p,i)) b+=i.run; if(fl && i.flutRun && usable(p,i)) b+=i.flutRun; }); if(fl) b+=1; if(p.sand) b-=2; return b; }
 function handsUsed(p){ return p.eq.filter(i=>i.slot==='hand').reduce((s,i)=>s+(i.hands||1),0); }
 function canEquip(p,c){
   if(c.k!=='item') return {ok:false, why:'Das ist kein Gegenstand.'};
@@ -539,15 +605,16 @@ function rcText(p){ return `${p.race?p.race.n:'Mensch'} · ${p.cls?p.cls.n:'kein
 function vsBonus(mc,C){
   if(!mc.vs) return 0;
   const ps=[P(C.f)]; if(C.h!=null) ps.push(P(C.h));
-  return ps.some(p=>mc.vs.race && hasRace(p,mc.vs.race)) ? mc.vs.val : 0;
+  return ps.some(p=>(mc.vs.race && hasRace(p,mc.vs.race)) || (mc.vs.cls && hasCls(p,mc.vs.cls))) ? mc.vs.val : 0;
 }
 function sideStrength(C){
   const f=P(C.f); let s=power(f);
   const parts=[{l:`${f.human?'Deine':f.name+'s'} Stufe`,v:f.lvl,keep:true},{l:`${f.human?'Deine':f.name+'s'} Gegenstände`,v:itemBonus(f)}];
   if(C.h!=null){ const h=P(C.h); s+=power(h); parts.push({l:`Helfer: ${h.human?'du':h.name} (Stufe ${h.lvl} + Gegenst.)`,v:power(h)}); }
   const sides=[f, C.h!=null?P(C.h):null];
-  [['und','undead','gegen Untote'],['pilzb','pilz','gegen Pilze']].forEach(([k,tag,l])=>{ if(C.mons.some(m=>m.c[tag])) sides.forEach(q=>q && q.eq.forEach(i=>{ if(i[k] && usable(q,i)){ const v=i[k]-(i.b||0); s+=v; parts.push({l:`${i.n} ${l}`,v}); } })); });
+  [['und','undead','gegen Untote'],['pilzb','pilz','gegen Pilze'],['meerb','meer','gegen Meeresmonster']].forEach(([k,tag,l])=>{ if(C.mons.some(m=>m.c[tag])) sides.forEach(q=>q && q.eq.forEach(i=>{ if(i[k] && usable(q,i)){ const v=i[k]-(i.b||0); s+=v; parts.push({l:`${i.n} ${l}`,v}); } })); });
   sides.forEach(q=>{ if(q && q.spore){ s-=q.spore; parts.push({l:`Sporenwolke (${q.human?'du':q.name})`,v:-q.spore}); } });
+  sides.forEach(q=>{ if(q && q.sun){ s-=1; parts.push({l:`Sonnenbrand (${q.human?'du':q.name})`,v:-1}); } });
   C.pB.forEach(b=>{ s+=b.v; parts.push(b); });
   return {s, parts};
 }
@@ -556,7 +623,9 @@ function monStrength(C){
   C.mons.forEach(m=>{
     let v=m.c.lvl; parts.push({l:m.c.n,v:m.c.lvl,keep:true});
     m.enh.forEach(e=>{ v+=e.v; parts.push({l:`„${e.n}“`,v:e.v}); });
-    const vs=vsBonus(m.c,C); if(vs){ v+=vs; parts.push({l:`Bonus gegen ${RACES[m.c.vs.race].n}en`,v:vs}); }
+    const vs=vsBonus(m.c,C); if(vs){ v+=vs; parts.push({l:`Bonus gegen ${m.c.vs.race ? RACES[m.c.vs.race].n+'en' : CLASSES[m.c.vs.cls].n}`,v:vs}); }
+    if(isFlut() && m.c.meer){ v+=3; parts.push({l:'Flut (Meer)',v:3}); }
+    if(isFlut() && m.c.soft){ v-=m.c.soft; parts.push({l:'Flut weicht ihn auf',v:-m.c.soft}); }
     s+=v;
   });
   C.mB.forEach(b=>{ s+=b.v; parts.push(b); });
@@ -591,6 +660,8 @@ function newGame(allBots){
   if(allBots) S.players[0].name='Testbot';
   names.forEach((n,i)=>{ const p=newPlayer(i+1,n,false); if(roster){ p.face=roster[i].face; p.style=roster[i].style; } S.players.push(p); });
   if(sc && sc.boss) placeBoss(sc.boss, sc.bossLvl);
+  S.tides = !!(sc && sc.tides) || [...S.door,...S.tr].some(c=>c.w===4); S.spring = !!(sc && sc.spring);
+  if(S.tides) log(S.spring ? 'Springflut: In dieser Partie ist jede Runde Flut. Meeresmonster +3, Weglaufen +1.' : 'Am Strand wechseln Ebbe und Flut mit jeder Runde. Runde 1 ist Ebbe.','sys');
   S.players.forEach(p=>{
     if(p.id===0 && sc && sc.start) applyStart(p, sc.start);
     else if(!p.human && sc && sc.botStart && sc.botStart[p.name]) applyStart(p, sc.botStart[p.name]);
@@ -654,9 +725,10 @@ async function gameLoop(t){
     if(p.human) await humanTurn(p); else await botTurn(p);
     // Wer zuletzt aufgestiegen ist (für Walter, den Waldschrat)
     const up=S.players.filter((q,i)=>q.lvl>snap[i]); if(up.length) S.lastUp=(up.find(q=>q.id===p.id)||up[0]).id;
+    up.forEach(q=>{ if(q.sand){ q.sand=0; log(`${nm(q)} ${V(q,'schüttelst','schüttelt')} den Sand aus der Badehose.`,'good'); } });
     if(S.winner!=null || t!==TOKEN) break;
     S.cur=(S.cur+1)%S.players.length;
-    if(S.cur===0) S.turn++;
+    if(S.cur===0){ S.turn++; if(S.tides && !S.spring){ const fl=isFlut(); log(fl ? `Runde ${S.turn}: Die Flut kommt! Meeresmonster +3, Weglaufen +1.` : `Runde ${S.turn}: Ebbe. Das Watt liegt frei: Wer den Raum durchsucht, zieht einen Schatz.`,'sys'); fx('tide',{flut:fl}); ruleOnce('tide','Ebbe und Flut: Bei Flut haben Meeresmonster +3 und Weglaufen klappt mit +1. Bei Ebbe bringt „Raum durchsuchen“ einen Schatz statt einer Türkarte.'); } }
     if(S.turn>400){ log('Abbruch nach 400 Runden.','sys'); break; }
   }
   if(S.winner===0 && t===TOKEN){ track('gamewon'); if(!S.stats.lvlLost) track('cleanwin'); }
@@ -717,8 +789,9 @@ async function humanTurn(p){
     }, 'trouble');
     if(v==='loot'){
       S.phase=3;
-      const d=drawDoor();
-      if(d){ p.hand.push(d); log(`Du durchsuchst den Raum und ziehst verdeckt: <b>${cardLabel(d)}</b>.`);
+      const watt=isEbbe(), d=watt ? luckyTr() : drawDoor();
+      if(d && watt){ p.hand.push(d); log(`Ebbe: Du suchst im Watt und findest <b>${cardLabel(d)}</b>.`,'good'); }
+      else if(d){ p.hand.push(d); log(`Du durchsuchst den Raum und ziehst verdeckt: <b>${cardLabel(d)}</b>.`);
         if(d.k==='curse') ruleOnce('hiddencurse','Verdeckt gezogene Flüche wirken nicht auf dich. Du kannst sie später jederzeit auf jemanden spielen.');
         if(d.k==='monster') ruleOnce('handmon','Ein Monster auf der Hand nutzt du nächsten Zug für „Monster herausfordern“ oder mit „Ungebetener Gast“ in fremden Kämpfen.'); }
     } else {
@@ -759,6 +832,9 @@ function hintStart(p){
   if(p.hand.some(c=>c.k==='levelup') && p.lvl<WINLVL()-1) h.push('Eine Stufenkarte direkt zu benutzen lohnt sich fast immer.');
   if(canPfanne(p).ok) h.push('Du hast alles für eine Pilzpfanne. Tippe einen Speisepilz an und wähle „Pilzpfanne kochen“.');
   if(p.spore) h.push(`Die Sporenwolke kostet dich −${p.spore} in jedem Kampf, bis du einen gewinnst.`);
+  if(p.sun) h.push(p.hand.some(c=>c.cream) ? 'Du hast Sonnenbrand und Sonnencreme auf der Hand: Creme dich ein, dann hilft dir auch wieder jemand.' : 'Mit Sonnenbrand hast du −1 in jedem Kampf, und niemand hilft dir, bis du einen Kampf gewinnst.');
+  if(p.sand) h.push('Sand in der Badehose: Weglaufen −2, bis du eine Stufe aufsteigst.');
+  if(S.tides) h.push(isFlut() ? 'Es ist Flut: Meeresmonster haben +3, dafür klappt Weglaufen mit +1.' : 'Es ist Ebbe: Meeresmonster sind normal stark, und „Raum durchsuchen“ bringt einen Schatz.');
   if(!h.length) h.push('Alles bereit. Deine Kampfstärke: '+power(p)+'.');
   return h;
 }
@@ -768,7 +844,7 @@ function hintTrouble(p,mons){
     const safe=mons.filter(m=>power(p)>m.lvl+2);
     h.push(`Deine Kampfstärke ist ${power(p)}. ${safe.length?'Mit Puffer schlägst du: '+safe.map(m=>m.n).join(', ')+'.':'Keins deiner Hand-Monster schlägst du mit Puffer.'}`);
     h.push('Die anderen können eingreifen. Ein knapper Kampf ist riskant.');
-  } else h.push('Ohne Monster auf der Hand bleibt nur: Raum durchsuchen. Du ziehst 1 Türkarte verdeckt.');
+  } else h.push(isEbbe() ? 'Ohne Monster auf der Hand bleibt nur: Raum durchsuchen. Bei Ebbe findest du im Watt einen Schatz.' : 'Ohne Monster auf der Hand bleibt nur: Raum durchsuchen. Du ziehst 1 Türkarte verdeckt.');
   return h;
 }
 function charityTargets(p){
@@ -809,6 +885,7 @@ async function botManage(p){
   if(p.race!==r0) log(`${p.name} spielt die Rasse ${p.race.n} aus.`);
   if(p.cls!==c0) log(`${p.name} spielt die Klasse ${p.cls.n} aus.`);
   if(canPfanne(p).ok) doPfanne(p);
+  if(p.sun){ const cr=p.hand.find(c=>c.cream); if(cr) useCream(p,cr); }
   for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.'); } }
   botSell(p);
   for(const cu of p.hand.filter(c=>c.k==='curse')){
@@ -836,6 +913,8 @@ function curseHits(t,c){
   if(e.t==='lvl') return t.lvl>1;
   if(e.t==='chill') return !t.chill;
   if(e.t==='spore') return (t.spore||0)<2;
+  if(e.t==='sun') return !t.sun && !hasShade(t);
+  if(e.t==='sand') return !t.sand;
   return true;
 }
 function pickCurseTarget(p,c){
@@ -843,13 +922,16 @@ function pickCurseTarget(p,c){
   const others=S.players.filter(o=>o.id!==p.id && !o.dead && curseHits(o,c) && !(spare && o.human));
   if(!others.length) return null;
   if(styleOf(p).grudge){ const g=others.find(o=>o.id===S.lastUp); if(g) return g; }
+  if(styleOf(p).whistle && S.lastRan!=null){ const g=others.find(o=>o.id===S.lastRan); if(g) return g; }
   const max=Math.max(...others.map(o=>o.lvl));
   if(max<p.lvl - (styleOf(p).spite?1:0)) return null;
   const top=others.filter(o=>o.lvl===max);
   return top[rnd(top.length)];
 }
 function botTroubleChoice(p){
-  const ms=p.hand.filter(c=>c.k==='monster' && power(p) - (p.spore||0) > c.lvl + (c.vs && hasRace(p,c.vs.race)?c.vs.val:0) + (styleOf(p).cautious?4:2));
+  if(styleOf(p).lazy && Math.random()<0.65) return null;
+  const fl=isFlut(), eff=c=>c.lvl + (c.vs && ((c.vs.race && hasRace(p,c.vs.race)) || (c.vs.cls && hasCls(p,c.vs.cls)))?c.vs.val:0) + (fl && c.meer?3:0) - (fl && c.soft?c.soft:0);
+  const ms=p.hand.filter(c=>c.k==='monster' && power(p) - (p.spore||0) - (p.sun?1:0) > eff(c) + (styleOf(p).cautious?4:2));
   return ms.sort((a,b)=>b.lvl-a.lvl)[0]||null;
 }
 async function botTurn(p){
@@ -874,7 +956,7 @@ async function botTurn(p){
     S.phase=2;
     const m=botTroubleChoice(p);
     if(m){ take(p,m); log(`${p.name} fordert <b>${m.n}</b> (Stufe ${m.lvl}) von der Hand heraus.`); await sleep(spd()); await combat(p.id,[m]); }
-    else { S.phase=3; const d=drawDoor(); if(d) p.hand.push(d); log(`${p.name} durchsucht den Raum und zieht 1 Türkarte verdeckt.`); await sleep(spd(0.6)); }
+    else { S.phase=3; const watt=isEbbe(), d=watt ? drawTr() : drawDoor(); if(d) p.hand.push(d); log(watt ? `Ebbe: ${p.name} sucht im Watt und findet einen Schatz.` : `${p.name} durchsucht den Raum und zieht 1 Türkarte verdeckt.`); await sleep(spd(0.6)); }
   }
   if(S.winner!=null) return;
   await botManage(p);
@@ -896,7 +978,7 @@ async function combat(fid, cards, preEnh){
   if(f.human) await humanFight(C); else await botFight(C);
   C.resolved=true;
   const r=evalCombat(C);
-  if(r.win) [f, C.h!=null?P(C.h):null].forEach(q=>{ if(q && q.spore){ q.spore=0; log(`Die Sporenwolke um ${nmA(q)} verzieht sich.`,'good'); } });
+  if(r.win) [f, C.h!=null?P(C.h):null].forEach(q=>{ if(q && q.spore){ q.spore=0; log(`Die Sporenwolke um ${nmA(q)} verzieht sich.`,'good'); } if(q && q.sun){ q.sun=0; log(`Der Sonnenbrand ${q.human?'auf deiner Haut':'von '+q.name} klingt ab.`,'good'); } });
   if(SCN && SCN.fight){
     S.stats.fightWon=r.win;
     if(r.win){ fx('win',{p:f, mine:true}); log(`Du besiegst ${monNames(C)}! Rätsel gelöst.`,'good'); }
@@ -917,7 +999,7 @@ function combatPrompt(C){
     h.push(`Dir ${pl(need,'fehlt','fehlen')} ${need} ${pl(need,'Punkt','Punkte')}.`);
     if(os.length) h.push(`Einmal-Gegenstände auf deiner Hand: ${os.map(c=>`${c.n} (+${osP(c,C)})`).join(', ')}. Aufs Spielfeld ziehen oder antippen.`);
     const tiny=p.hand.find(c=>c.k==='enh' && c.v<0); if(tiny) h.push(`„${tiny.n}“ (${sign(tiny.v)}) darfst du auch auf dein eigenes Monster spielen.`);
-    if(C.h==null) h.push(noHelpMon(C) ? 'Hilfe gibt es hier nicht: Das Waldnetz hört mit, niemand darf dir helfen.' : 'Du kannst einen Mitspieler um Hilfe bitten und Schätze anbieten.');
+    if(C.h==null) h.push(noHelpMon(C) ? (p.sun && !C.mons.some(m=>m.c.noHelp) ? 'Mit deinem Sonnenbrand will dir niemand helfen. Sonnencreme oder ein gewonnener Kampf hilft.' : 'Hilfe gibt es hier nicht: Das Waldnetz hört mit, niemand darf dir helfen.') : 'Du kannst einen Mitspieler um Hilfe bitten und Schätze anbieten.');
     h.push('Reicht nichts davon: aufgeben und weglaufen.');
   } else {
     h.push('Wenn du „Fertig“ sagst, haben die anderen noch kurz Zeit einzugreifen.');
@@ -1060,7 +1142,7 @@ function botBoost(b,C){
   const decisive=b.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss);
   sides.forEach(q=>q.hand.forEach(c=>{
     if(c.k==='oneshot' && c.speise && styleOf(q).collect && !decisive) return;
-    if(c.k==='oneshot' && c.b){ const v=osP(c,C); res.push({v, use:()=>{ take(q,c); C.used.push(c); C.pB.push({l:`${c.n} (${q.name})`,v}); log(`${q.name} setzt ${c.n} ein (+${v}).`); }}); }
+    if(c.k==='oneshot' && c.b){ const v=osP(c,C); res.push({v, use:()=>{ take(q,c); C.used.push(c); C.pB.push({l:`${c.n} (${q.name})`,v}); log(`${q.name} setzt ${c.n} ein (+${v}).`); if(c.cream && q.sun){ q.sun=0; log(`Der Sonnenbrand von ${q.name} ist weg.`,'good'); } }}); }
     if(c.k==='enh' && c.v<0) res.push({v:-c.v, use:()=>{ take(q,c); const m=strongestMon(C); m.enh.push(c); log(`${q.name} spielt „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`); }});
   }));
   const spare=b.hand.filter(c=>keepValue(b,c)<5 && c.k!=='oneshot' && !(c.k==='enh' && c.v<0)).sort((x,y)=>keepValue(b,x)-keepValue(b,y));
@@ -1077,7 +1159,7 @@ function botBoost(b,C){
   if(nt){ C.turning+=nt; C.pB.push({l:`Priester gegen Untote (${b.name})`,v:3*nt}); log(`${b.name} wirft als Priester ${nt} ${pl(nt,'Karte','Karten')} ab: +${3*nt} gegen Untote.`); }
   return true;
 }
-const noHelpMon = C => C.mons.some(m=>m.c.noHelp);
+const noHelpMon = C => C.mons.some(m=>m.c.noHelp) || !!(P(C.f) && P(C.f).sun);
 async function botSeekHelp(b,C){
   if(C.h!=null || noHelpMon(C)) return;
   const sk=styleOf(b).seek; if(sk!=null && Math.random()>sk && !severe(strongestMon(C).c.bad)) return;
@@ -1142,7 +1224,7 @@ function botPlayAgainst(b,C,threat){
 }
 async function winCombat(C){
   const f=P(C.f), h=C.h!=null?P(C.h):null, lv=levelsGained(C);
-  if(f.human){ track('win'); if(C.mons.some(m=>m.c.lvl>=10)) track('big'); ['undead','nager','pilz'].forEach(t=>{ if(C.mons.some(m=>m.c[t])) track(t); }); }
+  if(f.human){ track('win'); if(C.mons.some(m=>m.c.lvl>=10)) track('big'); ['undead','nager','pilz','meer'].forEach(t=>{ if(C.mons.some(m=>m.c[t])) track(t); }); if(isFlut() && C.mons.some(m=>m.c.meer)) stat('meerflut'); }
   if(h && h.human) track('helped');
   fx('win',{p:f, mine: f.human || (h&&h.human)});
   f.lvl+=lv;
@@ -1184,13 +1266,13 @@ async function loseCombat(C){
 }
 function severe(bad){ if(bad.t==='death') return true; if(bad.t==='lvl') return bad.n>=2; if(bad.t==='multi') return bad.l.length>=2 || bad.l.some(severe); if(bad.t==='hand') return bad.n>=5; return false; }
 async function runAway(p,m,i=0,n=1){
-  const left=n-i;
+  const left=n-i; S.lastRan=p.id;
   if(m.c.np && p.lvl<=m.c.np){ if(p.human) track('escape'); log(`${m.c.n} verfolgt niemanden bis Stufe ${m.c.np}. ${nm(p)} ${V(p,'entkommst','entkommt')} automatisch.`,'good'); ruleOnce('np','„Verfolgt niemanden bis Stufe X“: Wer diese Stufe oder niedriger hat, entkommt ohne Würfeln.'); return; }
   const mod=runBonus(p)+(m.c.run||0);
   const need=5-mod;
   const nebel=p.hand.find(c=>c.escape);
   if(p.human){
-    const parts=[]; if(hasRace(p,'elf')) parts.push('Elf +1'); p.eq.forEach(i=>{ if(i.run && usable(p,i)) parts.push(`${i.n} +${i.run}`); }); if(m.c.run) parts.push(`${m.c.n} ${sign(m.c.run)}`);
+    const parts=[]; if(hasRace(p,'elf')) parts.push('Elf +1'); p.eq.forEach(i=>{ if(i.run && usable(p,i)) parts.push(`${i.n} +${i.run}`); if(isFlut() && i.flutRun && usable(p,i)) parts.push(`${i.n} bei Flut +${i.flutRun}`); }); if(isFlut()) parts.push('Flut +1'); if(p.sand) parts.push('Sand in der Badehose −2'); if(m.c.run) parts.push(`${m.c.n} ${sign(m.c.run)}`);
     const v=await ask(()=>({title:`Weglaufen vor ${m.c.n}${n>1?` (Monster ${i+1} von ${n})`:''}`, text: need<=1 ? 'Mit deinen Boni klappt die Flucht auf jeden Fall.' : need>6 ? 'Mit diesen Mali schaffst du es nur mit Hilfe von Karten.' : `Du brauchst eine ${need}${need<6?' oder mehr':''}. Grundwert 5${parts.length?', '+parts.join(', '):''}.`,
       hint:[`Misslingt es: ${m.c.badTxt}`, ...(n>1?['Bei mehreren Monstern läufst du vor jedem einzeln weg.']:[]), ...(nebel?[left>1?`Mit Nebelpulver entkommst du sicher, und zwar vor allen ${left} übrigen Monstern.`:'Mit Nebelpulver entkommst du sicher.']:[])],
       opts:[{l:'Würfeln',v:'roll',kind:'primary'}, ...(nebel?[{l:'Nebelpulver einsetzen',v:'nebel'}]:[])]}), 'run', {m, left});
@@ -1260,6 +1342,15 @@ function applyBad(p,eff){
       log(`${nm(p)} ${V(p,'hustest','hustet')} in einer Sporenwolke: −${p.spore} in jedem Kampf bis zum nächsten gewonnenen.`,'bad');
       ruleOnce('spore','Sporenwolke: Sie bleibt, bis man einen Kampf gewinnt. So lange gibt es in jedem Kampf −1 je Wolke, auch als Helfer.');
       break; }
+    case 'sun': {
+      if(hasShade(p)){ log(`Der Sonnenschirm schützt ${nmA(p)} vor dem Sonnenbrand.`,'good'); break; }
+      if(p.sun){ log(`${nm(p)} ${V(p,'bist','ist')} schon krebsrot. Schlimmer geht es nicht.`); break; }
+      p.sun=1; log(`${nm(p)} ${V(p,'bekommst','bekommt')} Sonnenbrand: −1 in jedem Kampf, und niemand hilft, bis zum nächsten gewonnenen Kampf.`,'bad');
+      ruleOnce('sun','Sonnenbrand: −1 in jedem Kampf, und niemand hilft dir. Er bleibt, bis du einen Kampf gewinnst. Sonnencreme beseitigt ihn sofort, ein Sonnenschirm schützt davor.');
+      break; }
+    case 'sand': { if(!p.sand){ p.sand=1; log(`${nm(p)} ${V(p,'hast','hat')} Sand in der Badehose: Weglaufen −2, bis ${V(p,'du aufsteigst','er wieder aufsteigt')}.`,'bad'); } break; }
+    case 'cheap': { const all=[...p.eq,...p.pack].sort((a,b)=>(a.g||0)-(b.g||0)); if(all.length){ take(p,all[0]); discard(all[0]); log(`Die Möwen klauen ${nmD(p)} ${all[0].n}.`,'bad'); } else log(`${nm(p)} ${V(p,'hast','hat')} nichts, was die Möwen interessiert.`); break; }
+    case 'hands': { const its=p.eq.filter(i=>i.slot==='hand'); its.forEach(i=>{ take(p,i); discard(i); }); log(its.length ? `${nm(p)} ${V(p,'verlierst','verliert')} ${its.map(i=>i.n).join(' und ')}.` : `${nm(p)} ${V(p,'hältst','hält')} nichts in den Händen.`,'bad'); break; }
     case 'death': kill(p); break;
     case 'multi': eff.l.forEach(e=>applyBad(p,e)); break;
   }
@@ -1318,6 +1409,7 @@ function cardActions(c, where){
         else A.push({info:'Rassen und Klassen spielst du im eigenen Zug aus.'}); break;
       }
       case 'oneshot': {
+        if(c.cream && p.sun && !C) A.push({l:'Eincremen: Sonnenbrand weg', fn:()=>useCream(p,c), kind:'primary'});
         if(c.speise && !C){ const cp=canPfanne(p); A.push({l:'Pilzpfanne kochen: +1 Stufe', fn:()=>doPfanne(p), kind: cp.ok?'primary':'', dis: !free ? 'Die Pilzpfanne kochst du in deinem Zug außerhalb von Kämpfen.' : cp.ok ? false : cp.why}); }
         if(live && c.b){
           const vp=osP(c,C);
@@ -1372,8 +1464,11 @@ function playRC(c){
   ruleOnce('onerc','Du hast höchstens 1 Rasse und 1 Klasse. Eine neue Karte ersetzt die alte.');
 }
 function markIntf(){ const C=S.combat; if(C && C.f!==0){ C.hchg=true; } fx('play',{}); }
+// Sonnencreme außerhalb von Kämpfen: nur den Sonnenbrand loswerden
+function useCream(p,c){ if(!p.sun) return; take(p,c); discard(c); p.sun=0; if(p.human){ stat('played'); track('oneshot'); } log(`${nm(p)} ${V(p,'cremst dich','cremt sich')} mit ${c.n} ein. Der Sonnenbrand ist weg.`,'good'); render(); }
 function playOneShot(c,side){
   const p=me(), C=S.combat; take(p,c); C.used.push(c); stat('played'); stat('os'); track('oneshot'); if(C.f!==0 && C.h!==0) track('intf');
+  if(c.cream && side==='p' && p.sun && (C.f===0 || C.h===0)){ p.sun=0; log('Die Sonnencreme kühlt: Dein Sonnenbrand ist weg.','good'); }
   if(side==='p'){ const v=osP(c,C); C.pB.push({l:`${c.n} (von dir)`,v}); log(`Du setzt ${c.n} für ${C.f===0||C.h===0?'eure Seite':P(C.f).name} ein (+${v}).`,'good'); }
   else { C.mB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für das Monster ein (+${c.b}).`); if(C.f!==0 && C.h!==0) C.asked[0]=true; }
   markIntf();
@@ -1454,10 +1549,13 @@ function curseTargetAdv(p,c,charity){
   const t=ts[0];
   return charity || t.lvl>=p.lvl+2 || t.lvl>=WINLVL()-2 ? t : null;
 }
+const t_sunLoss = f => f.sun || hasShade(f) ? 0 : 2;
 function curseLoss(f,c){
   const e=c.eff;
   if(e.t==='chill') return 2;
   if(e.t==='spore') return 2;
+  if(e.t==='sun') return t_sunLoss(f);
+  if(e.t==='sand') return 1;
   if(e.t==='slot' && e.s==='hand'){ const it=f.eq.filter(i=>i.slot==='hand' && usable(f,i)).sort((a,b)=>(b.b||0)-(a.b||0))[0]; return it ? (it.b||0) : 0; }
   if(e.t==='slot'){ const it=f.eq.find(i=>i.slot===e.s); return it && usable(f,it) ? (it.b||0) : 0; }
   if(e.t==='lvl') return Math.min(e.n, f.lvl-1);
@@ -1672,6 +1770,9 @@ function cardMeaning(c){
       if(c.run) t += `, dazu +${c.run} beim Weglaufen`;
       if(c.und) t += `, gegen Untote sogar +${c.und}`;
       if(c.pilzb) t += `, gegen Pilze sogar +${c.pilzb}`;
+      if(c.meerb) t += `, gegen Meeresmonster sogar +${c.meerb}`;
+      if(c.flutRun) t += `, bei Flut +${c.flutRun} beim Weglaufen`;
+      if(c.shade) t += ', schützt vor Sonnenbrand';
       t += `. Belegt ${slot}.`;
       if(c.req) t += ` Wirkt nur für ${reqName(c)}.`;
       if(c.big) t += ' Großer Gegenstand: davon darf man nur einen haben, Zwerge beliebig viele.';
@@ -1679,7 +1780,7 @@ function cardMeaning(c){
     }
     case 'oneshot': if(c.pOnly) return `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, aber nur für die kämpfende Seite, nicht für das Monster. ${c.txt} Danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
       return c.escape ? 'Einmal einsetzbar: Beim Weglaufen entkommt man damit ohne Würfeln, auch bei mehreren Monstern vor allen auf einmal. Danach wird die Karte abgelegt.' : `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, für jede Seite, auch für das Monster. +${c.b}, danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
-    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}${c.pilz?', Pilz':''}.${c.noHelp?' Niemand darf helfen.':''} Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
+    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}${c.pilz?', Pilz':''}${c.meer?', Meer (bei Flut +3)':''}.${c.soft?` Bei Flut −${c.soft}.`:''}${c.noHelp?' Niemand darf helfen.':''} Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
     case 'curse': return 'Fluch. Beim Aufstoßen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen.';
     case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
@@ -1716,6 +1817,7 @@ function itemTxt(c){
   if(c.big) t.push('Großer Gegenstand.');
   if(c.und) t.push(`Gegen Untote +${c.und} statt +${c.b}.`);
   if(c.pilzb) t.push(`Gegen Pilze +${c.pilzb} statt +${c.b}.`);
+  if(c.meerb) t.push(`Gegen Meeresmonster +${c.meerb} statt +${c.b}.`);
   if(c.slot==='none') t.push('Belegt keinen Slot.');
   if(c.flv) t.push(c.flv);
   return t.join(' ');

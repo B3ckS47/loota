@@ -11,7 +11,8 @@ const ICON = {
     none: 'icons/icon-sonstiges.png', pack: 'icons/icon-rucksack.png', race: 'icons/icon-rasse.png', cls: 'icons/icon-klasse.png'},
   portrait: {Du: 'icons/portrait-du.png', Berta: 'icons/portrait-berta.png', Kalle: 'icons/portrait-kalle.png', Uschi: 'icons/portrait-uschi.png',
     Rosi: 'icons/portrait-rosi.png', Fridolin: 'icons/portrait-fridolin.png', Gustav: 'icons/portrait-gustav.png', Hilde: 'icons/portrait-hilde.png',
-    Flora: 'icons/portrait-flora.png', Trudi: 'icons/portrait-trudi.png', Walter: 'icons/portrait-walter.png'}
+    Flora: 'icons/portrait-flora.png', Trudi: 'icons/portrait-trudi.png', Walter: 'icons/portrait-walter.png',
+    Bruno: 'icons/portrait-bruno.png', Gesine: 'icons/portrait-gesine.png', Sunny: 'icons/portrait-sunny.png'}
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
 const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
@@ -129,7 +130,7 @@ let GAME_ON = false;
 // Tischfläche und Musik der laufenden Partie: im Storymodus von der Welt, im freien Spiel aus den Optionen
 let GAME_TABLE = 'taverne', GAME_THEME = 'taverne';
 // Tischflächen und Musik der Welten werden mit dem Abschluss der Welt freigeschaltet
-const MOOD_WORLD = {keller: 'w2', wald: 'w3'};
+const MOOD_WORLD = {keller: 'w2', wald: 'w3', strand: 'w4'};
 const moodOk = v => !MOOD_WORLD[v] || !!STORY.worlds[MOOD_WORLD[v]];
 function freeMood() { GAME_TABLE = moodOk(SET.table) ? SET.table : 'taverne'; GAME_THEME = moodOk(SET.theme) ? SET.theme : 'taverne'; }
 CHECKPOINT_HANDLER = () => {
@@ -151,10 +152,12 @@ const DECKS = [
   {id: 'keller', name: 'Keller-Deck', icon: 'Rattenkönig Rüdiger', desc: 'Staubmäuse, Spukgeister und der Rattenkönig: 18 Kellerkarten plus alles aus dem Grunddeck, was in einen Keller passt.',
     base: kellerCount, unlocked: () => !!STORY.worlds.w2, lockTxt: 'Das Keller-Deck schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'},
   {id: 'wald', name: 'Pilzwald-Deck', icon: 'Pilzkönigin Morchella', desc: 'Bovisten, Hexenringe und die Pilzkönigin: 20 Waldkarten plus alles aus dem Grunddeck, was in einen Wald passt.',
-    base: waldCount, unlocked: () => !!STORY.worlds.w3, lockTxt: 'Das Pilzwald-Deck schaltest du frei, wenn du im Storymodus Welt 3 abschließt.'}
+    base: waldCount, unlocked: () => !!STORY.worlds.w3, lockTxt: 'Das Pilzwald-Deck schaltest du frei, wenn du im Storymodus Welt 3 abschließt.'},
+  {id: 'strand', name: 'Strand-Deck', icon: 'Krabbenbaron Kneifer', desc: 'Quallen, Haie und der Krabbenbaron, dazu Ebbe und Flut: 19 Strandkarten plus alles aus dem Grunddeck, was an einen Strand passt.',
+    base: strandCount, unlocked: () => !!STORY.worlds.w4, lockTxt: 'Das Strand-Deck schaltest du frei, wenn du im Storymodus Welt 4 abschließt.'}
 ];
 // Karten einer Welt tauchen in der Kartenliste erst auf, wenn ihr Deck freigeschaltet ist
-const cardOpen = c => !c.w || deckById(c.w === 3 ? 'wald' : 'keller').unlocked();
+const cardOpen = c => !c.w || deckById({2: 'keller', 3: 'wald', 4: 'strand'}[c.w]).unlocked();
 const VARIANTS = [
   ['standard', 'Standard', 'Die ausgewogene Mischung.', (p, b) => b],
   ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', (p, b) => !b ? 0 : p.tpl.k === 'monster' ? b + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? b - 1 : p.tpl.k === 'enh' ? b + 1 : b],
@@ -253,7 +256,8 @@ function setScreen(name) {
   updatePaused();
   Snd.mood(name === 'game' && S && S.combat ? 'combat' : 'tavern');
   Snd.theme(name === 'game' ? GAME_THEME : 'taverne');
-  ['keller', 'wald'].forEach(t => $('#app').classList.toggle('tbl-' + t, name === 'game' && GAME_TABLE === t));
+  ['keller', 'wald', 'strand'].forEach(t => $('#app').classList.toggle('tbl-' + t, name === 'game' && GAME_TABLE === t));
+  if (name !== 'game') $('#app').classList.remove('flut');
   if (name === 'title') renderTitle();
   if (name === 'setup') { renderFoes(); renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
   if (name === 'settings') { renderControls(); renderSaveInfo(); }
@@ -276,7 +280,7 @@ window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, 
 
 /* ================= Startbildschirm ================= */
 // Ausschnitt der Weltkarte oben auf dem Startbildschirm (senkrechte Lage im Bild)
-const HERO_Y = {w1: '68%', w2: '6%', w3: '88%'};
+const HERO_Y = {w1: '68%', w2: '6%', w3: '88%', w4: '52%'};
 const nextStation = w => w.stations.find(st => st.type !== 'shop' && !STORY.done[st.id] && stationUnlocked(st));
 const freeGame = () => { const act = GAME_ON && S && S.winner == null && !S.scn; const sv = !act && load(K_SAVE); return act ? {turn: S.turn, lvl: S.players[0].lvl, live: true} : sv ? {turn: sv.S.turn, lvl: sv.S.players[0].lvl} : null; };
 function renderTitle() {
@@ -287,9 +291,9 @@ function renderTitle() {
   $('#t-world').textContent = `Welt ${cw.n}`;
   $('#t-stars').textContent = `${worldStars(cw)} / ${worldMaxStars(cw)}`;
   $('#t-wname').textContent = cw.name;
-  const open = worldMaxStars(cw) - worldStars(cw), first = nx && nx.type === 'tutorial';
-  $('#story-info').textContent = sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : first ? `Zum Start: ${nx.name}` : nx ? `Weiter mit Station ${nx.no} · ${nx.name}` : open ? `Alles geschafft · noch ${open} ${open === 1 ? 'Stern' : 'Sterne'} offen` : 'Alles geschafft. Bald geht es weiter!';
-  $('#t-cta').textContent = sst || (nx && !first) ? 'Story fortsetzen' : first ? 'Mit der Story loslegen' : 'Zur Storykarte';
+  const open = worldMaxStars(cw) - worldStars(cw), first = nx && nx.type === 'tutorial', shut = !worldOwned(cw);
+  $('#story-info').textContent = shut ? 'Neu: Hier geht die Geschichte weiter' : sst ? `Angefangen: Station ${sst.no} · ${sst.name}` : first ? `Zum Start: ${nx.name}` : nx ? `Weiter mit Station ${nx.no} · ${nx.name}` : open ? `Alles geschafft · noch ${open} ${open === 1 ? 'Stern' : 'Sterne'} offen` : 'Alles geschafft. Bald geht es weiter!';
+  $('#t-cta').textContent = shut ? `Welt ${cw.n} ansehen` : sst || (nx && !first) ? 'Story fortsetzen' : first ? 'Mit der Story loslegen' : 'Zur Storykarte';
   // Spielauswahl: die gewählte Kachel ist umrandet, der Spielen-Knopf startet sie
   const mode = SET.mode === 'online' ? 'online' : 'free';
   $$('.t-card[data-mode]').forEach(c => { const on = c.dataset.mode === mode; c.classList.toggle('sel', on); c.setAttribute('aria-checked', String(on)); });
@@ -315,7 +319,9 @@ function renderTitle() {
 // Weiter im Storymodus: angefangene Station fortsetzen, sonst die nächste Station auf der Karte öffnen
 function storyGo() {
   if (storySave()) { resumeStation(); return; }
-  const nx = nextStation(currentWorld());
+  const cw = currentWorld();
+  if (!worldOwned(cw)) { show('story'); openSheet({id: 'buyworld', w: cw.id}); return; }
+  const nx = nextStation(cw);
   show('story');
   if (nx) openStation(nx.id);
 }
@@ -372,6 +378,7 @@ function renderSaveInfo() {
   const s = load(K_SAVE);
   $('#save-info').textContent = s ? `Gespeichert am ${new Date(s.ts).toLocaleString('de-DE', {dateStyle: 'short', timeStyle: 'short'})}: Runde ${s.S.turn}, du auf Stufe ${s.S.players[0].lvl}.` : 'Kein gespeichertes Spiel.';
   $('#app-version').textContent = 'Version ' + APP_VERSION;
+  const bw = Object.keys(PURCHASE.worlds).filter(k => PURCHASE.worlds[k]); $('#cheat-buy').textContent = bw.length ? 'Freigeschaltet: ' + bw.map(k => 'Welt ' + k.slice(1)).join(', ') : 'Noch nichts freigeschaltet';
   const sk = streakNow(), cw = chestsWaiting().length; $('#cheat-streak').textContent = `Aktuell ${sk} ${sk === 1 ? 'Tag' : 'Tage'} · Rekord ${streakBest()}${cw ? ` · ${cw} ${cw === 1 ? 'Truhe' : 'Truhen'} bereit` : ''}`;
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   $('#install-hint').textContent = standalone ? 'Die App ist installiert.' : ios ? 'Installieren am iPhone: In Safari auf „Teilen“ tippen, dann „Zum Home-Bildschirm“.' : 'Installieren: Im Browser-Menü „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.';
@@ -504,6 +511,10 @@ function renderTop() {
   patch($('#tb-title'), String(S.turn));
   const mid = $('#tb-mid'); mid.setAttribute('aria-label', SCN && SCN.fight ? 'Rätselkampf' : `${SCN ? `Ziel Stufe ${WINLVL()}, ` : ''}Runde ${S.turn}, ${who}${S.phase ? `, Phase: ${PHASES[S.phase - 1]}` : ''}`);
   mid.classList.toggle('mine', S.cur === 0 && S.winner == null);
+  const td = tideNow(), tt = $('#tb-tide');
+  tt.hidden = !td; tt.className = 'tb-tide ' + (td || ''); tt.title = td === 'flut' ? 'Flut: Meeresmonster +3, Weglaufen +1' : 'Ebbe: Raum durchsuchen bringt einen Schatz';
+  if (td) mid.setAttribute('aria-label', mid.getAttribute('aria-label') + (td === 'flut' ? ', Flut' : ', Ebbe'));
+  $('#app').classList.toggle('flut', td === 'flut' && CUR === 'game');
   patch($('#phasedots'), ICON.phase.map((src, i) => `<img src="${src}" alt="${PHASES[i]}" title="${PHASES[i]}" class="${S.phase === i + 1 ? 'on' : S.phase > i + 1 ? 'done' : ''}">`).join(''));
   const unread = Math.max(0, S.log.length - W.logSeen), badge = $('#log-badge');
   badge.hidden = unread === 0 || topSheet()?.id === 'log';
@@ -931,6 +942,7 @@ function burstAt(sel, n) { const el = $(sel); if (!el) return; const r = el.getB
 
 FX_HANDLER = (t, d) => {
   switch (t) {
+    case 'tide': Snd.sfx(d.flut ? 'wave' : 'ebb'); if (d.flut) buzz([20, 60, 20]); break;
     case 'newgame': W.reset(); break;
     case 'turn': if (d.p.human) { Snd.sfx('page'); buzz(15); if (W.renderedOnce) toast('Du bist am Zug'); } break;
     case 'interfere': Snd.sfx('evil'); buzz(40); toast(`${esc(d.by.name)} greift ein!`); break;
@@ -1044,7 +1056,8 @@ function renderStory() {
   const maps = open.map((w, i) => (i ? `<div class="st-link" aria-hidden="true"></div><div class="panel st-head st-band">${head(w)}</div>` : '') + worldMapHTML(w, next)).join('');
   const f = fogWorld();
   patch($('#st-map'), maps + (f ? fogHTML(f, f.near) : ''));
-  if (!STORY.intro[cw.id]) { STORY.intro[cw.id] = true; saveStory(); openSheet({id: 'storyintro', w: cw.id}); }
+  if (!worldOwned(cw)) { if (!STORY.intro['kauf-' + cw.id] && CUR === 'story' && !SHEETS.length) { STORY.intro['kauf-' + cw.id] = true; saveStory(); openSheet({id: 'buyworld', w: cw.id}); } }
+  else if (!STORY.intro[cw.id]) { STORY.intro[cw.id] = true; saveStory(); openSheet({id: 'storyintro', w: cw.id}); }
   if (next && CUR === 'story') {
     const sc = $('#scr-story .content');
     if (sc && sc.__scrolledTo !== next.id) { sc.__scrolledTo = next.id; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - sc.clientHeight / 2); }); }
@@ -1078,7 +1091,8 @@ function worldMapHTML(w, next) {
   }).join('');
   const last = w.stations[w.stations.length - 1];
   if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
-  return `<div class="smap-in${art ? ' pic' : ''}" data-world="${w.id}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}"><svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>`;
+  const buy = worldOwned(w) ? '' : `<button type="button" class="st-buy" data-buyworld="${w.id}"><span class="sn-medal">${medalIcon('lock')}</span><b>Welt ${w.n} freischalten</b><small>Antippen für alle Infos</small></button>`;
+  return `<div class="smap-in${art ? ' pic' : ''}${buy ? ' shut' : ''}" data-world="${w.id}" style="${art ? `aspect-ratio:${w.mapRatio};background-image:url(${w.map})` : `height:${w.mapH}px`}">${buy}<svg class="st-path" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">${segs.join('')}</svg>${art ? '' : marks}${nodes}</div>`;
 }
 // Nächste Welt: im Nebel zu erahnen, je weiter unten desto dichter
 function fogHTML(f, open) {
@@ -1091,6 +1105,7 @@ function fogHTML(f, open) {
 }
 function openStation(id) {
   const st = stationById(id); if (!st) return;
+  if (!worldOwned(worldById(st.world)) && !STORY.done[st.id]) { openSheet({id: 'buyworld', w: st.world}); return; }
   if (!stationUnlocked(st) && !SET.test) { toast('Erst die Station davor schaffen.'); buzz(30); return; }
   if (st.type === 'shop') visitShop(st);
   openSheet({id: 'station', st: id});
@@ -1286,6 +1301,26 @@ SHEET_VIEWS.curse = s => {
     return `<button type="button" class="ctgt" data-cursepick="${t.id}"><img src="${portrait(t)}" alt=""><span class="ct-t"><b>${esc(t.name)}</b><small>Stufe ${t.lvl} · Kampfstärke ${power(t)}${t.dead ? ' · tot' : ''}</small>${curseImpact(c, t) ? `<em>${esc(curseImpact(c, t))}</em>` : ''}</span>${role ? `<span class="ct-role">${role}</span>` : ''}</button>`; };
   return {head: h3(`Wen triffst du mit „${esc(c.n)}“?`), body: (mean ? `<p class="meaning ct-mean">${mean}</p>` : '') + `<div class="ctg">${ts.map(row).join('')}</div>`};
 };
+// Kaufwelt: Vorschau mit Karte, Figuren und Angeboten. Bis zur Play-Store-Version schaltet nur die Testphase frei.
+SHEET_VIEWS.buyworld = s => {
+  const w = worldById(s.w); if (!w) return null;
+  const faces = [...new Set(w.stations.filter(st => st.scn && typeof st.scn === 'object' && st.scn.bots).flatMap(st => st.scn.bots))].filter(n => ICON.portrait[n]);
+  const owned = worldOwned(w), rest = w.stations.filter(st => st.type !== 'shop').length;
+  const offers = OFFERS.filter(o => o.worlds.includes(w.id)).map(o => `<button type="button" class="btn${o.worlds.length > 1 ? ' primary' : ''} bw-offer" data-offer="${o.id}"><b>${esc(o.n)}</b><span>${SET.test ? 'Gratis (Testphase)' : esc(o.price)}</span>${o.note ? `<small>${esc(o.note)}</small>` : ''}</button>`).join('');
+  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `<div class="bw-map" style="background-image:url(${w.map})"><span class="bw-faces">${faces.map(n => `<img src="${ICON.portrait[n]}" alt="${esc(n)}">`).join('')}</span></div>` +
+    `<p class="bw-lead">${esc(w.intro.split('. ').slice(0, 3).join('. '))}.</p>` +
+    `<ul class="bw-list"><li><b>${rest} Stationen</b> mit Rätseln, Duellen und Krabbenbaron Kneifer als Boss</li><li><b>Ebbe und Flut:</b> eine neue Spielregel, die den ganzen Tisch verändert</li><li><b>Neue Optik:</b> 4 Titel, 3 Rahmen und ein Porträt zum Sammeln</li><li><b>Danach fürs freie Spiel:</b> ${esc(w.unlocks.join(', '))}</li></ul>` +
+    (owned ? `<p class="bw-own">Gehört dir. Viel Spaß am Strand!</p><div class="acts"><button type="button" class="btn primary" data-storyclose>Los geht’s</button></div>`
+      : `<div class="bw-offers">${offers}</div><p class="hint">${SET.test ? 'Testphase: Du kannst die Welt hier gratis freischalten. Echte Käufe kommen mit der Play-Store-Version.' : 'Einmal kaufen, für immer spielen. Kaufen geht bald in der Play-Store-Version.'}</p>`)};
+};
+async function buyOffer(id) {
+  const o = OFFERS.find(x => x.id === id); if (!o) return;
+  if (!SET.test) { toast('Kaufen geht bald in der Play-Store-Version. In der Testphase (Optionen) kannst du schon gratis freischalten.'); buzz(30); return; }
+  unlockOffer(id); Snd.sfx('victory'); buzz([40, 60, 40]);
+  closeAllSheets(); toast(`${o.n} freigeschaltet!`);
+  burstAt('#st-map', 30);
+  renderStory(); renderTitle();
+}
 SHEET_VIEWS.storyintro = s => {
   const w = worldById(s.w);
   return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du beim Händler gegen Rahmen, Titel und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
@@ -1346,6 +1381,7 @@ function go(a) {
     case 'chest': showChest(); break;
     case 'streakplus': { const n = cheatStreak(); if (!chestsWaiting().length || n % 7 && n !== 3) toast(`Serie: ${n} ${n === 1 ? 'Tag' : 'Tage'}`); renderSaveInfo(); break; }
     case 'streakreset': resetStreak(); toast('Serie auf 0 gesetzt'); renderSaveInfo(); break;
+    case 'buyreset': PURCHASE.worlds = {}; savePurchase(); toast('Käufe zurückgesetzt'); renderSaveInfo(); break;
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
@@ -1418,12 +1454,14 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-sheetback]'))) { popSheet(); return; }
   if ((el = t.closest('[data-back]'))) { back(); return; }
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
-  if ((el = t.closest('.seg[data-set] button.locked'))) { toast(`Schaltest du frei, wenn du im Storymodus Welt ${MOOD_WORLD[el.dataset.v] === 'w3' ? 3 : 2} abschließt.`); buzz(30); return; }
+  if ((el = t.closest('.seg[data-set] button.locked'))) { toast(`Schaltest du frei, wenn du im Storymodus Welt ${worldById(MOOD_WORLD[el.dataset.v]).n} abschließt.`); buzz(30); return; }
   if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); if (CUR === 'setup') renderFoes(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('frame:' + el.dataset.frame)); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-buyworld]'))) { openSheet({id: 'buyworld', w: el.dataset.buyworld}); return; }
+  if ((el = t.closest('[data-offer]'))) { buyOffer(el.dataset.offer); return; }
   if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
   if ((el = t.closest('[data-story-start]'))) { askStartStation(el.dataset.storyStart); return; }
   if ((el = t.closest('[data-story-resume]'))) { resumeStation(); return; }
