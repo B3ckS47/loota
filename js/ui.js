@@ -1123,7 +1123,7 @@ SHEET_VIEWS.daily = () => {
       `<div class="acts"><button type="button" class="btn" data-go="shop">Zum Krämerladen (${STORY.coins} Münzen)</button></div>`};
 };
 SHEET_VIEWS.online = () => ({head: h3('Online spielen'),
-  body: `<div class="online-pic"><img src="icons/portrait-elfe.png" alt=""><img src="icons/portrait-zwerg.png" alt=""><img src="icons/portrait-diebin.png" alt=""></div>` +
+  body: `<img class="scene" src="art/kachel-online.webp" alt="">` +
     `<p>Bald spielst du hier mit deinen Freunden statt gegen Bots:</p><ul class="online-list"><li>Freunde über einen Code oder Link hinzufügen</li><li>Eine Partie erstellen und Freunde einladen</li><li>Sehen, wer gerade online ist</li></ul>` +
     `<p class="hint">Dafür meldest du dich einmal an. Dann ist auch dein Fortschritt gesichert, wenn du das Handy wechselst.</p>` +
     `<div class="acts"><button type="button" class="btn primary" data-sheetclose>Alles klar</button></div>`});
