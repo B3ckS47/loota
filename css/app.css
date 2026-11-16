@@ -1111,13 +1111,14 @@ input[type=range]{accent-color:#ff8a1f}
 
 /* Rahmen mit Grafik: der Ring liegt über dem Porträt, das Loch nimmt 70 % der Grafik ein */
 .pf-bigw{position:relative;display:block;flex:0 0 auto}
-.pf-bigw::after,.mebar .ptbtn::after{content:'';position:absolute;background:var(--pfimg,none) center/contain no-repeat;pointer-events:none}
+.pf-bigw::after,.pfw::after{content:'';position:absolute;background:var(--pfimg,none) center/contain no-repeat;pointer-events:none}
 .pf-bigw::after{inset:-19px}
+.pfw{position:relative;display:block;flex:0 0 auto}
+.pfw::after{inset:-21.5%}
+html.pf-art .sh-head .pfw{margin:6px 12px 6px 8px}
+html.pf-art #sheet .sh-head .pt.me{width:62px;height:62px;border:0}
 html.pf-art .pf-bigw{margin:0 8px}
 html.pf-art .pf-big{width:88px;height:88px;border:0;box-shadow:0 8px 18px -6px rgba(0,0,0,.6)}
-.mebar .ptbtn{position:relative}
-.mebar .ptbtn::after{inset:-8px}
-html.pf-art .mebar .pt{border:0}
 .pf-fr i.frimg{position:relative;width:32px;height:32px;margin:-6px -2px -6px -4px;background-color:transparent;background-position:center;background-size:contain;background-repeat:no-repeat;box-shadow:none;border-radius:0}
 .pf-fr i.frimg svg{position:absolute;inset:0;margin:auto}
 
@@ -1131,4 +1132,7 @@ html.pf-art .mebar .pt{border:0}
 .mebar .coins i.goal{opacity:.6}
 .mebar .coins i.on,.mebar .coins i.goal.on{opacity:1}
 .mebar{padding-left:10px}
-html:not(.pf-art) .mebar .pt{box-shadow:0 0 0 1.5px rgba(59,42,28,.55)}
+.mebar .pt{box-shadow:0 0 0 1.5px rgba(59,42,28,.55)}
+
+.sh-head h3 .sh-title{display:block;font:800 14px/1.2 var(--body);font-style:normal;color:var(--red);margin-top:3px}
+.sh-head h3 .sh-lvl{display:block;font:700 15px/1.2 var(--body);color:var(--muted);margin-top:2px}

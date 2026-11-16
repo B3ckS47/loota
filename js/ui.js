@@ -78,8 +78,9 @@ function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portr
 function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]; return f[2]; }
 function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
 function myName() { return PROFILE.name || 'Du'; }
-// Rahmen mit eigener Grafik (Ring, der über dem Porträt liegt); alle anderen bleiben ein farbiger Rand
-const FRAME_ART = new Set(['kupferkessel', 'rettungsring']);
+// Rahmen mit eigener Grafik (Ring, der über dem Porträt liegt). Gezeigt nur, wo das Porträt groß ist:
+// oben im Charakter-Bildschirm und im eigenen Profil im Spiel. Überall sonst gilt der farbige Rand.
+const FRAME_ART = new Set(['bierdeckel', 'dublonengold', 'eichenholz', 'fliegenpilz', 'goldkronkorken', 'kerzenwachs', 'korallenrot', 'kupferkessel', 'leuchtpilz', 'meeresschaum', 'moewenfeder', 'rettungsring', 'strandtuch', 'wochenstammgast']);
 const frameArt = k => FRAME_ART.has(k) ? `icons/rahmen-${k}.webp` : '';
 function myFrameKey() { return (ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0])[0]; }
 function applyProfile() {
@@ -859,7 +860,7 @@ const SHEET_VIEWS = {
   equip() {
     if (!S) return null;
     const p = me(), free = isFree();
-    return {head: `<img class="pt me" src="${myPortrait()}" alt=""><h3>${esc(myName())}<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span></h3>`, body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
+    return {head: `<span class="pfw"><img class="pt me" src="${myPortrait()}" alt=""></span><h3>${esc(myName())}${myTitle() ? `<em class="sh-title">${esc(myTitle())}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span></h3>`, body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
       `<p class="hint">Im Kampf zählen nur Rasse, Klasse und ausgerüstete Gegenstände. Der Rucksack bringt keinen Bonus. Karte antippen für Aktionen.</p>` +
       (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') +
       `<div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="tipbox">${handTip(p)}</div>`};
