@@ -676,6 +676,7 @@ function newGame(allBots){
   else if(sc && sc.tut) log('Probespiel mit Hilde: Wer zuerst Stufe '+WINLVL()+' erreicht, gewinnt.','sys');
   else if(sc) log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt.${sc.boss?` Irgendwo im Türstapel lauert ${sc.boss}: Wer ihn besiegt, gewinnt sofort.`:''} Du beginnst.`,'sys');
   else log('Neue Partie. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.','sys');
+  if(sc && sc.stars && sc.stars.length) log(`Sterne in dieser Station: ${sc.stars.map(t=>'★ '+t).join(' · ')}`,'sys');
   rule('Tippe deine Handkarten an, um sie auszuspielen. Rasse, Klasse und Gegenstände darfst du gleich jetzt auslegen.');
   fx('newgame');
   const t=TOKEN;

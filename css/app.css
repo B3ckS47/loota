@@ -1080,3 +1080,12 @@ input[type=range]{accent-color:#ff8a1f}
 .bw-offer span{font-weight:800}
 .bw-offer small{font-weight:400;font-size:11.5px;opacity:.85}
 .bw-own{font-weight:700;color:#3f7a2e}
+/* Storykarte: Sonderregeln je Welt */
+.st-head{position:relative}
+.st-info{position:absolute;right:10px;top:10px;width:34px;height:34px;display:grid;place-items:center;padding:0;border-radius:50%;border:2px solid var(--edge);background:linear-gradient(var(--card-hi),var(--card));box-shadow:0 2px 0 var(--wood-dark)}
+.st-info svg{width:20px;height:20px;fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+.st-info:active{transform:translateY(2px);box-shadow:none}
+.wr-list{margin:0 0 10px}
+.wr-list dt{font:700 20px/1.1 var(--display);color:#5a2b1a;margin:10px 0 2px}
+.wr-list dt:first-child{margin-top:0}
+.wr-list dd{margin:0}

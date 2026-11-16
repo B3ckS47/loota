@@ -1049,7 +1049,7 @@ function renderStory() {
   const open = openWorlds(), cw = open[open.length - 1];
   SAVED_ST = (storySave() || {}).st || null;
   patch($('#st-coins'), `${coinImg}<b>${STORY.coins}</b>`);
-  const head = w => `<span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${STORY.worlds[w.id] ? ' · abgeschlossen' : ''}</span>`;
+  const head = w => `<button type="button" class="st-info" data-worldrules="${w.id}" aria-label="Sonderregeln von Welt ${w.n}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6 M12 7.5h.01" /></svg></button><span class="st-world">Welt ${w.n}</span><b class="st-name">${esc(w.name)}</b><span class="st-stars">${starSvg(true)}<b>${worldStars(w)}</b> von ${worldMaxStars(w)} Sternen${STORY.worlds[w.id] ? ' · abgeschlossen' : ''}</span>`;
   patch($('#st-head'), head(open[0]));
   let next = null;
   open.forEach(w => { const n = w.stations.find(st => stationUnlocked(st) && !STORY.done[st.id]); if (n) next = n; });
@@ -1116,6 +1116,7 @@ function startStation(id) {
   clearStorySave();
   const scn = scenarioFor(st);
   const w = worldById(st.world);
+  scn.stars = st.type === 'tutorial' ? null : ['Station schaffen', ...(st.extras || []).map(e => e.t)];
   scn.counts = variantCounts(w.deck, scn.variant || 'standard'); delete scn.variant;
   // Der Endgegner einer Welt (ab Welt 2) kommt nur im Bosskampf ins Deck
   const fin = w.id !== 'w1' && w.stations.find(x => x.final), bossName = fin && fin.scn && fin.scn.boss;
@@ -1321,6 +1322,13 @@ async function buyOffer(id) {
   burstAt('#st-map', 30);
   renderStory(); renderTitle();
 }
+// Sonderregeln einer Welt, über das i an der Weltüberschrift der Storykarte
+SHEET_VIEWS.worldrules = s => {
+  const w = worldById(s.w); if (!w) return null;
+  const list = w.rules && w.rules.length ? `<dl class="wr-list">${w.rules.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${linkify(esc(d))}</dd>`).join('')}</dl>`
+    : '<p>In dieser Welt gelten nur die Grundregeln. Nachlesen kannst du sie unter „Karten“ bei „Regeln und Probespiel“.</p>';
+  return {head: h3(`Welt ${w.n} · Sonderregeln`), body: list + `<p class="hint">Sterne gibt es pro Station: einen fürs Schaffen und je einen für die Zusatzziele. Welche das sind, steht beim Start auch in den Notizen.</p><div class="acts"><button type="button" class="btn primary" data-storyclose>Alles klar</button></div>`};
+};
 SHEET_VIEWS.storyintro = s => {
   const w = worldById(s.w);
   return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du beim Händler gegen Rahmen, Titel und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
@@ -1461,6 +1469,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('frame:' + el.dataset.frame)); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-worldrules]'))) { openSheet({id: 'worldrules', w: el.dataset.worldrules}); return; }
   if ((el = t.closest('[data-buyworld]'))) { openSheet({id: 'buyworld', w: el.dataset.buyworld}); return; }
   if ((el = t.closest('[data-offer]'))) { buyOffer(el.dataset.offer); return; }
   if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
