@@ -62,7 +62,11 @@ const COSMETICS = {
     eichenholz: {n: 'Eichenholz', c: '#8a5a2b'},
     lavendel: {n: 'Lavendel', c: '#a98bd6'},
     perlmutt: {n: 'Perlmutt', c: '#efe6f5'},
-    wochenstammgast: {n: 'Wochenstammgast', c: '#f0b429'}
+    wochenstammgast: {n: 'Wochenstammgast', c: '#f0b429'},
+    // Nur aus der Goldtruhe
+    truhenbeschlag: {n: 'Truhenbeschlag', c: '#6b4a2b'},
+    schluesselbund: {n: 'Schlüsselbund', c: '#c9a227'},
+    edelsteine: {n: 'Edelsteinkranz', c: '#b03a7a'}
   },
   portrait: {
     gartenzwerg: {n: 'Gartenzwerg', src: 'icons/portrait-gartenzwerg.png'},
@@ -83,7 +87,11 @@ const COSMETICS = {
     bruno: {n: 'Bademeister Bruno', src: 'icons/portrait-bruno.png'},
     gesine: {n: 'Möwe Gesine', src: 'icons/portrait-gesine.png'},
     pepe: {n: 'Papagei Pepe', src: 'icons/portrait-pepe.png'},
-    sardella: {n: 'Smutje Sardella', src: 'icons/portrait-sardella.png'}
+    sardella: {n: 'Smutje Sardella', src: 'icons/portrait-sardella.png'},
+    // Nur aus der Goldtruhe
+    minka: {n: 'Tavernenkatze Minka', src: 'icons/portrait-minka.png'},
+    klappi: {n: 'Mimik Klappi', src: 'icons/portrait-klappi.png'},
+    kurt: {n: 'Schlüsselmeister Kurt', src: 'icons/portrait-kurt.png'}
   }
 };
 function cosmeticName(id) {
@@ -605,7 +613,7 @@ const SHOP_POOL = [
 const SHOP_N = 4;
 const STREAK_FRAME = 'frame:wochenstammgast';
 // Nur aus Truhen: die Holztruhe zieht aus den einfachen, die Goldtruhe zuerst aus den seltenen.
-// Porträts und Rahmen kommen hier dazu, sobald ihre Bilder da sind (nur, was in COSMETICS steht, wird gezogen).
+// Gezogen wird nur, was in COSMETICS steht.
 const CHEST_ITEMS = {
   holz: ['title:truhenknacker', 'title:gluecksritter', 'title:dauerbrenner'],
   gold: ['title:stammtischlegende', 'portrait:minka', 'portrait:klappi', 'portrait:kurt', 'frame:truhenbeschlag', 'frame:schluesselbund', 'frame:edelsteine']

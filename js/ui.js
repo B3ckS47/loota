@@ -82,7 +82,7 @@ function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? CO
 function myName() { return PROFILE.name || 'Du'; }
 // Rahmen mit eigener Grafik (Ring, der über dem Porträt liegt). Gezeigt nur, wo das Porträt groß ist:
 // oben im Charakter-Bildschirm und im eigenen Profil im Spiel. Überall sonst gilt der farbige Rand.
-const FRAME_ART = new Set(['bierdeckel', 'dublonengold', 'eichenholz', 'fliegenpilz', 'goldkronkorken', 'kerzenwachs', 'korallenrot', 'kupferkessel', 'leuchtpilz', 'meeresschaum', 'moewenfeder', 'rettungsring', 'strandtuch', 'wochenstammgast']);
+const FRAME_ART = new Set(Object.keys(COSMETICS.frame));   // alle Rahmen außer den sechs Farbringen vom Start
 const frameArt = (k, small) => FRAME_ART.has(k) ? `icons/rahmen-${k}${small ? '-k' : ''}.webp` : '';
 function myFrameKey() { return (ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0])[0]; }
 function applyProfile() {
