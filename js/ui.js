@@ -78,10 +78,18 @@ function myPortrait() { const x = ALL_PORTRAITS.find(q => q[0] === PROFILE.portr
 function myFrame() { const f = ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]; return f[2]; }
 function myTitle() { return PROFILE.title && owns('title:' + PROFILE.title) ? COSMETICS.title[PROFILE.title] : ''; }
 function myName() { return PROFILE.name || 'Du'; }
-function applyProfile() { document.documentElement.style.setProperty('--pf', myFrame()); if (S && CUR === 'game') { W.renderedOnce = true; render(); } }
+// Rahmen mit eigener Grafik (Ring, der über dem Porträt liegt); alle anderen bleiben ein farbiger Rand
+const FRAME_ART = new Set(['gold', 'kupferkessel', 'rettungsring']);
+const frameArt = k => FRAME_ART.has(k) ? `icons/rahmen-${k}.webp` : '';
+function myFrameKey() { return (ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0])[0]; }
+function applyProfile() {
+  const de = document.documentElement, art = frameArt(myFrameKey());
+  de.style.setProperty('--pf', myFrame()); de.style.setProperty('--pfimg', art ? `url("${new URL(art, document.baseURI).href}")` : 'none'); de.classList.toggle('pf-art', !!art);
+  if (S && CUR === 'game') { W.renderedOnce = true; render(); }
+}
 const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
 function renderProfile() {
-  patch($('#pf-hero'), `<img class="pf-big" src="${myPortrait()}" alt=""><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
+  patch($('#pf-hero'), `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
     `<span class="pf-streak">${candleHtml(streakNow() > 0)}<span><b>Längste Serie: ${streakBest()} ${streakBest() === 1 ? 'Tag' : 'Tage'}</b><small>Aktuell: ${streakNow()} ${streakNow() === 1 ? 'Tag' : 'Tage'}</small></span></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
@@ -90,7 +98,7 @@ function renderProfile() {
   const arrow = (d, dis) => `<button type="button" class="pf-arr" data-pfpage="${d}" aria-label="${d < 0 ? 'Vorherige' : 'Nächste'} Seite"${dis ? ' disabled' : ''}><svg viewBox="0 0 24 24"><path d="${d < 0 ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}"/></svg></button>`;
   patch($('#pf-filter'), arrow(-1, pi === 0) + `<div class="pf-pg"><b>${esc(gl)}</b><small>${esc(gs)} · ${got} von ${items.length}</small><span class="pf-dots">${G.map((g, i) => `<i class="${i === pi ? 'on' : ''}"></i>`).join('')}</span></div>` + arrow(1, pi === G.length - 1));
   patch($('#pf-portraits'), (ALL_PORTRAITS.filter(x => inG(x[3])).map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join('')) || none);
-  patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}"><i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i><span>${l}</span></button>`; }).join('')) || none);
+  patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}">${frameArt(k) ? `<i class="frimg" style="background-image:url('${frameArt(k)}')">${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>` : `<i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>`}<span>${l}</span></button>`; }).join('')) || none);
   // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
   const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k) && inG('title:' + k));
   patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +

@@ -1108,3 +1108,15 @@ input[type=range]{accent-color:#ff8a1f}
 .reduce #app.kipp-l #scr-game,.reduce #app.kipp-r #scr-game{animation:none}
 .seg[data-set]{flex-wrap:wrap}
 .seg[data-set] button{flex:1 1 30%}
+
+/* Rahmen mit Grafik: der Ring liegt über dem Porträt, das Loch nimmt 70 % der Grafik ein */
+.pf-bigw{position:relative;display:block;flex:0 0 auto}
+.pf-bigw::after,.mebar .ptbtn::after{content:'';position:absolute;background:var(--pfimg,none) center/contain no-repeat;pointer-events:none}
+.pf-bigw::after{inset:-19px}
+html.pf-art .pf-bigw{margin:0 8px}
+html.pf-art .pf-big{width:88px;height:88px;border:0;box-shadow:0 8px 18px -6px rgba(0,0,0,.6)}
+.mebar .ptbtn{position:relative}
+.mebar .ptbtn::after{inset:-8px}
+html.pf-art .mebar .pt{border:0}
+.pf-fr i.frimg{position:relative;width:32px;height:32px;margin:-6px -2px -6px -4px;background-color:transparent;background-position:center;background-size:contain;background-repeat:no-repeat;box-shadow:none;border-radius:0}
+.pf-fr i.frimg svg{position:absolute;inset:0;margin:auto}
