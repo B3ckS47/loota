@@ -763,6 +763,7 @@ input[type=range]{width:100%;accent-color:var(--red);height:30px}
 .es-pw.down{color:#8a2a1e}
 /* Welt 2: Kellergewölbe als Tischfläche */
 #app.tbl-keller{background:linear-gradient(rgba(10,6,4,.12),rgba(10,6,4,.12)), url(../art/hintergrund-keller.webp) center/cover no-repeat, #2a221c}
+#app.tbl-wald{background:linear-gradient(rgba(6,10,4,.14),rgba(6,10,4,.14)), url(../art/hintergrund-wald.webp) center/cover no-repeat, #1f2a17}
 /* Storykarte: Kopf jeder weiteren Welt zwischen den Karten */
 .st-band{margin:0 0 10px}
 .seg button.locked{opacity:.5;position:relative}
@@ -805,3 +806,8 @@ img.star{object-fit:contain}
 /* Rucksack-Knopf als Ablagefläche beim Ziehen */
 #mebar .packbtn.dz{outline-offset:2px}
 #mebar .packbtn.dzh{outline-offset:2px;transform:scale(1.15);background:#f3c873}
+
+/* Sporenwolke: Hinweis bei dir und auf den Gegnerkarten */
+.mebar .lv em.neg{font-style:normal;color:#ff9b8a}
+.oc .os .neg{color:#b3261e}
+.oc .os img.spi{border-radius:50%;object-fit:cover}

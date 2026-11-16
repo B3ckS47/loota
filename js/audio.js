@@ -131,6 +131,17 @@ const Snd = (() => {
   ];
   const K_CH = ['Dm', 'Gm', 'Dm', 'A', 'Dm', 'Bb', 'A', 'Dm'];
   const KB_CH = ['Dm', 'Bb', 'Gm', 'A'];
+  // Pilzwald: Flöte über gezupftem Bass, dazu Vögel und Grillen
+  CH.Em = [52, 55, 59]; CH.D = [50, 54, 57]; CH.B = [47, 51, 54];
+  const W = [
+    [[71,2],[74,1],[76,2],[74,1]], [[71,2],[69,1],[67,3]], [[69,2],[71,1],[74,2],[71,1]], [[69,3],[0,3]],
+    [[71,2],[74,1],[76,2],[79,1]], [[78,2],[76,1],[74,3]], [[76,2],[74,1],[71,2],[69,1]], [[67,4],[0,2]]
+  ];
+  const W_CH = ['Em', 'G', 'D', 'D', 'Em', 'D', 'C', 'G'];
+  const WB_CH = ['Em', 'C', 'D', 'B'];
+  function flute(m, t, dur, vol) { const f = mtof(m); tone(f, t, dur, 'sine', vol, {bus: musicBus, vib: 5, vibAmt: 3, a: 0.05, rev: 0.45}); tone(f * 2, t, dur * 0.8, 'triangle', vol * 0.12, {bus: musicBus, lp: 3000, rev: 0.4}); }
+  function bird(t) { const f = 2200 + Math.random() * 900; tone(f, t, 0.07, 'sine', 0.035, {bus: musicBus, to: f * 1.35, rev: 0.6}); tone(f * 1.1, t + 0.09, 0.06, 'sine', 0.03, {bus: musicBus, to: f * 1.5, rev: 0.6}); }
+  function cricket(t) { for (let i = 0; i < 3; i++) noise(t + i * 0.045, 0.02, 0.02, 'bandpass', 4800, null, {bus: musicBus, q: 6}); }
   function drip(t) { const f = 1500 + Math.random() * 1100; tone(f, t, 0.09, 'sine', 0.045, {bus: musicBus, to: f * 1.6, rev: 0.85}); }
 
   function pluck(m, t, dur, vol) {
@@ -156,6 +167,24 @@ const Snd = (() => {
       drum(t, 0.14);
       if (Math.random() < 0.6) drip(t + Math.random() * 6 * e);
       if (Math.random() < 0.25) drip(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'wald' && mood === 'tavern') {
+      const idx = bar % 8, ch = CH[W_CH[idx]];
+      let x = 0;
+      W[idx].forEach(([m, len]) => { if (m) flute(m, t + x * e, len * e * 0.95, 0.09); x += len; });
+      bassN(ch[0] - 12, t, 1.2 * e, 0.16); bassN(ch[0] - 5, t + 3 * e, 1.2 * e, 0.12);
+      [0, 1, 2, 1].forEach((k, i) => pluck(ch[k] + 12, t + (1 + i) * e, 0.9 * e, 0.035));
+      if (Math.random() < 0.35) bird(t + Math.random() * 6 * e);
+      if (Math.random() < 0.5) cricket(t + Math.random() * 6 * e);
+      return;
+    }
+    if (theme === 'wald') {
+      const ch = CH[WB_CH[bar % 4]];
+      for (let i = 0; i < 6; i++) bassN(ch[0] - 12, t + i * e, 0.8 * e, i % 3 === 0 ? 0.26 : 0.14);
+      drum(t, 0.42); drum(t + 3 * e, 0.3); rim(t + 2 * e, 0.06); rim(t + 5 * e, 0.06);
+      if (bar % 2 === 0) [0, 1, 2].forEach(i => pluck(ch[i] + 12, t + i * 0.03, 2 * e, 0.055));
+      else { flute(ch[2] + 12, t + 3 * e, e, 0.06); flute(ch[1] + 12, t + 4 * e, e, 0.06); flute(ch[0] + 12, t + 5 * e, e, 0.06); }
       return;
     }
     if (theme === 'keller') {
@@ -189,7 +218,7 @@ const Snd = (() => {
   }
   function tick() {
     if (!ctx || !playing) return;
-    const e = mood === 'tavern' ? (theme === 'keller' ? 0.26 : 0.19) : (theme === 'keller' ? 0.13 : 0.15);
+    const e = mood === 'tavern' ? ({keller: 0.26, wald: 0.21}[theme] || 0.19) : ({keller: 0.13, wald: 0.14}[theme] || 0.15);
     while (nextT < ctx.currentTime + 0.25) {
       if (pendingMood !== mood || pendingTheme !== theme) { mood = pendingMood; theme = pendingTheme; bar = 0; }
       scheduleBar(nextT, e);
@@ -212,7 +241,7 @@ const Snd = (() => {
     startMusic() { if (st.music) startMusic(); },
     stopMusic,
     mood(m) { pendingMood = m; },
-    theme(t) { pendingTheme = t === 'keller' ? 'keller' : 'taverne'; },
+    theme(t) { pendingTheme = ['keller', 'wald'].includes(t) ? t : 'taverne'; },
     suspend() { if (ctx && ctx.state === 'running') ctx.suspend(); },
     resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
     get ready() { return !!ctx; }

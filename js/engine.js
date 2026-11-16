@@ -10,7 +10,7 @@ const MONSTERS = [
   {n:'Kellerassel XXL',lvl:3,tr:1,vs:{race:'halbling',val:3},bad:{t:'hand',n:2},txt:'Hält Halblinge für Snacks: +3 gegen Halblinge.',badTxt:'Wirf 2 zufällige Handkarten ab.'},
   {n:'Rentner-Ritter',lvl:4,tr:2,x:2,bad:{t:'slot',s:'ruestung'},txt:'Erzählt von früher. Stundenlang.',badTxt:'Verliere deine Rüstung.'},
   {n:'Steuerprüfer-Gespenst',lvl:4,tr:2,undead:true,bad:{t:'lvl',n:1},txt:'Untot. Prüft rückwirkend zehn Jahre.',badTxt:'Verliere 1 Stufe.'},
-  {n:'Pilzkönig',lvl:5,tr:2,bad:{t:'best'},txt:'Hält Hof im Komposthaufen.',badTxt:'Verliere deinen besten Gegenstand.'},
+  {n:'Pilzkönig',lvl:5,tr:2,pilz:true,bad:{t:'best'},txt:'Pilz. Hält Hof im Komposthaufen.',badTxt:'Verliere deinen besten Gegenstand.'},
   {n:'Vampir-Kaninchen',lvl:6,tr:2,undead:true,run:-1,bad:{t:'lvl',n:2},txt:'Untot und erschreckend schnell: Weglaufen −1.',badTxt:'Verliere 2 Stufen.'},
   {n:'Durchgedrehter Saugroboter',lvl:6,tr:2,bad:{t:'multi',l:[{t:'slot',s:'schuhe'},{t:'hand',n:2}]},txt:'Hat deine Schnürsenkel gefressen.',badTxt:'Verliere dein Schuhwerk und 2 Handkarten.'},
   {n:'Riesen-Nacktschnecke',lvl:7,tr:2,run:1,bad:{t:'multi',l:[{t:'slot',s:'schuhe'},{t:'lvl',n:1}]},txt:'Sehr, sehr langsam: Weglaufen +1.',badTxt:'Verliere dein Schuhwerk und 1 Stufe.'},
@@ -64,6 +64,56 @@ const KELLER_GRUND = {'Wütender Gartenzwerg':1,'Schleimige Socke':2,'Kellerasse
   'Pechsträhne':2,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
 // Stückzahl einer Pool-Karte im Keller-Deck
 function kellerCount(p){ if(p.tpl.w===2) return p.wdef; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return KELLER_GRUND[p.tpl.n]||0; return p.def; }
+/* Welt 3 (Pilzwald): nur im Pilzwald-Deck. pilz = Monster-Merkmal, spore = Fluch bis zum nächsten Sieg */
+const MONSTERS_W3 = [
+  {n:'Wandernder Bovist',lvl:1,tr:1,x:2,pilz:true,bad:{t:'spore',n:1},txt:'Pilz. Platzt bei jeder Berührung.',badTxt:'Du bekommst eine Sporenwolke ab: −1 in jedem Kampf, bis du einen gewinnst.'},
+  {n:'Eichhörnchen-Inkasso',lvl:2,tr:1,bad:{t:'slot',s:'kopf'},txt:'Treibt alte Nussschulden ein.',badTxt:'Verliere deine Kopfbedeckung. Es baut ein Nest darin.'},
+  {n:'Pfifferling-Gang',lvl:3,tr:1,pilz:true,vs:{race:'halbling',val:2},bad:{t:'hand',n:1},txt:'Pilz. Zu fünft und sehr reizbar: +2 gegen Halblinge.',badTxt:'Wirf 1 zufällige Handkarte ab.'},
+  {n:'Hexenring',lvl:4,tr:2,pilz:true,run:-2,bad:{t:'lvl',n:1},txt:'Pilz. Wer hineintritt, muss tanzen: Weglaufen −2.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Moos-Troll',lvl:6,tr:2,vs:{race:'elf',val:3},bad:{t:'slot',s:'ruestung'},txt:'Hält Elfen für Unkraut: +3 gegen Elfen.',badTxt:'Verliere deine Rüstung.'},
+  {n:'Gestiefelter Fliegenpilz',lvl:8,tr:2,pilz:true,bad:{t:'multi',l:[{t:'lvl',n:1},{t:'spore',n:1}]},txt:'Pilz. Fesch, aber giftig.',badTxt:'Verliere 1 Stufe und bekomme eine Sporenwolke ab.'},
+  {n:'Bärlauch-Bär',lvl:9,tr:2,run:-2,bad:{t:'lvl',n:2},txt:'Riecht dich drei Täler weit: Weglaufen −2.',badTxt:'Verliere 2 Stufen.'},
+  {n:'Myzel-Koloss',lvl:12,tr:3,pilz:true,noHelp:true,np:3,bad:{t:'lvl',n:2},txt:'Pilz. Das Waldnetz hört alles mit: Niemand darf helfen. Verfolgt niemanden bis Stufe 3.',badTxt:'Verliere 2 Stufen.'},
+  {n:'Pilzkönigin Morchella',lvl:15,tr:4,up:2,pilz:true,np:4,bad:{t:'multi',l:[{t:'lvl',n:2},{t:'best'}]},txt:'Pilz. Ihr Mann, der Pilzkönig, trägt ihr die Schleppe. Bringt 2 Stufen. Verfolgt niemanden bis Stufe 4.',badTxt:'Verliere 2 Stufen und deinen besten Gegenstand.'}
+].map(m=>Object.assign({w:3},m));
+const CURSES_W3 = [
+  {n:'Sporenwolke',w:3,x:2,eff:{t:'spore',n:1},txt:'Bleibt, bis du einen Kampf gewinnst: So lange −1 in jedem Kampf.'},
+  {n:'Ameisen in der Hose',w:3,eff:{t:'slot',s:'ruestung'},txt:'Verliere deine Rüstung.'}
+];
+const ITEMS_W3 = [
+  {n:'Pilzmesser',w:3,slot:'hand',hands:1,b:1,g:300,pilzb:3},
+  {n:'Sammelkorb',w:3,slot:'hand',hands:1,b:1,g:200,korb:true,flv:'Für die Pilzpfanne reichen zwei verschiedene Speisepilze.'},
+  {n:'Fliegenpilzhut',w:3,slot:'kopf',b:2,g:400,flv:'Steht dir erstaunlich gut.'},
+  {n:'Moosmantel',w:3,slot:'ruestung',b:2,g:400,run:1,flv:'Im Wald sieht man dich kaum.'}
+];
+const SPEISE = ['Steinpilz','Pfifferling','Champignon'];
+const ONESHOTS_W3 = [
+  ...SPEISE.map(n=>({n,w:3,x:2,b:2,g:100,pOnly:true,speise:true,txt:'+2. Speisepilz: Steinpilz, Pfifferling und Champignon zusammen ergeben eine Pilzpfanne (+1 Stufe). Nur für die kämpfende Seite.'})),
+  {n:'Fußpilzsalbe',w:3,b:1,g:200,pOnly:true,vs:{tag:'pilz',val:6},txt:'Gegen Pilze +6, sonst +1. Nur für die kämpfende Seite.'}
+];
+const LEVELUPS_W3 = ['Aus dem Wald zurückgefunden'];
+// Was aus dem Grunddeck mit in den Wald darf (Name -> Stückzahl); Schätze kommen alle mit
+const WALD_GRUND = {'Wütender Gartenzwerg':1,'Schleimige Socke':1,'Schwarm Stechmücken':1,'Kellerassel XXL':1,'Rentner-Ritter':1,'Pilzkönig':1,'Vampir-Kaninchen':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,
+  'Pechsträhne':2,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
+function waldCount(p){ if(p.tpl.w===3) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return WALD_GRUND[p.tpl.n]||0; return p.def; }
+// Pilzpfanne: drei verschiedene Speisepilze (mit Sammelkorb zwei) gegen 1 Stufe, nie für die Siegstufe
+function pfanneSet(p){
+  const need=p.eq.some(i=>i.korb && usable(p,i)) ? 2 : 3, pick=[];
+  SPEISE.forEach(n=>{ const c=p.hand.find(x=>x.n===n); if(c && pick.length<need) pick.push(c); });
+  return pick.length>=need ? pick : null;
+}
+function canPfanne(p){
+  if(!pfanneSet(p)){ const korb=p.eq.some(i=>i.korb && usable(p,i)); return {ok:false, why:`Für die Pilzpfanne brauchst du ${korb?'zwei':'drei'} verschiedene Speisepilze: Steinpilz, Pfifferling, Champignon.`}; }
+  if(p.lvl>=WINLVL()-1) return {ok:false, why:`Stufe ${WINLVL()} gibt es nur für einen Monstersieg.`};
+  return {ok:true};
+}
+function doPfanne(p){
+  const set=pfanneSet(p); if(!set || p.lvl>=WINLVL()-1) return;
+  set.forEach(c=>{ take(p,c); discard(c); }); p.lvl++;
+  if(p.human) stat('pfanne');
+  log(`${nm(p)} ${V(p,'kochst','kocht')} eine Pilzpfanne aus ${set.map(c=>c.n).join(', ')} und ${V(p,'steigst','steigt')} auf Stufe ${p.lvl}.`,'good');
+  ruleOnce('pfanne','Pilzpfanne: Steinpilz, Pfifferling und Champignon zusammen ablegen bringt 1 Stufe, mit Sammelkorb reichen zwei verschiedene. Nie für die Siegstufe.');
+}
 // Einmal-Karten: Wert für die kämpfende Seite (gegen Nager/Untote teils mehr) und für das Monster
 const osP = (c, C) => !c.b ? 0 : (c.vs && C && C.mons.some(m => m.c[c.vs.tag])) ? c.vs.val : c.b;
 const osM = c => c.pOnly ? 0 : (c.b || 0);
@@ -212,7 +262,27 @@ const ART = {
   "Kronkorken-Krone":"art/gegenstand-kronkorken-krone.webp",
   "Mausefalle":"art/einmal-mausefalle.webp",
   "Knoblauchzopf":"art/einmal-knoblauchzopf.webp",
-  "Bier aus dem Keller geholt":"art/stufe-bier-aus-dem-keller-geholt.webp"
+  "Bier aus dem Keller geholt":"art/stufe-bier-aus-dem-keller-geholt.webp",
+  "Wandernder Bovist":"art/monster-wandernder-bovist.webp",
+  "Eichhörnchen-Inkasso":"art/monster-eichhoernchen-inkasso.webp",
+  "Pfifferling-Gang":"art/monster-pfifferling-gang.webp",
+  "Hexenring":"art/monster-hexenring.webp",
+  "Moos-Troll":"art/monster-moos-troll.webp",
+  "Gestiefelter Fliegenpilz":"art/monster-gestiefelter-fliegenpilz.webp",
+  "Bärlauch-Bär":"art/monster-baerlauch-baer.webp",
+  "Myzel-Koloss":"art/monster-myzel-koloss.webp",
+  "Pilzkönigin Morchella":"art/monster-pilzkoenigin-morchella.webp",
+  "Sporenwolke":"art/fluch-sporenwolke.webp",
+  "Ameisen in der Hose":"art/fluch-ameisen-in-der-hose.webp",
+  "Pilzmesser":"art/gegenstand-pilzmesser.webp",
+  "Sammelkorb":"art/gegenstand-sammelkorb.webp",
+  "Fliegenpilzhut":"art/gegenstand-fliegenpilzhut.webp",
+  "Moosmantel":"art/gegenstand-moosmantel.webp",
+  "Steinpilz":"art/einmal-steinpilz.webp",
+  "Pfifferling":"art/einmal-pfifferling.webp",
+  "Champignon":"art/einmal-champignon.webp",
+  "Fußpilzsalbe":"art/einmal-fusspilzsalbe.webp",
+  "Aus dem Wald zurückgefunden":"art/stufe-aus-dem-wald-zurueckgefunden.webp"
 };
 function artKey(c){ if(c.k==='item') return c.slot; return {monster:'monster',curse:'curse',race:'race',class:'cls',enh:'enh',wander:'wander',oneshot:'potion',levelup:'levelup',amulet:'none'}[c.k]; }
 
@@ -254,7 +324,11 @@ const STYLES = {
   // Welt 2: Kellerbewohner
   Rosi: {help:0, curse:1.8, intf:1, spite:true, noHelp:true, l:'verflucht jeden, der führt, und hilft nie'},
   Fridolin: {help:1.4, curse:0.5, intf:0.7, greedy:true, seek:0.5, l:'hilft nur für fast alle Schätze'},
-  Gustav: {help:0.8, curse:0.9, intf:1.7, l:'mischt sich ständig ein'}
+  Gustav: {help:0.8, curse:0.9, intf:1.7, l:'mischt sich ständig ein'},
+  // Welt 3: Waldbewohner
+  Flora: {help:1.5, cheap:true, curse:0.6, intf:1.4, envy:true, l:'hilft gern und billig, mischt sich aber gegen jeden ein, der vor ihr liegt'},
+  Trudi: {help:1, curse:0.8, intf:0.9, greedy:true, collect:true, cautious:true, seek:0.4, l:'sammelt Speisepilze für die Pilzpfanne und hilft nur gegen viele Schätze'},
+  Walter: {help:0, curse:1.6, intf:1, grudge:true, noHelp:true, noWhy:'Pssst! Ich helfe niemandem. Ruhe im Wald!', l:'verflucht den, der zuletzt aufgestiegen ist, und hilft nie'}
 };
 // Spielweisen für zufällige Gegner im freien Spiel
 const BOT_STYLES = [
@@ -327,6 +401,11 @@ function cardPool(){
   ITEMS_W2.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
   ONESHOTS_W2.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W2.forEach(n=>addW({k:'levelup',n,w:2,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  MONSTERS_W3.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
+  CURSES_W3.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
+  ITEMS_W3.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ONESHOTS_W3.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
+  LEVELUPS_W3.forEach(n=>addW({k:'levelup',n,w:3,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   return P;
 }
 // Stückzahlen pro Kartenname; null = Empfehlung. Wird von der Oberfläche vor einem neuen Spiel gesetzt.
@@ -463,7 +542,9 @@ function sideStrength(C){
   const f=P(C.f); let s=power(f);
   const parts=[{l:`${f.human?'Deine':f.name+'s'} Stufe`,v:f.lvl,keep:true},{l:`${f.human?'Deine':f.name+'s'} Gegenstände`,v:itemBonus(f)}];
   if(C.h!=null){ const h=P(C.h); s+=power(h); parts.push({l:`Helfer: ${h.human?'du':h.name} (Stufe ${h.lvl} + Gegenst.)`,v:power(h)}); }
-  if(C.mons.some(m=>m.c.undead)) [f, C.h!=null?P(C.h):null].forEach(q=>q && q.eq.forEach(i=>{ if(i.und && usable(q,i)){ const v=i.und-(i.b||0); s+=v; parts.push({l:`${i.n} gegen Untote`,v}); } }));
+  const sides=[f, C.h!=null?P(C.h):null];
+  [['und','undead','gegen Untote'],['pilzb','pilz','gegen Pilze']].forEach(([k,tag,l])=>{ if(C.mons.some(m=>m.c[tag])) sides.forEach(q=>q && q.eq.forEach(i=>{ if(i[k] && usable(q,i)){ const v=i[k]-(i.b||0); s+=v; parts.push({l:`${i.n} ${l}`,v}); } })); });
+  sides.forEach(q=>{ if(q && q.spore){ s-=q.spore; parts.push({l:`Sporenwolke (${q.human?'du':q.name})`,v:-q.spore}); } });
   C.pB.forEach(b=>{ s+=b.v; parts.push(b); });
   return {s, parts};
 }
@@ -566,7 +647,10 @@ async function gameLoop(t){
   while(S.winner==null && t===TOKEN){
     const p=P(S.cur);
     S.phase=0; S.combat=null;
+    const snap=S.players.map(q=>q.lvl);
     if(p.human) await humanTurn(p); else await botTurn(p);
+    // Wer zuletzt aufgestiegen ist (für Walter, den Waldschrat)
+    const up=S.players.filter((q,i)=>q.lvl>snap[i]); if(up.length) S.lastUp=(up.find(q=>q.id===p.id)||up[0]).id;
     if(S.winner!=null || t!==TOKEN) break;
     S.cur=(S.cur+1)%S.players.length;
     if(S.cur===0) S.turn++;
@@ -669,6 +753,8 @@ function hintStart(p){
   const sv=sellValue(p,[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)]);
   if(sv.sum>=1000 && p.lvl<WINLVL()-1) h.push(`Du hast nicht genutzte Gegenstände für ${fmt(sv.sum)} Gold. Verkaufen bringt dir eine Stufe.`);
   if(p.hand.some(c=>c.k==='levelup') && p.lvl<WINLVL()-1) h.push('Eine Stufenkarte direkt zu benutzen lohnt sich fast immer.');
+  if(canPfanne(p).ok) h.push('Du hast alles für eine Pilzpfanne. Tippe einen Speisepilz an und wähle „Pilzpfanne kochen“.');
+  if(p.spore) h.push(`Die Sporenwolke kostet dich −${p.spore} in jedem Kampf, bis du einen gewinnst.`);
   if(!h.length) h.push('Alles bereit. Deine Kampfstärke: '+power(p)+'.');
   return h;
 }
@@ -718,6 +804,7 @@ async function botManage(p){
   botSetup(p);
   if(p.race!==r0) log(`${p.name} spielt die Rasse ${p.race.n} aus.`);
   if(p.cls!==c0) log(`${p.name} spielt die Klasse ${p.cls.n} aus.`);
+  if(canPfanne(p).ok) doPfanne(p);
   for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.'); } }
   botSell(p);
   for(const cu of p.hand.filter(c=>c.k==='curse')){
@@ -744,19 +831,21 @@ function curseHits(t,c){
   if(e.t==='hand') return t.hand.length>0;
   if(e.t==='lvl') return t.lvl>1;
   if(e.t==='chill') return !t.chill;
+  if(e.t==='spore') return (t.spore||0)<2;
   return true;
 }
 function pickCurseTarget(p,c){
   const spare=Math.random()<LUCK();   // Glück: diesmal bleibst du verschont
   const others=S.players.filter(o=>o.id!==p.id && !o.dead && curseHits(o,c) && !(spare && o.human));
   if(!others.length) return null;
+  if(styleOf(p).grudge){ const g=others.find(o=>o.id===S.lastUp); if(g) return g; }
   const max=Math.max(...others.map(o=>o.lvl));
   if(max<p.lvl - (styleOf(p).spite?1:0)) return null;
   const top=others.filter(o=>o.lvl===max);
   return top[rnd(top.length)];
 }
 function botTroubleChoice(p){
-  const ms=p.hand.filter(c=>c.k==='monster' && power(p) > c.lvl + (c.vs && hasRace(p,c.vs.race)?c.vs.val:0) + 2);
+  const ms=p.hand.filter(c=>c.k==='monster' && power(p) - (p.spore||0) > c.lvl + (c.vs && hasRace(p,c.vs.race)?c.vs.val:0) + (styleOf(p).cautious?4:2));
   return ms.sort((a,b)=>b.lvl-a.lvl)[0]||null;
 }
 async function botTurn(p){
@@ -803,6 +892,7 @@ async function combat(fid, cards, preEnh){
   if(f.human) await humanFight(C); else await botFight(C);
   C.resolved=true;
   const r=evalCombat(C);
+  if(r.win) [f, C.h!=null?P(C.h):null].forEach(q=>{ if(q && q.spore){ q.spore=0; log(`Die Sporenwolke um ${nmA(q)} verzieht sich.`,'good'); } });
   if(SCN && SCN.fight){
     S.stats.fightWon=r.win;
     if(r.win){ fx('win',{p:f, mine:true}); log(`Du besiegst ${monNames(C)}! Rätsel gelöst.`,'good'); }
@@ -823,7 +913,7 @@ function combatPrompt(C){
     h.push(`Dir ${pl(need,'fehlt','fehlen')} ${need} ${pl(need,'Punkt','Punkte')}.`);
     if(os.length) h.push(`Einmal-Gegenstände auf deiner Hand: ${os.map(c=>`${c.n} (+${osP(c,C)})`).join(', ')}. Aufs Spielfeld ziehen oder antippen.`);
     const tiny=p.hand.find(c=>c.k==='enh' && c.v<0); if(tiny) h.push(`„${tiny.n}“ (${sign(tiny.v)}) darfst du auch auf dein eigenes Monster spielen.`);
-    if(C.h==null) h.push('Du kannst einen Mitspieler um Hilfe bitten und Schätze anbieten.');
+    if(C.h==null) h.push(noHelpMon(C) ? 'Hilfe gibt es hier nicht: Das Waldnetz hört mit, niemand darf dir helfen.' : 'Du kannst einen Mitspieler um Hilfe bitten und Schätze anbieten.');
     h.push('Reicht nichts davon: aufgeben und weglaufen.');
   } else {
     h.push('Wenn du „Fertig“ sagst, haben die anderen noch kurz Zeit einzugreifen.');
@@ -833,7 +923,7 @@ function combatPrompt(C){
   }
   const opts=[];
   opts.push(r.win ? {l:'Fertig: Monster besiegen',v:'done',kind:'primary'} : {l: SCN && SCN.fight ? 'Aufgeben' : 'Aufgeben und weglaufen',v:'run',kind:'danger'});
-  if(C.h==null && S.players.some(x=>!x.human && !x.dead && !C.asked[x.id])) opts.push({l:'Um Hilfe bitten',v:'help'});
+  if(C.h==null && !noHelpMon(C) && S.players.some(x=>!x.human && !x.dead && !C.asked[x.id])) opts.push({l:'Um Hilfe bitten',v:'help'});
   if(hasCls(p,'krieger') && C.berserk<3 && p.hand.length) opts.push({l:`Krieger: Karten abwerfen (+1 je Karte)`,v:'berserk'});
   if(hasCls(p,'priester') && C.mons.some(m=>m.c.undead) && C.turning<3 && p.hand.length) opts.push({l:'Priester: gegen Untote (+3 je Karte)',v:'turn'});
   return {title:`Kampf · ${r.a} gegen ${r.b}`, text: r.win ? 'Du gewinnst diesen Kampf gerade.' : (r.a===r.b ? 'Gleichstand. Das reicht nicht, du verlierst gerade.' : 'Du verlierst diesen Kampf gerade.'), hint:h, opts};
@@ -886,7 +976,8 @@ function botAcceptHelp(b,C,offer){
   if(!wouldWinWith(C,b)) return {yes:false, why:'Selbst mit mir reicht das nicht.'};
   if(SCN && SCN.perks && SCN.perks.freeHelp===b.name && f.human && (!S.stats.perkUsed || SCN.perks.always)){ S.stats.perkUsed=true; return {yes:true, why:SCN.perks.why||'Ehrensache!'}; }
   if(f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss)) return {yes:false, why:'Damit du gewinnst? Sicher nicht!'};
-  if(st.noHelp) return {yes:false, why:'Helfen? Ich? Pfoten weg von meinen Schätzen!'};
+  if(st.noHelp) return {yes:false, why:st.noWhy||'Helfen? Ich? Pfoten weg von meinen Schätzen!'};
+  if(st.cheap && Math.random()<(offer===0?0.55:0.95)*(f.lvl>b.lvl+2?0.6:1)) return {yes:true, why: offer>0 ? 'Oh ja, oh ja! Ich helfe!' : 'Umsonst? Na klar, ich mag dich!'};
   if(hasRace(b,'elf') && b.lvl<WINLVL()-1) return {yes:true, why:'Als Elf steige ich dabei selbst auf. Gern!'};
   if(st.greedy){ const all=Math.max(1,total);
     if(offer>=all) return {yes:true, why:'Alle Schätze? Prost, abgemacht!'};
@@ -962,7 +1053,9 @@ function botBoost(b,C){
   const need=r.b-r.a+(r.tieWin?0:1);
   const res=[];
   const sides=[b]; if(C.h!=null && !P(C.h).human) sides.push(P(C.h));
+  const decisive=b.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss);
   sides.forEach(q=>q.hand.forEach(c=>{
+    if(c.k==='oneshot' && c.speise && styleOf(q).collect && !decisive) return;
     if(c.k==='oneshot' && c.b){ const v=osP(c,C); res.push({v, use:()=>{ take(q,c); C.used.push(c); C.pB.push({l:`${c.n} (${q.name})`,v}); log(`${q.name} setzt ${c.n} ein (+${v}).`); }}); }
     if(c.k==='enh' && c.v<0) res.push({v:-c.v, use:()=>{ take(q,c); const m=strongestMon(C); m.enh.push(c); log(`${q.name} spielt „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`); }});
   }));
@@ -980,8 +1073,9 @@ function botBoost(b,C){
   if(nt){ C.turning+=nt; C.pB.push({l:`Priester gegen Untote (${b.name})`,v:3*nt}); log(`${b.name} wirft als Priester ${nt} ${pl(nt,'Karte','Karten')} ab: +${3*nt} gegen Untote.`); }
   return true;
 }
+const noHelpMon = C => C.mons.some(m=>m.c.noHelp);
 async function botSeekHelp(b,C){
-  if(C.h!=null) return;
+  if(C.h!=null || noHelpMon(C)) return;
   const sk=styleOf(b).seek; if(sk!=null && Math.random()>sk && !severe(strongestMon(C).c.bad)) return;
   const total=treasuresOf(C);
   const cands=S.players.filter(p=>p.id!==b.id && !p.dead && !C.asked[p.id] && wouldWinWith(C,p))
@@ -1014,7 +1108,7 @@ async function botsInterfere(C){
     const threat=f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss);
     if((C.intf[b.id]||0) >= (threat?2:1)) continue;
     const others=S.players.filter(x=>x.id!==f.id);
-    const leading=f.lvl>=Math.max(...others.map(x=>x.lvl));
+    const leading=styleOf(b).envy ? f.lvl>b.lvl : f.lvl>=Math.max(...others.map(x=>x.lvl));
     const mine=C.f===0 || C.h===0;
     const chance=(threat?1:Math.min(1,(leading?0.45:0.15)*diffF()*(styleOf(b).intf||1))) * (mine ? 1-LUCK()*0.7 : 1);
     if(Math.random()>chance) continue;
@@ -1156,6 +1250,10 @@ function applyBad(p,eff){
       break; }
     case 'class': { if(p.cls){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Klasse ${p.cls.n}.`,'bad'); discard(p.cls); p.cls=null; } else { if(p.human && p.lvl>1) stat('lvlLost'); p.lvl=Math.max(1,p.lvl-1); log(`Keine Klasse da: ${nm(p)} ${V(p,'verlierst','verliert')} stattdessen 1 Stufe.`,'bad'); } break; }
     case 'race': { if(p.race){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Rasse ${p.race.n} und ${V(p,'bist','ist')} wieder Mensch.`,'bad'); discard(p.race); p.race=null; } else log(`${nm(p)} ${V(p,'bist','ist')} sowieso Mensch. Nichts passiert.`); break; }
+    case 'spore': { p.spore=Math.min(3,(p.spore||0)+eff.n);
+      log(`${nm(p)} ${V(p,'hustest','hustet')} in einer Sporenwolke: −${p.spore} in jedem Kampf bis zum nächsten gewonnenen.`,'bad');
+      ruleOnce('spore','Sporenwolke: Sie bleibt, bis man einen Kampf gewinnt. So lange gibt es in jedem Kampf −1 je Wolke, auch als Helfer.');
+      break; }
     case 'death': kill(p); break;
     case 'multi': eff.l.forEach(e=>applyBad(p,e)); break;
   }
@@ -1214,6 +1312,7 @@ function cardActions(c, where){
         else A.push({info:'Rassen und Klassen spielst du im eigenen Zug aus.'}); break;
       }
       case 'oneshot': {
+        if(c.speise && !C){ const cp=canPfanne(p); A.push({l:'Pilzpfanne kochen: +1 Stufe', fn:()=>doPfanne(p), kind: cp.ok?'primary':'', dis: !free ? 'Die Pilzpfanne kochst du in deinem Zug außerhalb von Kämpfen.' : cp.ok ? false : cp.why}); }
         if(live && c.b){
           const vp=osP(c,C);
           if(inMine) A.push({l:`Für unsere Seite (+${vp})`, fn:()=>playOneShot(c,'p'), kind:'primary'});
@@ -1352,6 +1451,7 @@ function curseTargetAdv(p,c,charity){
 function curseLoss(f,c){
   const e=c.eff;
   if(e.t==='chill') return 2;
+  if(e.t==='spore') return 2;
   if(e.t==='slot' && e.s==='hand'){ const it=f.eq.filter(i=>i.slot==='hand' && usable(f,i)).sort((a,b)=>(b.b||0)-(a.b||0))[0]; return it ? (it.b||0) : 0; }
   if(e.t==='slot'){ const it=f.eq.find(i=>i.slot===e.s); return it && usable(f,it) ? (it.b||0) : 0; }
   if(e.t==='lvl') return Math.min(e.n, f.lvl-1);
@@ -1360,6 +1460,7 @@ function curseLoss(f,c){
   return 0;
 }
 function adviseFree(p,charity){
+  if(canPfanne(p).ok){ const c=pfanneSet(p)[0]; return {uid:c.uid, act:'Pilzpfanne kochen', text:'Koch eine Pilzpfanne.', why:'Deine Speisepilze zusammen bringen dir sofort 1 Stufe. Einzeln im Kampf wären sie je nur +2 wert.'}; }
   const r=bestRC(p,'race');
   if(r && !p.race) return {uid:r.uid, act:'Ausspielen', text:`Spiel die Rasse ${r.n} aus.`, why:`Ohne Rasse bist du Mensch ohne Fähigkeit. ${r.n}: ${r.txt}`};
   const k=bestRC(p,'class');
@@ -1401,6 +1502,7 @@ function adviseTrouble(p){
 function bestHelper(C){
   const f=P(C.f); if(f.lvl+levelsGained(C)>=WINLVL()) return null;
   const elf=x=>hasRace(x,'elf') && x.lvl<WINLVL()-1 ? 1 : 0;
+  if(noHelpMon(C)) return null;
   return S.players.filter(x=>!x.human && !x.dead && x.id!==C.f && !C.asked[x.id] && wouldWinWith(C,x))
     .sort((a,b)=>elf(b)-elf(a) || a.lvl-b.lvl || power(b)-power(a))[0] || null;
 }
@@ -1563,6 +1665,7 @@ function cardMeaning(c){
       let t = c.b ? `Gibt +${c.b} Kampfstärke, solange er ausgerüstet ist` : 'Gibt keinen Kampfbonus';
       if(c.run) t += `, dazu +${c.run} beim Weglaufen`;
       if(c.und) t += `, gegen Untote sogar +${c.und}`;
+      if(c.pilzb) t += `, gegen Pilze sogar +${c.pilzb}`;
       t += `. Belegt ${slot}.`;
       if(c.req) t += ` Wirkt nur für ${reqName(c)}.`;
       if(c.big) t += ' Großer Gegenstand: davon darf man nur einen haben, Zwerge beliebig viele.';
@@ -1570,7 +1673,7 @@ function cardMeaning(c){
     }
     case 'oneshot': if(c.pOnly) return `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, aber nur für die kämpfende Seite, nicht für das Monster. ${c.txt} Danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
       return c.escape ? 'Einmal einsetzbar: Beim Weglaufen entkommt man damit ohne Würfeln, auch bei mehreren Monstern vor allen auf einmal. Danach wird die Karte abgelegt.' : `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, für jede Seite, auch für das Monster. +${c.b}, danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
-    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}. Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
+    case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}${c.pilz?', Pilz':''}.${c.noHelp?' Niemand darf helfen.':''} Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
     case 'curse': return 'Fluch. Beim Aufstoßen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen.';
     case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
@@ -1606,6 +1709,7 @@ function itemTxt(c){
   if(c.run) t.push(`+${c.run} beim Weglaufen.`);
   if(c.big) t.push('Großer Gegenstand.');
   if(c.und) t.push(`Gegen Untote +${c.und} statt +${c.b}.`);
+  if(c.pilzb) t.push(`Gegen Pilze +${c.pilzb} statt +${c.b}.`);
   if(c.slot==='none') t.push('Belegt keinen Slot.');
   if(c.flv) t.push(c.flv);
   return t.join(' ');

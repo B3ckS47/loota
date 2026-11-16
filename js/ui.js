@@ -10,7 +10,8 @@ const ICON = {
   slot: {kopf: 'icons/icon-kopf.png', ruestung: 'icons/icon-ruestung.png', schuhe: 'icons/icon-schuhe.png', hand: 'icons/icon-haende.png',
     none: 'icons/icon-sonstiges.png', pack: 'icons/icon-rucksack.png', race: 'icons/icon-rasse.png', cls: 'icons/icon-klasse.png'},
   portrait: {Du: 'icons/portrait-du.png', Berta: 'icons/portrait-berta.png', Kalle: 'icons/portrait-kalle.png', Uschi: 'icons/portrait-uschi.png',
-    Rosi: 'icons/portrait-rosi.png', Fridolin: 'icons/portrait-fridolin.png', Gustav: 'icons/portrait-gustav.png', Hilde: 'icons/portrait-hilde.png'}
+    Rosi: 'icons/portrait-rosi.png', Fridolin: 'icons/portrait-fridolin.png', Gustav: 'icons/portrait-gustav.png', Hilde: 'icons/portrait-hilde.png',
+    Flora: 'icons/portrait-flora.png', Trudi: 'icons/portrait-trudi.png', Walter: 'icons/portrait-walter.png'}
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
 const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
@@ -106,8 +107,10 @@ function buzz(p) { if (SET.vibrate && navigator.vibrate) { try { navigator.vibra
 let GAME_ON = false;
 // Tischfläche und Musik der laufenden Partie: im Storymodus von der Welt, im freien Spiel aus den Optionen
 let GAME_TABLE = 'taverne', GAME_THEME = 'taverne';
-const moodOpen = () => !!STORY.worlds.w2;
-function freeMood() { GAME_TABLE = moodOpen() && SET.table === 'keller' ? 'keller' : 'taverne'; GAME_THEME = moodOpen() && SET.theme === 'keller' ? 'keller' : 'taverne'; }
+// Tischflächen und Musik der Welten werden mit dem Abschluss der Welt freigeschaltet
+const MOOD_WORLD = {keller: 'w2', wald: 'w3'};
+const moodOk = v => !MOOD_WORLD[v] || !!STORY.worlds[MOOD_WORLD[v]];
+function freeMood() { GAME_TABLE = moodOk(SET.table) ? SET.table : 'taverne'; GAME_THEME = moodOk(SET.theme) ? SET.theme : 'taverne'; }
 CHECKPOINT_HANDLER = () => { if (SCN) return; store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION}); };
 
 /* ================= Bildschirme ================= */
@@ -122,10 +125,12 @@ const DECK_MAX = 4;
 const DECKS = [
   {id: 'grund', name: 'Grunddeck', icon: 'Wütender Gartenzwerg', desc: 'Die Karten, mit denen alles begann.', base: p => p.def, unlocked: () => true},
   {id: 'keller', name: 'Keller-Deck', icon: 'Rattenkönig Rüdiger', desc: 'Staubmäuse, Spukgeister und der Rattenkönig: 18 Kellerkarten plus alles aus dem Grunddeck, was in einen Keller passt.',
-    base: kellerCount, unlocked: () => !!STORY.worlds.w2, lockTxt: 'Das Keller-Deck schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'}
+    base: kellerCount, unlocked: () => !!STORY.worlds.w2, lockTxt: 'Das Keller-Deck schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'},
+  {id: 'wald', name: 'Pilzwald-Deck', icon: 'Pilzkönigin Morchella', desc: 'Bovisten, Hexenringe und die Pilzkönigin: 20 Waldkarten plus alles aus dem Grunddeck, was in einen Wald passt.',
+    base: waldCount, unlocked: () => !!STORY.worlds.w3, lockTxt: 'Das Pilzwald-Deck schaltest du frei, wenn du im Storymodus Welt 3 abschließt.'}
 ];
 // Karten einer Welt tauchen in der Kartenliste erst auf, wenn ihr Deck freigeschaltet ist
-const cardOpen = c => !c.w || c.w !== 2 || DECKS[1].unlocked();
+const cardOpen = c => !c.w || deckById(c.w === 3 ? 'wald' : 'keller').unlocked();
 const VARIANTS = [
   ['standard', 'Standard', 'Die ausgewogene Mischung.', (p, b) => b],
   ['monsterjagd', 'Monsterjagd', 'Mehr Kämpfe, kaum Flüche.', (p, b) => !b ? 0 : p.tpl.k === 'monster' ? b + (p.tpl.lvl <= 12 ? 1 : 0) : p.tpl.k === 'curse' ? b - 1 : p.tpl.k === 'enh' ? b + 1 : b],
@@ -224,7 +229,7 @@ function setScreen(name) {
   updatePaused();
   Snd.mood(name === 'game' && S && S.combat ? 'combat' : 'tavern');
   Snd.theme(name === 'game' ? GAME_THEME : 'taverne');
-  $('#app').classList.toggle('tbl-keller', name === 'game' && GAME_TABLE === 'keller');
+  ['keller', 'wald'].forEach(t => $('#app').classList.toggle('tbl-' + t, name === 'game' && GAME_TABLE === t));
   if (name === 'title') renderTitle();
   if (name === 'setup') { renderFoes(); renderControls(); const sd = $('#setup-deck'); if (sd) { const st = deckStats(DECK.counts); sd.innerHTML = `${esc(deckLabel())} <small>${st.door + st.tr} Karten${st.ok ? '' : ' · nicht spielbereit'}</small>`; } }
   if (name === 'settings') { renderControls(); renderSaveInfo(); }
@@ -277,7 +282,7 @@ const Motes = (() => {
 /* ================= Steuerelemente (Setup und Optionen) ================= */
 const DIFF_TXT = {gemuetlich: 'Die Bots greifen selten ein und verfluchen wenig. Gut zum Kennenlernen.', normal: 'Die Bots spielen wie typische Mitspieler: Sie bremsen vor allem, wer vorne liegt.', gnadenlos: 'Die Bots greifen oft ein und verteilen Flüche großzügig. Hier schenkt dir niemand etwas.'};
 function renderControls() {
-  $$('.seg[data-set]').forEach(seg => { const k = seg.dataset.set; seg.querySelectorAll('button').forEach(b => { const lk = b.dataset.v === 'keller' && !moodOpen(); b.classList.toggle('locked', lk); b.setAttribute('aria-pressed', String(!lk && String(SET[k] === 'keller' && !moodOpen() ? 'taverne' : SET[k]) === b.dataset.v)); }); });
+  $$('.seg[data-set]').forEach(seg => { const k = seg.dataset.set; seg.querySelectorAll('button').forEach(b => { const lk = !moodOk(b.dataset.v); b.classList.toggle('locked', lk); b.setAttribute('aria-pressed', String(!lk && String(moodOk(SET[k]) ? SET[k] : 'taverne') === b.dataset.v)); }); });
   $$('[data-toggle]').forEach(sw => sw.setAttribute('aria-checked', String(!!SET[sw.dataset.toggle])));
   $$('[data-range]').forEach(r => { r.value = SET[r.dataset.range]; });
   $('#diff-hint').textContent = DIFF_TXT[SET.diff] || '';
@@ -436,7 +441,7 @@ function renderOpps() {
     return `<button type="button" class="oc${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
       (role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : '') +
       `<span class="pt"><img src="${portrait(p)}" alt=""><span class="lvb">${p.lvl}</span></span>` +
-      `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span>${many ? '' : `<span><img src="${ICON.hand}" alt="">${p.hand.length}</span>`}</span></span></button>`;
+      `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span>${many ? '' : `<span><img src="${ICON.hand}" alt="">${p.hand.length}</span>`}${p.spore ? `<span class="neg" title="Sporenwolke"><img class="spi" src="${ART['Sporenwolke']}" alt="">−${p.spore}</span>` : ''}</span></span></button>`;
   }).join('');
   patch($('#opps'), html);
   if (W.pulse.size) { W.pulse.forEach(id => { const el = $(`.oc[data-opp="${id}"]`); if (el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); } }); W.pulse.clear(); }
@@ -615,7 +620,7 @@ function renderMe() {
   const p = me();
   const C = S.combat, role = C ? (C.f === 0 ? ' · kämpft' : C.h === 0 ? ' · hilft' : '') : '';
   const over = p.hand.length > handLimit(p);
-  patch($('#mebar'), `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
+  patch($('#mebar'), `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}${p.spore ? `<em class="neg"> · Sporen −${p.spore}</em>` : ''}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
     `<span class="mstats"><button type="button" class="mstat" data-go="equip" aria-label="Kampfstärke ${power(p)}"><img src="${ICON.kampf}" alt="">${power(p)}</button>` +
     `<button type="button" class="mstat" data-go="equip" aria-label="Weglaufen ${sign(runBonus(p))}"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</button>` +
     `<button type="button" class="mstat${over ? ' warn' : ''}" data-go="equip" aria-label="Handkarten ${p.hand.length} von ${handLimit(p)}"><img src="${ICON.hand}" alt="">${p.hand.length}/${handLimit(p)}</button>` +
@@ -1057,6 +1062,8 @@ function curseImpact(c, t) {
     case 'hand': return t.hand.length ? `Hat ${t.hand.length} ${t.hand.length === 1 ? 'Handkarte' : 'Handkarten'}` : 'Hat keine Handkarten';
     case 'class': return t.cls ? `Verliert ${t.cls.n}` : t.lvl > 1 ? `Keine Klasse: Stufe ${t.lvl} → ${t.lvl - 1}` : 'Keine Klasse, schon Stufe 1';
     case 'race': return t.race ? `Verliert ${t.race.n}` : 'Ist schon Mensch';
+    case 'chill': return t.chill ? 'Friert schon' : 'Im nächsten Kampf −' + e.n;
+    case 'spore': return (t.spore || 0) >= 2 ? 'Steckt schon tief in Sporen' : `Im Kampf −${(t.spore || 0) + e.n}, bis zum nächsten Sieg`;
     default: return '';
   }
 }
@@ -1184,7 +1191,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-sheetback]'))) { popSheet(); return; }
   if ((el = t.closest('[data-back]'))) { back(); return; }
   if ((el = t.closest('[data-go]'))) { go(el.dataset.go); return; }
-  if ((el = t.closest('.seg[data-set] button.locked'))) { toast('Schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'); buzz(30); return; }
+  if ((el = t.closest('.seg[data-set] button.locked'))) { toast(`Schaltest du frei, wenn du im Storymodus Welt ${MOOD_WORLD[el.dataset.v] === 'w3' ? 3 : 2} abschließt.`); buzz(30); return; }
   if ((el = t.closest('.seg[data-set] button'))) { const k = el.parentElement.dataset.set; SET[k] = isNaN(+el.dataset.v) ? el.dataset.v : +el.dataset.v; saveSettings(); renderControls(); if (CUR === 'setup') renderFoes(); return; }
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
@@ -1225,6 +1232,7 @@ function powerTip(p){
   const n=[];
   if(hasCls(p,'krieger')) n.push('Gewinnt bei Gleichstand und darf im Kampf bis zu 3 Karten für je +1 abwerfen.');
   if(hasCls(p,'priester')) n.push('Gegen Untote je abgeworfener Karte +3 (höchstens 3 Karten).');
+  if(p.spore) n.push(`Sporenwolke: im Kampf −${p.spore}, bis ein Kampf gewonnen ist.`);
   n.push('Im Kampf kommen noch Einmal-Gegenstände, ein Helfer und Monsterboni dazu.');
   return `<b class="tip-h">Kampfstärke = Stufe + ausgerüstete Gegenstände</b>${tipRows(rows,power(p))}<span class="tip-n">${n.join(' ')}</span>`;
 }

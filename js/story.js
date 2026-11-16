@@ -14,19 +14,27 @@ const COSMETICS = {
     kellerkind: 'Kellerkind',
     geisterjaeger: 'Geisterjäger',
     fassfluesterer: 'Fassflüsterer',
-    rattenschreck: 'Rattenschreck'
+    rattenschreck: 'Rattenschreck',
+    pilzkenner: 'Pilzkenner',
+    wurzelfluesterer: 'Wurzelflüsterer',
+    schwammerlsucher: 'Schwammerlsucher',
+    myzelmeister: 'Myzelmeister'
   },
   frame: {
     kupferkessel: {n: 'Kupferkessel', c: '#c8773a'},
     moewenfeder: {n: 'Möwenfeder', c: '#e9eef2'},
     rattengrau: {n: 'Rattengrau', c: '#8b9096'},
     kerzenwachs: {n: 'Kerzenwachs', c: '#f1e2b8'},
-    goldkronkorken: {n: 'Goldener Kronkorken', c: '#e8b923'}
+    goldkronkorken: {n: 'Goldener Kronkorken', c: '#e8b923'},
+    moosgruen: {n: 'Moosgrün', c: '#6a9a3e'},
+    fliegenpilz: {n: 'Fliegenpilz', c: '#c8352b'},
+    leuchtpilz: {n: 'Leuchtpilz', c: '#7fe3d4'}
   },
   portrait: {
     gartenzwerg: {n: 'Gartenzwerg', src: 'icons/portrait-gartenzwerg.png'},
     rentner: {n: 'Rentner-Ritter', src: 'icons/portrait-rentner.png'},
-    rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'}
+    rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'},
+    flora: {n: 'Fee Flora', src: 'icons/portrait-flora.png'}
   }
 };
 function cosmeticName(id) {
@@ -175,13 +183,75 @@ const WORLDS = [{
       extras: [{t: 'Rüdiger selbst besiegen', ok: st => st.bossBy === 0}, {t: 'Ohne Hilfe gegen Rüdiger', ok: st => st.bossBy === 0 && !st.bossHelped}],
       reward: 'title:rattenschreck', final: true}
   ]
+}, {
+  id: 'w3', n: 3, name: 'Der Pilzwald', face: 'icons/portrait-hilde.png', deck: 'wald', table: 'wald', theme: 'wald', map: 'art/karte-welt3.webp', mapRatio: 768 / 1376,
+  fog: {show: 0.55, teaser: [[50, 20], [74, 40.9], [28, 60]], hint: 'Besiege Rattenkönig Rüdiger, dann führt ein Tunnel hinaus in den Wald.'},
+  intro: 'Hinter Rüdigers Thron führt ein Tunnel hinaus in den Pilzwald. Nachts leuchtet dort alles, und die Pilze tratschen über ihr Wurzelnetz. Hilde ist in Sorge: „Pilzkönigin Morchella will das Städtchen überwuchern, und meine Taverne soll ihr Sommerpalast werden! Ihr Mann, der Pilzkönig, hat da nichts zu melden.“ Berta drückt dir einen Korb in die Hand: „Bring was Leckeres mit!“',
+  outro: 'Morchella zieht beleidigt ihre Sporen zurück, und der Pilzkönig atmet hörbar auf. Hilde bekommt einen Korb voller Steinpilze, und die Taverne bleibt eine Taverne. Hinter dem Sporenpalast führt ein Pfad hinauf ins Gebirge. Von oben hört man Hämmern …',
+  unlocks: ['das Pilzwald-Deck', 'die Tischfläche „Waldboden“', 'die Waldmusik'],
+  starReward: {n: 18, id: 'frame:leuchtpilz'},
+  finalTitle: 'Morchella ist besiegt!',
+  stations: [
+    {id: 'w3s1', face: 'art/monster-hexenring.webp', ax: 50, ay: 11, no: '1', type: 'puzzle', name: 'Licht am Tunnelende', place: 'Tunnelausgang', req: ['w2s8'],
+      text: 'Am Ende des Tunnels blendet dich grünes Licht. Kaum trittst du hinaus, stehst du mitten in einem kleinen Hexenring. Die Pilze sind stinksauer, weil du einem von ihnen auf den Hut getreten bist.',
+      goal: 'Besiege den stinksauren Hexenring (Kampfstärke 9, ein Pilz). Du hast Stufe 3, eine Kellerlaterne und drei Karten auf der Hand.',
+      scn: {fight: {mons: ['Hexenring'], enh: ['Stinksauer']}, start: {lvl: 3, eq: ['Kellerlaterne'], hand: ['Fußpilzsalbe', 'Steinpilz', 'Trank der Tapferkeit'], deal: false}, bots: []},
+      extras: [{t: 'Mit nur einer Karte gewinnen', ok: st => st.played <= 1}, {t: 'Den Steinpilz behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Steinpilz')}],
+      reward: 'title:pilzkenner'},
+    {id: 'w3s2', luck: 0.15, face: 'icons/portrait-flora.png', ax: 74, ay: 22.5, no: '2', type: 'duel', name: 'Floras Lichtung', place: 'Lichtung', req: ['w3s1'],
+      text: 'Auf der Lichtung schwirrt Fee Flora herum, eine Nektartasse in der Hand und viel zu wach. „Oh, Besuch! Spielen wir? Bitte, bitte, bitte! Ich helf dir auch, ehrlich!“',
+      goal: '1 gegen 1 gegen Fee Flora, mit dem Pilzwald-Deck: Erreiche Stufe 5 vor ihr.',
+      scn: {target: 5, bots: ['Flora'], diff: 'gemuetlich'},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}],
+      reward: 'frame:moosgruen'},
+    {id: 'w3s3', face: 'icons/portrait-trudi.png', ax: 28, ay: 33, no: '3', type: 'event', name: 'Trudi wittert was', place: 'Trüffelgrund', req: ['w3s2'],
+      text: 'Etwas Rosafarbenes wühlt im Boden: Trüffelschwein Trudi, mit Pudelmütze und Korb. „Psst, ich hab heute schon dreimal was gefunden. Eins davon kannst du haben, wenn du mich nachher zum Hexenring begleitest.“',
+      goal: 'Nimm einen von Trudis Funden. Er wirkt sich auf die nächste Station aus.',
+      choices: [
+        {v: 'knife', l: 'Das Pilzmesser nehmen', d: 'Du startest Station 4 mit dem Pilzmesser (+1, gegen Pilze +3).'},
+        {v: 'basket', l: 'Den Sammelkorb mit zwei Pilzen nehmen', d: 'Du startest Station 4 mit Sammelkorb, Steinpilz und Pfifferling. Damit kannst du sofort eine Pilzpfanne kochen.'},
+        {v: 'coins', l: 'Die 30 Münzen nehmen', d: 'Du bekommst 30 Münzen.', coins: 30}
+      ]},
+    {id: 'w3s4', luck: 0.1, face: 'icons/portrait-flora.png', ax: 29, ay: 49, no: '4', type: 'duel', name: 'Kartenrunde im Hexenring', place: 'Hexenring', req: ['w3s3'],
+      text: 'Im großen Hexenring tanzen die Pilze, bis sich Flora und Trudi in die Mitte setzen. „Wer zuerst Stufe 6 hat, darf den Ring verlassen“, kichert Flora. Trudi schnüffelt schon an deinem Gepäck.',
+      goal: 'Gegen Flora und Trudi: Erreiche als Erster Stufe 6.',
+      scn: story => ({target: 6, bots: ['Flora', 'Trudi'], diff: 'gemuetlich',
+        start: story.choice.w3s3 === 'knife' ? {eq: ['Pilzmesser']} : story.choice.w3s3 === 'basket' ? {eq: ['Sammelkorb'], hand: ['Steinpilz', 'Pfifferling']} : undefined}),
+      extras: [{t: 'Einmal die Pilzpfanne kochen', ok: st => (st.pfanne || 0) >= 1}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
+    {id: 'w3s5', face: 'icons/portrait-walter.png', ax: 75, ay: 53, no: '5', type: 'puzzle', name: 'Walters Wurzelrätsel', place: 'Hohle Eiche', req: ['w3s4'],
+      text: 'In der hohlen Eiche wohnt Waldschrat Walter, 800 Jahre alt und schlecht gelaunt. „Ruhe! Du trampelst wie ein Troll.“ Dann pfeift er, und ein echter Moos-Troll stapft heran, stinksauer, weil Walter ihn geweckt hat. „Der mag keine Elfen“, brummt Walter und grinst.',
+      goal: 'Besiege den stinksauren Moos-Troll (Kampfstärke 14: Stufe 6, stinksauer +5, gegen Elfen +3). Du bist Elf auf Stufe 4 mit dem Moosmantel: Kampfstärke 6. Rassen und Klassen darfst du jederzeit ablegen.',
+      scn: {fight: {mons: ['Moos-Troll'], enh: ['Stinksauer']}, start: {lvl: 4, race: 'Elf', eq: ['Moosmantel'], hand: ['Fußpilzsalbe', 'Champignon', 'Trank der Tapferkeit', 'Winzig'], deal: false}, bots: []},
+      extras: [{t: 'Ohne die Fußpilzsalbe', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Fußpilzsalbe')}, {t: 'Den Champignon behalten', ok: (st, S) => S.players[0].hand.some(c => c.n === 'Champignon')}],
+      reward: 'title:wurzelfluesterer'},
+    {id: 'w3s6a', face: 'icons/portrait-walter.png', ax: 9, ay: 64, via: {w3s5: [[52, 57], [30, 59.5]]}, no: '6a', type: 'duel', name: 'Das Dickicht', place: 'Dickicht', hard: true, req: ['w3s5'],
+      text: 'Westlich der Eiche wird der Wald so dicht, dass kaum Licht durchkommt. Flora und Walter spielen hier ihre Lieblingsvariante, mit doppelt so vielen Flüchen. „Endlich Stille“, brummt Walter. Flora kichert schon wieder.',
+      goal: 'Gegen Flora und Walter, mit doppelt so vielen Flüchen im Deck: Erreiche Stufe 7. Hier gibt es doppelte Münzen.',
+      scn: {target: 7, bots: ['Flora', 'Walter'], variant: 'fluchchaos', diff: 'normal'}, coinMul: 2,
+      extras: [{t: 'In weniger als 15 Runden', ok: (st, S) => S.turn < 15}, {t: 'Nie aus einem Kampf weglaufen', ok: st => !st.ran}]},
+    {id: 'w3s6b', luck: 0.05, face: 'icons/portrait-trudi.png', ax: 52, ay: 68, no: '6b', type: 'duel', name: 'Am Bachlauf', place: 'Bachlauf', easy: true, req: ['w3s5'],
+      text: 'Am Bach plätschert es friedlich. Trudi hat sich auf die Moosbrücke gelegt und lässt die Füße ins Wasser baumeln. „Eine ruhige Runde? Aber wehe, du nimmst mir meine Pilze weg.“',
+      goal: 'Gegen Trudi: Erreiche Stufe 6.',
+      scn: {target: 6, bots: ['Trudi'], diff: 'gemuetlich'},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
+    {id: 'w3s7', ax: 25, ay: 79, no: '7', type: 'shop', name: 'Hütte der Kräuterhexe', place: 'Kräuterhütte', reqAny: ['w3s6a', 'w3s6b'],
+      text: 'Die Kräuterhexe hat ihre Hütte nicht weit von Morchellas Palast gebaut, „wegen der Kundschaft“. Zwischen Kräuterbündeln und Salbentöpfen gibt es allerlei zu kaufen.',
+      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Morchella.',
+      shop: [{id: 'title:schwammerlsucher', price: 30}, {id: 'frame:fliegenpilz', price: 40}, {id: 'portrait:flora', price: 60}], onward: 'Weiter zu Morchella'},
+    {id: 'w3s8', luck: 0.1, face: 'art/monster-pilzkoenigin-morchella.webp', ax: 73, ay: 88, no: '8', type: 'boss', name: 'Morchellas Sporenpalast', place: 'Sporenpalast', req: ['w3s7'],
+      text: 'Morchellas Sporenpalast leuchtet wie eine riesige Laterne. Die Königin thront in der Mitte, ihr Mann hält ihr die Schleppe. Flora, Trudi und Walter sitzen schon am Tisch. „Wer mich besiegt, darf gehen“, säuselt Morchella. „Alle anderen werden Kompost.“',
+      goal: 'Gegen Flora, Trudi und Walter. Morchella steckt in der unteren Hälfte des Türstapels: Stufe 14. Wer sie besiegt, gewinnt. Besiegt sie jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
+      scn: {target: 10, bots: ['Flora', 'Trudi', 'Walter'], boss: 'Pilzkönigin Morchella', bossLvl: 14, diff: 'normal'},
+      extras: [{t: 'Morchella selbst besiegen', ok: st => st.bossBy === 0}, {t: 'Ohne Hilfe gegen Morchella', ok: st => st.bossBy === 0 && !st.bossHelped}],
+      reward: 'title:myzelmeister', final: true}
+  ]
 }];
 
 // Welten, die noch kommen: auf der Karte im Nebel zu erahnen (map = späteres Musely-Bild)
 // map fehlt noch: dann zeigt der Nebel eine schlichte Fläche. teaser in Prozent des sichtbaren Ausschnitts
 const WORLDS_SOON = [
-  {id: 'w3', n: 3, name: 'Der Pilzwald', map: null, ratio: 768 / 1376, show: 0.45, teaser: [[50, 30], [28, 52], [66, 74]],
-    hint: 'Besiege Rattenkönig Rüdiger, dann führt ein Tunnel weiter.', soon: 'Folgt bald: Hinter Rüdigers Thron wartet der Pilzwald.'}
+  {id: 'w4', n: 4, name: 'Die Zwergenmine', map: null, ratio: 768 / 1376, show: 0.45, teaser: [[50, 30], [28, 52], [66, 74]],
+    hint: 'Besiege Pilzkönigin Morchella, dann führt ein Pfad hinauf ins Gebirge.', soon: 'Folgt bald: Oben im Gebirge hämmern die Zwerge.'}
 ];
 // Welten, die gerade offen sind: Welt 1 immer, jede weitere nach Abschluss der vorigen
 const openWorlds = () => WORLDS.filter((w, i) => i === 0 || STORY.worlds[WORLDS[i - 1].id]);
