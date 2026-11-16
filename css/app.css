@@ -1114,7 +1114,7 @@ input[type=range]{accent-color:#ff8a1f}
 .pf-bigw::after,.pfw::after{content:'';position:absolute;background:var(--pfimg,none) center/contain no-repeat;pointer-events:none}
 .pf-bigw::after{inset:-19px}
 .pfw{position:relative;display:block;flex:0 0 auto}
-.pfw::after{inset:-21.5%}
+.pfw::after{inset:-21.5%;background-image:var(--pfimgk,none)}
 html.pf-art .sh-head .pfw{margin:6px 12px 6px 8px}
 html.pf-art #sheet .sh-head .pt.me{width:62px;height:62px;border:0}
 html.pf-art .pf-bigw{margin:0 8px}

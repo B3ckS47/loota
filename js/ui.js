@@ -57,6 +57,8 @@ function cosmeticSource(id) {
   }
   for (const w of WORLDS) if (w.starReward && w.starReward.id === id) return `${cosmeticName(id)}: für ${w.starReward.n} Sterne in Welt ${w.n}.`;
   if (id === STREAK_FRAME) return `${cosmeticName(id)}: steckt in der Goldtruhe, die es alle 7 Tage Auftrags-Serie gibt.`;
+  if (CHEST_ITEMS.gold.includes(id)) return `${cosmeticName(id)}: selten, nur in der Goldtruhe (alle 7 Tage Auftrags-Serie).`;
+  if (CHEST_ITEMS.holz.includes(id)) return `${cosmeticName(id)}: nur aus Truhen, mit etwas Glück schon in der Holztruhe nach 3 Tagen Serie.`;
   const sh = shopItem(id); if (sh) return `${cosmeticName(id)}: im Krämerladen für ${sh.price} Münzen, wenn er im Angebot ist.`;
   return 'Schaltest du im Storymodus frei.';
 }
@@ -67,7 +69,7 @@ function cosmeticGroup(id) {
     if (w.starReward && w.starReward.id === id) return w.id;
     for (const st of w.stations) if (st.reward === id || (st.shop || []).some(x => x.id === id) || (st.choices || []).some(c => (c.rewards || []).includes(id) || c.reward === id)) return w.id;
   }
-  if (id === STREAK_FRAME) return 'truhe';
+  if (chestItem(id)) return 'truhe';
   if (shopItem(id)) return 'laden';
   return 'start';
 }
@@ -81,11 +83,11 @@ function myName() { return PROFILE.name || 'Du'; }
 // Rahmen mit eigener Grafik (Ring, der über dem Porträt liegt). Gezeigt nur, wo das Porträt groß ist:
 // oben im Charakter-Bildschirm und im eigenen Profil im Spiel. Überall sonst gilt der farbige Rand.
 const FRAME_ART = new Set(['bierdeckel', 'dublonengold', 'eichenholz', 'fliegenpilz', 'goldkronkorken', 'kerzenwachs', 'korallenrot', 'kupferkessel', 'leuchtpilz', 'meeresschaum', 'moewenfeder', 'rettungsring', 'strandtuch', 'wochenstammgast']);
-const frameArt = k => FRAME_ART.has(k) ? `icons/rahmen-${k}.webp` : '';
+const frameArt = (k, small) => FRAME_ART.has(k) ? `icons/rahmen-${k}${small ? '-k' : ''}.webp` : '';
 function myFrameKey() { return (ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0])[0]; }
 function applyProfile() {
-  const de = document.documentElement, art = frameArt(myFrameKey());
-  de.style.setProperty('--pf', myFrame()); de.style.setProperty('--pfimg', art ? `url("${new URL(art, document.baseURI).href}")` : 'none'); de.classList.toggle('pf-art', !!art);
+  const de = document.documentElement, k = myFrameKey(), art = frameArt(k), u = x => `url("${new URL(x, document.baseURI).href}")`;
+  de.style.setProperty('--pf', myFrame()); de.style.setProperty('--pfimg', art ? u(art) : 'none'); de.style.setProperty('--pfimgk', art ? u(frameArt(k, true)) : 'none'); de.classList.toggle('pf-art', !!art);
   if (S && CUR === 'game') { W.renderedOnce = true; render(); }
 }
 const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
@@ -99,11 +101,11 @@ function renderProfile() {
   const arrow = (d, dis) => `<button type="button" class="pf-arr" data-pfpage="${d}" aria-label="${d < 0 ? 'Vorherige' : 'Nächste'} Seite"${dis ? ' disabled' : ''}><svg viewBox="0 0 24 24"><path d="${d < 0 ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}"/></svg></button>`;
   patch($('#pf-filter'), arrow(-1, pi === 0) + `<div class="pf-pg"><b>${esc(gl)}</b><small>${esc(gs)} · ${got} von ${items.length}</small><span class="pf-dots">${G.map((g, i) => `<i class="${i === pi ? 'on' : ''}"></i>`).join('')}</span></div>` + arrow(1, pi === G.length - 1));
   patch($('#pf-portraits'), (ALL_PORTRAITS.filter(x => inG(x[3])).map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join('')) || none);
-  patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}">${frameArt(k) ? `<i class="frimg" style="background-image:url('${frameArt(k)}')">${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>` : `<i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>`}<span>${l}</span></button>`; }).join('')) || none);
+  patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}">${frameArt(k) ? `<i class="frimg" style="background-image:url('${frameArt(k, true)}')">${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>` : `<i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>`}<span>${l}</span></button>`; }).join('')) || none);
   // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
   const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k) && inG('title:' + k));
   patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +
-    `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} gibt es im Storymodus und im Krämerladen.</p>`);
+    `<p class="hint">${titles.length ? 'Weitere Titel' : 'Titel'} gibt es im Storymodus, im Krämerladen und in Truhen.</p>`);
 }
 // Wischen über Titel, Porträts und Rahmen blättert ebenfalls
 (() => { let x0 = null, y0 = 0;

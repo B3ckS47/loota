@@ -33,7 +33,12 @@ const COSMETICS = {
     kartenhai: 'Kartenhai',
     fruehaufsteher: 'Frühaufsteher',
     nachteule: 'Nachteule',
-    schatzsucher: 'Schatzsucher'
+    schatzsucher: 'Schatzsucher',
+    // Nur aus Truhen
+    truhenknacker: 'Truhenknacker',
+    gluecksritter: 'Glücksritter',
+    dauerbrenner: 'Dauerbrenner',
+    stammtischlegende: 'Stammtischlegende'
   },
   frame: {
     kupferkessel: {n: 'Kupferkessel', c: '#c8773a'},
@@ -599,6 +604,14 @@ const SHOP_POOL = [
 ];
 const SHOP_N = 4;
 const STREAK_FRAME = 'frame:wochenstammgast';
+// Nur aus Truhen: die Holztruhe zieht aus den einfachen, die Goldtruhe zuerst aus den seltenen.
+// Porträts und Rahmen kommen hier dazu, sobald ihre Bilder da sind (nur, was in COSMETICS steht, wird gezogen).
+const CHEST_ITEMS = {
+  holz: ['title:truhenknacker', 'title:gluecksritter', 'title:dauerbrenner'],
+  gold: ['title:stammtischlegende', 'portrait:minka', 'portrait:klappi', 'portrait:kurt', 'frame:truhenbeschlag', 'frame:schluesselbund', 'frame:edelsteine']
+};
+const cosmeticExists = id => { const [k, key] = id.split(':'); return !!(COSMETICS[k] && COSMETICS[k][key]); };
+const chestItem = id => id === STREAK_FRAME || CHEST_ITEMS.holz.includes(id) || CHEST_ITEMS.gold.includes(id);
 let DAILY_NOTIFY = null;   // (Text, Münzen) => Hinweis in der Oberfläche
 
 function dayKey(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
@@ -637,15 +650,17 @@ function streakNow() { const s = dailyState().streak; return s.last === dayKey()
 const CHESTS = {holz: {n: 'Holztruhe'}, gold: {n: 'Goldtruhe'}};
 function streakGoal(at) { const t = at === 3 ? 'holz' : 'gold'; return {chest: t, l: `zur ${CHESTS[t].n}`}; }
 const chestsWaiting = () => dailyState().chests || [];
-// Truhe öffnen: Holztruhe meist Münzen, manchmal ein Porträt, Rahmen oder Titel; Goldtruhe sicher etwas davon
-// (zuerst der Rahmen „Wochenstammgast“, den es nur hier gibt) und dazu Münzen. Schon Vorhandenes wird nie gezogen.
+// Truhe öffnen: Holztruhe meist Münzen, manchmal etwas Einfaches nur aus Truhen oder aus dem Krämerladen;
+// Goldtruhe sicher etwas (zuerst der Rahmen „Wochenstammgast“, dann Seltenes nur aus Truhen) und dazu Münzen.
+// Schon Vorhandenes wird nie gezogen.
 function openChest() {
   const d = dailyState(); if (!d.chests || !d.chests.length) return null;
   const c = d.chests.shift(), gold = c.t === 'gold', rnd = a => a[Math.floor(Math.random() * a.length)];
-  const pool = SHOP_POOL.map(x => x.id).filter(id => !owns(id));
+  const open = a => a.filter(id => cosmeticExists(id) && !owns(id));
+  const pool = open(SHOP_POOL.map(x => x.id)), common = open(CHEST_ITEMS.holz), rare = open(CHEST_ITEMS.gold);
   let id = null;
-  if (gold) id = !owns(STREAK_FRAME) ? STREAK_FRAME : pool.length ? rnd(pool) : null;
-  else if (pool.length && Math.random() < 0.35) id = rnd(pool);
+  if (gold) id = !owns(STREAK_FRAME) ? STREAK_FRAME : rare.length ? rnd(rare) : common.length ? rnd(common) : pool.length ? rnd(pool) : null;
+  else if (Math.random() < 0.35) id = common.length && (Math.random() < 0.6 || !pool.length) ? rnd(common) : pool.length ? rnd(pool) : null;
   const coins = gold ? (id ? 20 : 60 + 5 * Math.floor(Math.random() * 9)) : (id ? 0 : 15 + 5 * Math.floor(Math.random() * 5));
   if (id) grant(id);
   STORY.coins += coins; saveStory(); saveDaily();
