@@ -112,7 +112,7 @@ function storySave() { const d = load(K_STORYSAVE); return d && d.st && d.S && s
 function clearStorySave() { try { localStorage.removeItem(K_STORYSAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
-const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', table: 'taverne', theme: 'taverne', foes: 'zufall', test: false, mode: 'free'}, SAVED_SET || {});
+const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', foes: 'zufall', test: false, mode: 'free'}, SAVED_SET || {});
 // Lernhilfen sind ab Einstellungs-Version 2 standardmäßig aus, auch für bereits gespeicherte Einstellungen
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
@@ -133,10 +133,11 @@ let GAME_TABLE = 'taverne', GAME_THEME = 'taverne';
 // Tischflächen und Musik der Welten werden mit dem Abschluss der Welt freigeschaltet
 const MOOD_WORLD = {keller: 'w2', wald: 'w3', strand: 'w4', schiff: 'w5'};
 const moodOk = v => !MOOD_WORLD[v] || !!STORY.worlds[MOOD_WORLD[v]];
-function freeMood() { GAME_TABLE = moodOk(SET.table) ? SET.table : 'taverne'; GAME_THEME = moodOk(SET.theme) ? SET.theme : 'taverne'; }
+// Freies Spiel: Tischfläche und Musik kommen vom gewählten Deck (auch bei einem eigenen Deck, das ja auf einem Deck aufbaut)
+function freeMood(saved) { const d = deckById(DECK.deck), m = saved || (d.unlocked() ? d.mood : 'taverne'); GAME_TABLE = GAME_THEME = moodOk(m) ? m : 'taverne'; }
 CHECKPOINT_HANDLER = () => {
   if (SCN) { if (!SCN.fight && !SCN.tut && STORY_RUN) store(K_STORYSAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION, scn: SCN, st: STORY_RUN.st, table: GAME_TABLE, theme: GAME_THEME}); return; }
-  store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION});
+  store(K_SAVE, {S, seen: UI.seen, ts: Date.now(), bots: UI.bots, diff: UI.diff, v: APP_VERSION, mood: GAME_TABLE});
 };
 
 /* ================= Bildschirme ================= */
@@ -149,14 +150,14 @@ const DECK_MAX = 4;
 /* Decks und Varianten. Weitere Decks (z. B. je Welt aus dem Storymodus) bekommen eigene
    Grund-Stückzahlen (base), ein ikonisches Bild (icon) und eine Freischaltung (unlocked). */
 const DECKS = [
-  {id: 'grund', name: 'Grunddeck', icon: 'Wütender Gartenzwerg', desc: 'Die Karten, mit denen alles begann.', base: p => p.def, unlocked: () => true},
-  {id: 'keller', name: 'Keller-Deck', icon: 'Rattenkönig Rüdiger', desc: 'Staubmäuse, Spukgeister und der Rattenkönig: 18 Kellerkarten plus alles aus dem Grunddeck, was in einen Keller passt.',
+  {id: 'grund', name: 'Grunddeck', icon: 'Wütender Gartenzwerg', mood: 'taverne', desc: 'Die Karten, mit denen alles begann. Gespielt wird in der Taverne.', base: p => p.def, unlocked: () => true},
+  {id: 'keller', name: 'Keller-Deck', icon: 'Rattenkönig Rüdiger', desc: 'Staubmäuse, Spukgeister und der Rattenkönig: 18 Kellerkarten plus alles aus dem Grunddeck, was in einen Keller passt. Mit Kellergewölbe und Kellermusik.', mood: 'keller',
     base: kellerCount, unlocked: () => !!STORY.worlds.w2, lockTxt: 'Das Keller-Deck schaltest du frei, wenn du im Storymodus Welt 2 abschließt.'},
-  {id: 'wald', name: 'Pilzwald-Deck', icon: 'Pilzkönigin Morchella', desc: 'Bovisten, Hexenringe und die Pilzkönigin: 20 Waldkarten plus alles aus dem Grunddeck, was in einen Wald passt.',
+  {id: 'wald', name: 'Pilzwald-Deck', icon: 'Pilzkönigin Morchella', desc: 'Bovisten, Hexenringe und die Pilzkönigin: 20 Waldkarten plus alles aus dem Grunddeck, was in einen Wald passt. Mit Waldboden und Waldmusik.', mood: 'wald',
     base: waldCount, unlocked: () => !!STORY.worlds.w3, lockTxt: 'Das Pilzwald-Deck schaltest du frei, wenn du im Storymodus Welt 3 abschließt.'},
-  {id: 'strand', name: 'Strand-Deck', icon: 'Krabbenbaron Kneifer', desc: 'Quallen, Haie und der Krabbenbaron, dazu Ebbe und Flut: 19 Strandkarten plus alles aus dem Grunddeck, was an einen Strand passt.',
+  {id: 'strand', name: 'Strand-Deck', icon: 'Krabbenbaron Kneifer', desc: 'Quallen, Haie und der Krabbenbaron, dazu Ebbe und Flut: 19 Strandkarten plus alles aus dem Grunddeck, was an einen Strand passt. Mit Sandstrand und Strandmusik.', mood: 'strand',
     base: strandCount, unlocked: () => !!STORY.worlds.w4, lockTxt: 'Das Strand-Deck schaltest du frei, wenn du im Storymodus Welt 4 abschließt.'},
-  {id: 'meer', name: 'Meeres-Deck', icon: 'Käpt’n Achtarm', desc: 'Wale, Kraken, Piraten und Seegang, dazu die Schatzkarte: 30 Meereskarten plus alles aus dem Grunddeck, was aufs Meer passt.',
+  {id: 'meer', name: 'Meeres-Deck', icon: 'Käpt’n Achtarm', desc: 'Wale, Kraken, Piraten und Seegang, dazu die Schatzkarte: 31 Meereskarten plus alles aus dem Grunddeck, was aufs Meer passt. Mit Schiffsdeck und Piratenmusik.', mood: 'schiff',
     base: meerCount, unlocked: () => !!STORY.worlds.w5, lockTxt: 'Das Meeres-Deck schaltest du frei, wenn du im Storymodus Welt 5 abschließt.'}
 ];
 // Karten einer Welt tauchen in der Kartenliste erst auf, wenn ihr Deck freigeschaltet ist
@@ -416,7 +417,7 @@ async function startNewGame() {
 function continueGame() {
   if (GAME_ON && S && S.winner == null) { setScreen('game'); return; }
   const d = load(K_SAVE); if (!d) return;
-  SCN = null; STORY_RUN = null; freeMood(); applySettings();
+  SCN = null; STORY_RUN = null; freeMood(d.mood); applySettings();
   UI.bots = d.bots || UI.bots; UI.diff = d.diff || UI.diff;
   W.reset(); GAME_ON = true;
   STACK.length = 0; STACK.push('title');

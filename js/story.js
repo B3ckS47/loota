@@ -170,7 +170,7 @@ const WORLDS = [{
   intro: 'Das Bier ist alle, und aus dem Keller kommen seltsame Geräusche. Hilde drückt dir eine Laterne in die Hand: „Unten hat sich Rattenkönig Rüdiger zum Herrscher ausgerufen. Seitdem spielen alle da unten nach seinen Regeln. Hol mir mein Bier zurück!“ Am Stammtisch wetten Berta, Kalle und Uschi schon, ob du überhaupt wiederkommst.',
   outro: 'Rüdiger rückt seinen Kronkorken gerade und gibt sich geschlagen. Hilde bekommt ihr Bier, der Stammtisch zahlt die Wettschulden. Hinter dem Thron entdeckst du einen schmalen Tunnel. Es riecht nach Moos und Pilzen …',
   rules: [['Kellerkälte', 'Ein Fluch: Im nächsten Kampf hast du −2. Danach ist die Kälte vorbei.'], ['Nager', 'Viele Kellermonster sind Nager. Die Mausefalle bringt gegen sie +6 statt +2.'], ['Untote', 'Gegen den Korkgeist und andere Untote helfen Knoblauchzopf (+5), Fassdeckel-Schild (+4) und Priester (+3 je abgeworfene Karte).'], ['Rattenkönig Rüdiger', 'Der Boss steckt nur in der letzten Station im Türstapel. Wer ihn besiegt, gewinnt sofort.']],
-  unlocks: ['das Keller-Deck', 'die Tischfläche „Kellergewölbe“', 'die Kellermusik'],
+  unlocks: ['das Keller-Deck mit Tischfläche „Kellergewölbe“ und Kellermusik'],
   starReward: {n: 18, id: 'frame:goldkronkorken'},
   finalTitle: 'Rüdiger ist besiegt!',
   stations: [
@@ -234,7 +234,7 @@ const WORLDS = [{
   intro: 'Hinter Rüdigers Thron führt ein Tunnel hinaus in den Pilzwald. Nachts leuchtet dort alles, und die Pilze tratschen über ihr Wurzelnetz. Hilde ist in Sorge: „Pilzkönigin Morchella will das Städtchen überwuchern, und meine Taverne soll ihr Sommerpalast werden! Ihr Mann, der Pilzkönig, hat da nichts zu melden.“ Berta drückt dir einen Korb in die Hand: „Bring was Leckeres mit!“',
   outro: 'Morchella zieht beleidigt ihre Sporen zurück, und der Pilzkönig atmet hörbar auf. Hilde bekommt einen Korb voller Steinpilze, und die Taverne bleibt eine Taverne. Hinter dem Sporenpalast plätschert ein Bach talabwärts. Es riecht nach Salz, und irgendwo kreischen Möwen …',
   rules: [['Pilze', 'Viele Waldmonster sind Pilze. Das Pilzmesser bringt gegen sie +3, die Fußpilzsalbe +6.'], ['Sporenwolke', 'Bleibt, bis du einen Kampf gewinnst. So lange hast du −1 in jedem Kampf, auch als Helfer. Mehrere Wolken zählen zusammen.'], ['Pilzpfanne', 'Steinpilz, Pfifferling und Champignon zusammen ablegen bringt 1 Stufe, mit dem Sammelkorb reichen zwei verschiedene. Nie für die Siegstufe.'], ['Myzel-Koloss', 'Das Waldnetz hört mit: Gegen ihn darf niemand helfen.']],
-  unlocks: ['das Pilzwald-Deck', 'die Tischfläche „Waldboden“', 'die Waldmusik'],
+  unlocks: ['das Pilzwald-Deck mit Tischfläche „Waldboden“ und Waldmusik'],
   starReward: {n: 18, id: 'frame:leuchtpilz'},
   finalTitle: 'Morchella ist besiegt!',
   stations: [
@@ -298,7 +298,7 @@ const WORLDS = [{
   outro: 'Kneifer klappert mit den Scheren und gibt die Strandkörbe frei. Der Stammtisch liegt endlich in der Sonne. Doch als die Flut kommt, springt Kneifer auf ein Piratenschiff, und Uschi ist weg. Am Strand liegt nur noch ihr Wettbuch. Von draußen ruft jemand: „Lösegeld, oder sie spielt bei uns mit!“',
   rules: [['Ebbe und Flut', 'Sie wechseln mit jeder Runde, Runde 1 ist Ebbe. Den Stand siehst du am Wasser auf dem Tisch und am Symbol neben der Rundenzahl.'], ['Bei Flut', 'Monster mit dem Merkmal Meer haben +3, der Sandburg-Koloss weicht auf (−3). Weglaufen klappt mit +1, mit Schwimmflügeln mit +3.'], ['Bei Ebbe', 'Das Watt liegt frei: „Raum durchsuchen“ bringt einen Schatz statt einer Türkarte.'], ['Sonnenbrand', 'Bleibt, bis du einen Kampf gewinnst: −1 in jedem Kampf, und niemand hilft dir. Sonnencreme beseitigt ihn sofort, ein Sonnenschirm schützt davor.'], ['Sand in der Badehose', 'Weglaufen −2, bis du eine Stufe aufsteigst.']],
   sell: {boss: 'Krabbenbaron Kneifer', rule: 'Ebbe und Flut: eine neue Spielregel, die den ganzen Tisch verändert', cards: 19, loot: '4 Titel, 3 Rahmen und ein Porträt'},
-  unlocks: ['das Strand-Deck', 'die Tischfläche „Sandstrand“', 'die Strandmusik'],
+  unlocks: ['das Strand-Deck mit Tischfläche „Sandstrand“ und Strandmusik'],
   starReward: {n: 18, id: 'frame:meeresschaum'},
   finalTitle: 'Kneifer ist besiegt!',
   stations: [
@@ -361,8 +361,8 @@ const WORLDS = [{
   intro: 'Ohne Uschi ist der Stammtisch nur halb so laut. Hilde kramt eine alte Seekarte aus dem Keller, Sunny leiht euch sein Surfbrett, und Wal Walburga bietet an, euch zu ziehen. Irgendwo da draußen segelt Käpt’n Achtarm, ein Krake mit acht Säbeln und einem Holzbein, das er nicht braucht. Kneifer ist jetzt sein Bootsmann. „Uschi spielt Karten mit denen“, sagt Berta. „Die armen Piraten.“',
   outro: 'Achtarm streicht die Flagge mit allen acht Armen. Uschi steht an Deck, einen Sack voller Dublonen über der Schulter. „Ich hab sie alle beim Kartenspielen ausgenommen. Warum hat das so lange gedauert?“ Walburga zieht das Schiff nach Hause. Am Abend sitzt der Stammtisch wieder bei Hilde, und an der Wand hängt jetzt eine Piratenflagge.',
   rules: [['Seegang', 'Eine Ereigniskarte im Türstapel. Wird sie aufgedeckt, geben alle 1 zufällige Handkarte an den Nachbarn weiter: in ungerader Runde nach links, in gerader nach rechts. Verdeckt gezogen darfst du sie jederzeit von der Hand auslösen, auch mitten im Kampf.'], ['Schatzkarte', 'Im Schatzstapel liegen eine linke und eine rechte Hälfte. Hast du beide, gräbst du in deinem Zug den Schatz aus und ziehst 3 Schätze.'], ['Piraten', 'Augenklappe, Enterhaken und Kanonenkugel sind gegen Piraten stärker. Wer einen Piraten besiegt, findet manchmal eine Schatzkarten-Hälfte.'], ['Klasse Pirat', 'Nur im Meeres-Deck. Plündern: Wer als Pirat ohne Helfer gewinnt, zieht 1 Schatz mehr. Seefest: Bei Seegang gibt der Pirat keine Karte ab, bekommt aber trotzdem eine.'], ['Tiefsee', 'Tiefseemonster leben im Dunkeln: Weglaufen −1. Mit dem Taucherhelm gilt der Malus nicht, und es gibt +3 im Kampf.'], ['Käpt’n Achtarm', 'Der Boss steckt nur in der letzten Station im Türstapel. Wer ihn besiegt, gewinnt sofort.']],
-  sell: {boss: 'Käpt’n Achtarm', rule: 'Seegang und Schatzkarte: Karten wandern übers Deck, und ein Schatz will ausgegraben werden', cards: 30, loot: '4 Titel, 3 Rahmen und ein Porträt'},
-  unlocks: ['das Meeres-Deck', 'die Tischfläche „Schiffsdeck“', 'die Piratenmusik'],
+  sell: {boss: 'Käpt’n Achtarm', rule: 'Seegang und Schatzkarte: Karten wandern übers Deck, und ein Schatz will ausgegraben werden', cards: 31, loot: '4 Titel, 3 Rahmen und ein Porträt'},
+  unlocks: ['das Meeres-Deck mit Tischfläche „Schiffsdeck“ und Piratenmusik'],
   starReward: {n: 18, id: 'frame:korallenrot'},
   finalTitle: 'Uschi ist frei!',
   stations: [
