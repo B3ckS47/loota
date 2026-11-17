@@ -1231,3 +1231,12 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 /* Rückfall ohne Zeichenfläche (z. B. direkt als Datei geöffnet): Brett als CSS-9-Slice */
 .notes.b9{border:solid transparent;border-width:17px;border-image:url(../art/brett-auftraege.webp) 54 fill / 17px stretch;padding:20px 4px;background:none}
 .sitems.b9{border:solid transparent;border-width:24px;border-image:url(../art/ladenregal.webp) 95 fill / 24px stretch;padding:4px 0 2px;background:none}
+
+/* Serie: Münzen-Stufen auf der Leiste (ab Woche 2) */
+.sk-dot.sk-coin,.streakbox .sk-dot.sk-coin,.t-daily .sk-dot.sk-coin{width:22px;height:22px;border:0;background:none;box-shadow:none;display:grid;place-items:center}
+.sk-dot.sk-coin img{width:22px;height:22px;filter:grayscale(.8) brightness(.8);opacity:.85}
+.sk-dot.sk-coin.f img{filter:none;opacity:1;filter:drop-shadow(0 0 4px rgba(255,190,60,.8))}
+.sk-dot.sk-coin.t img{filter:none;opacity:1;animation:sk-coinpulse 1.6s ease-in-out infinite}
+@keyframes sk-coinpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.sk-dot.sk-coin em{top:calc(100% + 4px)}
+.sk-dot.sk-coin.f em{color:#ffb547}

@@ -697,10 +697,15 @@ function bumpStreak() {
   s.best = Math.max(s.best || 0, s.n);   // Rekord fürs Profil
   streakChest(s);
 }
-// Serienziel erreicht: Truhe dazulegen (3. Tag Holz, alle 7 Tage Gold)
+// Ab der zweiten Woche Münzen zwischendurch: am 3. und 6. Tag jeder Woche (Tag 10, 13, 17, 20 …)
+const STREAK_COINS = {3: 10, 6: 15};
+const streakCoins = n => n > 7 ? STREAK_COINS[n % 7] || 0 : 0;
+// Serienziel erreicht: Truhe dazulegen (3. Tag Holz, alle 7 Tage Gold) bzw. Münzen gutschreiben
 function streakChest(s) {
   const t = s.n === 3 ? 'holz' : s.n % 7 === 0 ? 'gold' : null;
   if (t) { const d = dailyState(); (d.chests = d.chests || []).push({t, n: s.n}); DAILY_NOTIFY && DAILY_NOTIFY(`Serie: ${s.n} Tage! Eine ${CHESTS[t].n} wartet auf dich.`, 0); }
+  const c = streakCoins(s.n);
+  if (c) { STORY.coins += c; saveStory(); DAILY_NOTIFY && DAILY_NOTIFY(`Serie: ${s.n} Tage! Hilde legt dir Münzen hin.`, c); }
 }
 // Testphase: Serie um einen Tag verlängern bzw. auf 0 setzen
 function cheatStreak() { const s = dailyState().streak; s.n = streakNow() + 1; s.last = dayKey(); s.best = Math.max(s.best || 0, s.n); streakChest(s); saveDaily(); return s.n; }

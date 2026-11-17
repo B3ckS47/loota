@@ -1216,13 +1216,16 @@ function streakTrack(sk) {
   const today = sk > 0 && streakToday(), days = n => `${n} ${n === 1 ? 'Tag' : 'Tage'}`;
   const hit = today && (sk === 3 || (sk >= 7 && sk % 7 === 0));   // heute ein Ziel erreicht: Leiste bleibt bis morgen voll
   const nx = streakNext(hit ? sk - 1 : sk), len = nx.at - nx.from, fill = sk - nx.from, f = n => (n / len).toFixed(4);
-  const dots = Array.from({length: len - 1}, (_, k) => { const i = k + 1, cl = i <= fill ? 'f' : i === fill + 1 && !today ? 't' : '';
-    return `<span class="sk-dot ${cl}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s"><em>${nx.from + i}</em></span>`; }).join('');
+  const dots = Array.from({length: len - 1}, (_, k) => { const i = k + 1, cl = i <= fill ? 'f' : i === fill + 1 && !today ? 't' : '', c = streakCoins(nx.from + i);
+    return `<span class="sk-dot ${cl}${c ? ' sk-coin' : ''}" style="--f:${f(i)};--d:${(0.15 + i / len * 0.7).toFixed(2)}s">${c ? coinImg : ''}<em>${c ? `+${c}` : nx.from + i}</em></span>`; }).join('');
+  // nächste Münzen-Stufe vor der Truhe (ab Woche 2)
+  let nc = 0; for (let d = sk + 1; d < nx.at; d++) if (streakCoins(d)) { nc = d; break; }
   // am Ende eine Truhe: wartet eine aufs Öffnen, wackelt sie; heute erreicht und schon offen: offene Truhe, grün umrandet
   const wait = chestsWaiting()[0];
   const goal = wait ? `<span class="sk-goal ready" style="--f:1" data-chest><img src="icons/truhe-${wait.t}-zu.png" alt="${CHESTS[wait.t].n}"><em>Öffnen!</em></span>`
     : `<span class="sk-goal${hit ? ' ok' : fill + 1 === len && !today ? ' t' : ''}" style="--f:1"><img src="icons/truhe-${nx.chest}-${hit ? 'auf' : 'zu'}.png" alt=""><em>Tag ${nx.at}</em></span>`;
-  const lbl = wait ? `Deine ${CHESTS[wait.t].n} ist bereit. Tippe sie an!` : hit ? `Ziel erreicht! Nächste Truhe am ${streakNext(sk).at}. Tag.` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
+  const lbl = wait ? `Deine ${CHESTS[wait.t].n} ist bereit. Tippe sie an!` : hit ? `Ziel erreicht! Nächste Truhe am ${streakNext(sk).at}. Tag.`
+    : nc ? `Noch ${days(nc - sk)} bis ${streakCoins(nc)} Münzen, ${days(nx.at - sk)} bis ${esc(nx.l)}` : `Noch ${days(nx.at - sk)} bis ${esc(nx.l)}`;
   const track = `<div class="sk-track" style="--f:${f(fill)}"><span class="sk-rail"><i></i></span>${dots}${goal}</div>`;
   return {today, track, html: `${track}<span class="sk-l">${lbl}</span>`};
 }
@@ -1232,7 +1235,7 @@ function streakBox(sk) {
     : tr.today ? 'Heute geschafft! Morgen geht es weiter.' : 'Heute noch offen. Sonst erlischt die Kerze um Mitternacht.';
   return `<div class="streakbox${sk ? ' lit' : ''}"><div class="sk-head">${candleHtml(sk > 0)}<div class="sk-main">` +
     `<b>${sk ? `<span class="sk-n">${sk}</span> ${sk === 1 ? 'Tag' : 'Tage'} in Folge` : 'Noch keine Serie'}</b><span class="sk-txt">${txt}</span></div></div>${tr.html}${chestsWaiting().length ? `<button type="button" class="btn primary small sk-open" data-chest>${CHESTS[chestsWaiting()[0].t].n} öffnen</button>` : ''}` +
-    `<span class="sk-info">In der Holztruhe stecken Münzen oder mit Glück ein Porträt, Rahmen oder Titel. In der Goldtruhe ist sicher eins davon.</span></div>`;
+    `<span class="sk-info">In der Holztruhe stecken Münzen oder mit Glück ein Porträt, Rahmen oder Titel. In der Goldtruhe ist sicher eins davon. Ab der zweiten Woche gibt es zwischendurch Münzen.</span></div>`;
 }
 // Truhe öffnen: wackelt immer stärker, heller Blitz (darin wechselt das Bild auf offen), Strahlen, Münzregen, Beute steigt auf
 function showChest() {
