@@ -1011,6 +1011,8 @@ function fitNames(root) {
     while (el.scrollWidth > el.clientWidth + 1 && f > min) { f -= 1; el.style.fontSize = f + 'px'; }
   }));
 }
+// Hintergrund als Ware: kleines Gemälde auf der Staffelei (Leinwand ist in der Grafik ausgeschnitten)
+const easel = (key, c, cls = '') => `<span class="easel${cls}"><i style="background-image:url('art/kulisse-${key}-k.webp');background-position:${(c && c.p) || '50% 50%'}"></i></span>`;
 function heroHead(p) {
   const title = p.human ? myTitle() : '';
   return `<div class="sh-hero${bgAttr(bgOf(p))}"><span class="hh-pt">${bigPortrait(p)}<b class="hh-lvl" aria-label="Stufe ${p.lvl}">${p.lvl}</b></span>` +
@@ -1415,7 +1417,7 @@ SHEET_VIEWS.online = () => ({head: h3('Online spielen'),
 function cosPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
   if (k === 'portrait') return `<img class="sp-pt" src="${c.src}" alt="">`;
-  if (k === 'bg') return `<span class="sp-bg" style="background-image:url('${new URL(`art/kulisse-${key}-k.webp`, document.baseURI).href}');background-position:${c.p || '50% 50%'}"></span>`;
+  if (k === 'bg') return easel(key, c);
   if (k === 'frame') return frameArt(key) ? `<span class="sp-fa" style="--fa:url('${new URL(frameArt(key, true), document.baseURI).href}')"><img src="${myPortrait()}" alt=""></span>` : `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
   return '';   // Titel brauchen kein Bild, der Name steht daneben
 }
@@ -1475,7 +1477,7 @@ function cosmeticPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k][key];
   if (k === 'portrait') return `<img class="cos-pt" src="${c.src}" alt="">`;
   if (k === 'frame') return `<i class="cos-fr" style="--c:${c.c}"></i>`;
-  if (k === 'bg') return `<i class="cos-bg" style="background-image:url('art/kulisse-${key}-k.webp');background-position:${c.p || '50% 50%'}"></i>`;
+  if (k === 'bg') return easel(key, c, ' small');
   return `<i class="cos-ti">„“</i>`;
 }
 // Story-Text, wenn bekannt mit dem Gesicht dessen, der spricht oder auftritt
