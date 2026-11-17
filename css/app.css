@@ -1227,3 +1227,7 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .notes{border:0;border-image:none;padding:37px 21px;background:#3a2414 center/100% 100% no-repeat}
 .sitems{border:0;border-image:none;padding:28px 24px 26px;row-gap:26px;background:#3a2414 center/100% 100% no-repeat}
 .sitem .sbuy{margin-top:6px}
+
+/* Rückfall ohne Zeichenfläche (z. B. direkt als Datei geöffnet): Brett als CSS-9-Slice */
+.notes.b9{border:solid transparent;border-width:17px;border-image:url(../art/brett-auftraege.webp) 54 fill / 17px stretch;padding:20px 4px;background:none}
+.sitems.b9{border:solid transparent;border-width:24px;border-image:url(../art/ladenregal.webp) 95 fill / 24px stretch;padding:4px 0 2px;background:none}

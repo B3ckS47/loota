@@ -796,6 +796,7 @@ const h3 = t => `<h3>${t}</h3>`;
    Rahmen unverzerrt, Mitte gestreckt. Als CSS-9-Slice zeigte der Browser je nach Skalierung Haarlinien an den Nähten. */
 const BOARDS = [['.notes', 'art/brett-auftraege.webp', 54, 17], ['.sitems', 'art/ladenregal.webp', 95, 24]];
 const BOARD_IMG = {}, BOARD_URL = {};
+let BOARD_CSS = false;   // true, wenn Zeichnen nicht erlaubt ist
 const boardRO = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => es.forEach(e => paintBoard(e.target))) : null;
 function watchBoards(root) {
   BOARDS.forEach(([sel]) => root.querySelectorAll(sel).forEach(el => {
@@ -806,6 +807,8 @@ function watchBoards(root) {
 }
 function paintBoard(el, tries = 0) {
   const cfg = BOARDS.find(([sel]) => el.matches(sel)); if (!cfg || !el.isConnected) return;
+  // Direkt als Datei geöffnet (file://) darf Chrome die Zeichenfläche nicht auslesen: dann die CSS-Fassung aus neun Stücken
+  if (location.protocol === 'file:' || BOARD_CSS) { el.classList.add('b9'); return; }
   const [, src, s, bw] = cfg, w = el.offsetWidth, h = el.offsetHeight;
   if (!w || !h) { if (tries < 20) setTimeout(() => paintBoard(el, tries + 1), 100); return; }
   const dpr = Math.min(3, window.devicePixelRatio || 1), key = `${src}|${w}x${h}@${dpr}`;
@@ -819,7 +822,8 @@ function paintBoard(el, tries = 0) {
     const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
     const sx = [0, s, iw - s, iw], dx = [0, b, W - b, W], sy = [0, s, ih - s, ih], dy = [0, b, H - b, H];
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) g.drawImage(img, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
-    c.toBlob(bl => { if (!bl) return; BOARD_URL[key] = URL.createObjectURL(bl); apply(BOARD_URL[key]); }, 'image/jpeg', 0.9);
+    try { c.toBlob(bl => { if (!bl) { BOARD_CSS = true; el.classList.add('b9'); return; } BOARD_URL[key] = URL.createObjectURL(bl); apply(BOARD_URL[key]); }, 'image/jpeg', 0.9); }
+    catch (e) { BOARD_CSS = true; el.classList.add('b9'); }
   };
   if (img.complete && img.naturalWidth) draw(); else img.addEventListener('load', draw, {once: true});
 }
