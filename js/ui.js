@@ -1049,7 +1049,7 @@ function heroDoll(p, mine) {
 }
 function heroPack(p, mine) {
   return `<div class="hsec"><span class="hsec-h"><img src="${ICON.slot.pack}" alt="">Rucksack</span><span class="hsec-x">${p.pack.length ? `${p.pack.length} ${p.pack.length === 1 ? 'Karte' : 'Karten'} · zählt nicht im Kampf` : 'leer'}</span></div>` +
-    (p.pack.length ? `<div class="pack-row">${p.pack.map(c => eqTile(p, c, mine, 'pack', ' small')).join('')}</div>` : '');
+    (p.pack.length ? `<div class="pack">${p.pack.map(c => eqTile(p, c, mine, 'pack')).join('')}</div>` : '');
 }
 function slotRows(p, mine) {
   // Eigene Karten sind antippbar mit Aktionen, die der Gegner nur zum Ansehen (where 'opp')
