@@ -934,7 +934,7 @@ const SHEET_VIEWS = {
     const ab = abilList(p);
     const rows = slotRows(p, false);
     const hand = UI.open && p.hand.length ? `<div class="tipbox"><span class="tip-h">Handkarten (sichtbar, weil eingeschaltet)</span>${p.hand.map(c => linkify(esc(cardLabel(c)))).join(', ')}</div>` : '';
-    return {hero: true, head: `<div class="sh-hero${bgAttr(bgOf(p))}">${bigPortrait(p)}<h3>${esc(p.name)}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`,
+    return {hero: true, head: `<div class="sh-hero${bgAttr(bgOf(p))}">${bigPortrait(p)}<h3>${esc(p.name)}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`,
       body: `${ab}${stats3(p)}<div class="slots">${rows}</div><div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div>${hand}`};
   },
   equip() {
