@@ -835,7 +835,8 @@ const h3 = t => `<h3>${t}</h3>`;
 const BOARDS = [
   {sel: '.notes', src: 'art/brett-auftraege.webp', s: [54, 54, 54, 54], w: [17, 17, 17, 17]},
   {sel: '.sitems', src: 'art/ladenregal.webp', s: [95, 95, 95, 95], w: [24, 24, 24, 24]},
-  {sel: '.scroll', src: 'art/schriftrolle.webp', s: [100, 110, 95, 110], w: [46, 52, 44, 52], alpha: true}
+  {sel: '.scroll', src: 'art/schriftrolle.webp', s: [100, 110, 95, 110], w: [46, 52, 44, 52], alpha: true},
+  {sel: '.pack', src: 'art/leder-rucksack.webp', s: [72, 72, 72, 72], w: [22, 22, 22, 22], alpha: true}
 ];
 const BOARD_IMG = {}, BOARD_URL = {};
 let BOARD_CSS = false;   // true, wenn Zeichnen nicht erlaubt ist
