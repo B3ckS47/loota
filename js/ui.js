@@ -798,11 +798,16 @@ const BOARDS = [['.notes', 'art/brett-auftraege.webp', 54, 17], ['.sitems', 'art
 const BOARD_IMG = {}, BOARD_URL = {};
 const boardRO = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => es.forEach(e => paintBoard(e.target))) : null;
 function watchBoards(root) {
-  BOARDS.forEach(([sel]) => root.querySelectorAll(sel).forEach(el => { if (el.__ro) return; el.__ro = true; boardRO ? boardRO.observe(el) : paintBoard(el); }));
+  BOARDS.forEach(([sel]) => root.querySelectorAll(sel).forEach(el => {
+    if (!el.__ro) { el.__ro = true; if (boardRO) boardRO.observe(el); }
+    // Nicht nur auf den ResizeObserver verlassen: beim Aufklappen des Fensters meldet er sonst einmal 0 und dann nichts mehr
+    requestAnimationFrame(() => paintBoard(el)); setTimeout(() => paintBoard(el), 450);
+  }));
 }
-function paintBoard(el) {
-  const cfg = BOARDS.find(([sel]) => el.matches(sel)); if (!cfg) return;
-  const [, src, s, bw] = cfg, w = el.offsetWidth, h = el.offsetHeight; if (!w || !h) return;
+function paintBoard(el, tries = 0) {
+  const cfg = BOARDS.find(([sel]) => el.matches(sel)); if (!cfg || !el.isConnected) return;
+  const [, src, s, bw] = cfg, w = el.offsetWidth, h = el.offsetHeight;
+  if (!w || !h) { if (tries < 20) setTimeout(() => paintBoard(el, tries + 1), 100); return; }
   const dpr = Math.min(3, window.devicePixelRatio || 1), key = `${src}|${w}x${h}@${dpr}`;
   if (el.__bk === key) return; el.__bk = key;
   const apply = u => { if (el.__bk === key) el.style.backgroundImage = `url(${u})`; };
