@@ -1320,3 +1320,14 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .cv-loot .sp-bg{width:180px;margin:4px auto}
 .cos-bg{display:block;width:66px;aspect-ratio:3/1;border-radius:6px;border:2px solid var(--edge);background:#3a2414 center/cover no-repeat}
 .si-ware .sp-bg{width:112px}
+/* Charakter-Bildschirm: zwei Kacheln unter dem Kopf */
+.pf-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pf-stat{display:flex;align-items:center;gap:8px;margin:0;padding:10px 10px 10px 6px;min-width:0}
+.pf-stat .candle{flex:0 0 auto;width:40px;height:40px}
+.pf-stat>span:last-child{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.pf-stat small{font:800 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pf-stat b{font:700 21px/1.1 var(--display);color:#a3460b}
+.pf-stat em{font:700 12px var(--body);font-style:normal;color:var(--muted)}
+.pf-lvl{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;background:url(../icons/muenze-voll.png) center/contain no-repeat;font:800 16px/1 var(--body);color:#3b2a1c;text-shadow:0 0 2px #fff6d8}
+.pf-stat.soon .pf-lvl{filter:grayscale(1);opacity:.55}
+.pf-stat.soon b{color:var(--muted)}

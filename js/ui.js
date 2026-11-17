@@ -123,7 +123,11 @@ const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
 function renderProfile() {
   const hb = $('#pf-hero'), bx = myBg(); hb.classList.toggle('hasbg', !!bx[2]); hb.style.setProperty('--bg', bx[2] ? `url('${bgSrc(bx)}')` : ''); hb.style.setProperty('--bgp', bx[4] || '');
   patch(hb, `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
-    `<span class="pf-streak">${candleHtml(streakNow() > 0)}<span><b>Längste Serie: ${streakBest()} ${streakBest() === 1 ? 'Tag' : 'Tage'}</b><small>Aktuell: ${streakNow()} ${streakNow() === 1 ? 'Tag' : 'Tage'}</small></span></span></div>`);
+    `</div>`);
+  // Unter dem Kopf: links die längste Serie, rechts die Spielerstufe (kommt mit dem Online-Modus)
+  const days = n => `${n} ${n === 1 ? 'Tag' : 'Tage'}`;
+  patch($('#pf-stats'), `<div class="panel pf-stat">${candleHtml(streakNow() > 0)}<span><small>Längste Serie</small><b>${days(streakBest())}</b><em>Aktuell: ${days(streakNow())}</em></span></div>` +
+    `<div class="panel pf-stat soon"><span class="pf-lvl" aria-hidden="true"></span><span><small>Spielerstufe</small><b>Bald</b><em>Kommt mit dem Online-Modus</em></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
   const G = PF_GROUPS(), pi = pfPage(), [fg, gl, gs] = G[pi], inG = id => cosmeticGroup(id) === fg, none = '<p class="hint pf-empty">Hier gibt es nichts auf dieser Seite.</p>';
