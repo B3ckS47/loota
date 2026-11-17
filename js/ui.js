@@ -931,19 +931,15 @@ const SHEET_VIEWS = {
   },
   opp(s) {
     const p = S && S.players[s.pid]; if (!p) return null;
-    const ab = abilList(p);
-    const rows = slotRows(p, false);
-    const hand = UI.open && p.hand.length ? `<div class="tipbox"><span class="tip-h">Handkarten (sichtbar, weil eingeschaltet)</span>${p.hand.map(c => linkify(esc(cardLabel(c)))).join(', ')}</div>` : '';
-    return {hero: true, head: `<div class="sh-hero${bgAttr(bgOf(p))}">${bigPortrait(p)}<h3>${esc(p.name)}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`,
-      body: `${ab}${stats3(p)}<div class="slots">${rows}</div><div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div>${hand}`};
+    const hand = UI.open && p.hand.length ? `<div class="hsec"><span class="hsec-h"><img src="${ICON.hand}" alt="">Handkarten</span><span class="hsec-x">sichtbar, weil eingeschaltet</span></div><div class="pack-row">${p.hand.map(c => cardMini(c, {where: 'opp', size: 'tiny'})).join('')}</div>` : '';
+    return {hero: true, head: heroHead(p), body: `<div class="hbody">${heroStats(p)}${heroAbil(p)}${heroDoll(p, false)}${heroPack(p, false)}${hand}</div>`};
   },
   equip() {
     if (!S) return null;
     const p = me(), free = isFree();
-    return {hero: true, head: `<div class="sh-hero${bgAttr(myBg())}">${bigPortrait(p)}<h3>${esc(myName())}${myTitle() ? `<em class="sh-title">${esc(myTitle())}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`, body: `${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
-      `<p class="hint">Im Kampf zählen nur Rasse, Klasse und ausgerüstete Gegenstände. Der Rucksack bringt keinen Bonus. Karte antippen für Aktionen.</p>` +
-      (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') +
-      `<div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="tipbox">${handTip(p)}</div>`};
+    return {hero: true, head: heroHead(p), body: `<div class="hbody">${heroStats(p)}${heroAbil(p)}${heroDoll(p, true)}${heroPack(p, true)}` +
+      `<p class="hint hb-hint">Karte antippen für Aktionen. Im Kampf zählen Stufe, Rasse, Klasse und die Ausrüstung, der Rucksack nicht.</p>` +
+      (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') + `</div>`};
   },
   log(s) {
     if (!S) return null;
@@ -990,6 +986,70 @@ function stats3(p) {
 function abilList(p) {
   const a = [...(p.race ? ABIL[p.race.r].map(x => `<span class="ab race">${x}</span>`) : []), ...(p.cls ? ABIL[p.cls.c].map(x => `<span class="ab">${x}</span>`) : [])];
   return `<div class="abil">${a.length ? a.join('') : '<span class="ab none">keine Fähigkeiten</span>'}</div>`;
+}
+/* ===== Heldenbogen: geöffnetes Profil im Spiel =====
+   Kopf mit Hintergrund, Porträt, Rahmen, Titel und Stufe. Darunter drei Werte (antippen = Rechnung),
+   Rasse und Klasse mit Fähigkeiten, die Ausrüstung als Figur (Kopf, Hände, Rüstung, Schuhe, Sonstiges in den Ecken)
+   und der Rucksack als Leiste. */
+function heroHead(p) {
+  const title = p.human ? myTitle() : '';
+  return `<div class="sh-hero${bgAttr(bgOf(p))}"><span class="hh-pt">${bigPortrait(p)}<b class="hh-lvl" aria-label="Stufe ${p.lvl}">${p.lvl}</b></span>` +
+    `<h3>${esc(p.human ? myName() : p.name)}${title ? `<em class="sh-title">${esc(title)}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl} von ${WINLVL()}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`;
+}
+function heroStats(p) {
+  const pw = power(p), eqb = pw - p.lvl, rb = runBonus(p), need = Math.max(1, 5 - rb), over = p.hand.length > handLimit(p), open = UI.ptip;
+  const tile = (k, icon, val, lbl, sub, cls = '') => `<button type="button" class="hs${cls}${open === k ? ' on' : ''}" data-ptip="${k}" aria-expanded="${open === k}"><img src="${icon}" alt=""><b>${val}</b><span>${lbl}</span><small>${sub}</small></button>`;
+  const tip = open === 'power' ? powerTip(p) : open === 'run' ? runTip(p) : open === 'hand' ? handTip(p) : '';
+  return `<div class="hstats">${tile('power', ICON.kampf, pw, 'Kampfstärke', `Stufe ${p.lvl}${eqb ? ` ${eqb > 0 ? '+' : '−'} ${Math.abs(eqb)}` : ''}`, ' main')}` +
+    tile('run', ICON.run, need <= 1 ? 'immer' : `ab ${need}`, 'Weglaufen', `Bonus ${sign(rb)}`) +
+    tile('hand', ICON.hand, `${p.hand.length}/${handLimit(p)}`, 'Handkarten', over ? 'zu viele' : 'Platz frei', over ? ' warn' : '') + `</div>` +
+    (tip ? `<div class="tipbox hs-tip">${tip}</div>` : '');
+}
+function heroAbil(p) {
+  const a = [...(p.race ? (ABIL[p.race.r] || []).map(x => `<span class="ab race">${x}</span>`) : []), ...(p.cls ? (ABIL[p.cls.c] || []).map(x => `<span class="ab">${x}</span>`) : [])];
+  return a.length ? `<div class="abil habil">${a.join('')}</div>` : '';
+}
+// Rasse oder Klasse als Platz in der Figur
+function identTile(p, c, kind, mine) {
+  const lbl = kind === 'race' ? 'Rasse' : 'Klasse';
+  if (!c && kind === 'cls') return `<span class="et empty id"><img src="${ICON.slot.cls}" alt=""><span class="et-n">Klasse</span></span>`;
+  const art = c ? ART[c.n] : (ART.Mensch || ICON.slot.race), attrs = c ? `data-uid="${c.uid}" data-where="${mine ? kind : 'opp'}"` : 'data-human="1"';
+  return `<button type="button" class="et id k-${kind}" ${attrs} aria-label="${lbl}: ${esc(c ? c.n : 'Mensch')}"><img class="et-art" src="${art}" alt=""><i class="et-kind">${lbl}</i><span class="et-n">${esc(c ? c.n : 'Mensch')}</span></button>`;
+}
+function eqTile(p, c, mine, where, cls = '') {
+  if (!c) return '';
+  const off = where === 'eq' && !usable(p, c), badges = [];
+  if (c.b) badges.push(`<b class="et-b${off ? ' off' : ''}">+${c.b}</b>`);
+  if (c.run) badges.push(`<b class="et-r${off ? ' off' : ''}"><img src="${ICON.run}" alt="">+${c.run}</b>`);
+  return `<button type="button" class="et${off ? ' off' : ''}${cls}${mine && UI.adv && UI.adv.uid === c.uid ? ' rec' : ''}" data-uid="${c.uid}" data-where="${mine ? where : 'opp'}" aria-label="${esc(c.n)}">` +
+    `<img class="et-art" src="${ART[c.n] || ICON.slot[c.slot] || ICON.slot.none}" alt="" loading="lazy">${badges.join('')}${c.big ? '<i class="et-big">Groß</i>' : ''}` +
+    `<span class="et-n">${esc(c.n)}</span>${off ? `<i class="et-off">nur ${esc(reqName(c))}</i>` : ''}</button>`;
+}
+const eqEmpty = (slot, lbl, cls = '') => `<span class="et empty${cls}"><img src="${ICON.slot[slot]}" alt=""><span class="et-n">${lbl}</span></span>`;
+function heroDoll(p, mine) {
+  const by = s => p.eq.filter(i => i.slot === s), hands = by('hand'), misc = by('none');
+  const two = hands.find(h => (h.hands || 1) > 1);
+  const cell = (pos, html) => `<div class="dc ${pos}">${html}</div>`;
+  const kopf = by('kopf')[0], rue = by('ruestung')[0], sch = by('schuhe')[0];
+  const hL = two || hands[0], hR = two ? null : hands[1];
+  const corners = ['bl', 'br'];
+  let html = cell('tl', identTile(p, p.race, 'race', mine)) + cell('tr', identTile(p, p.cls, 'cls', mine)) + cell('k', kopf ? eqTile(p, kopf, mine, 'eq') : eqEmpty('kopf', 'Kopf')) +
+    cell('hl', hL ? eqTile(p, hL, mine, 'eq') : eqEmpty('hand', 'Hand')) +
+    cell('r', rue ? eqTile(p, rue, mine, 'eq') : eqEmpty('ruestung', 'Rüstung')) +
+    cell('hr', two ? `<span class="et empty both"><img src="${ICON.slot.hand}" alt=""><span class="et-n">beide Hände</span></span>` : hR ? eqTile(p, hR, mine, 'eq') : eqEmpty('hand', 'Hand')) +
+    cell('s', sch ? eqTile(p, sch, mine, 'eq') : eqEmpty('schuhe', 'Schuhe'));
+  misc.slice(0, 2).forEach((c, i) => { html += cell(corners[i], eqTile(p, c, mine, 'eq', ' misc')); });
+  if (!misc.length) html += cell('bl', eqEmpty('none', 'Sonstiges', ' misc'));
+  const extra = misc.slice(2).map(c => eqTile(p, c, mine, 'eq', ' misc')).join('');
+  // Ausrüstung, die noch an keinem der Plätze hängt (z. B. mehr als zwei Hände), sicherheitshalber darunter
+  const placed = new Set([kopf, rue, sch, hL, hR, ...misc].filter(Boolean)), rest = p.eq.filter(i => !placed.has(i)).map(c => eqTile(p, c, mine, 'eq')).join('');
+  const bonus = p.eq.reduce((n, i) => n + (usable(p, i) ? i.b || 0 : 0), 0);
+  return `<div class="hsec"><span class="hsec-h">Ausrüstung und Herkunft</span><span class="hsec-x">${bonus ? `+${bonus} Kampfstärke` : 'noch kein Bonus'}</span></div>` +
+    `<div class="doll">${html}</div>${extra || rest ? `<div class="pack-row">${extra}${rest}</div>` : ''}`;
+}
+function heroPack(p, mine) {
+  return `<div class="hsec"><span class="hsec-h"><img src="${ICON.slot.pack}" alt="">Rucksack</span><span class="hsec-x">${p.pack.length ? `${p.pack.length} ${p.pack.length === 1 ? 'Karte' : 'Karten'} · zählt nicht im Kampf` : 'leer'}</span></div>` +
+    (p.pack.length ? `<div class="pack-row">${p.pack.map(c => eqTile(p, c, mine, 'pack', ' small')).join('')}</div>` : '');
 }
 function slotRows(p, mine) {
   // Eigene Karten sind antippbar mit Aktionen, die der Gegner nur zum Ansehen (where 'opp')
@@ -1554,6 +1614,7 @@ document.addEventListener('click', e => {
   if (t.closest('[data-chest]')) { showChest(); return; }
   if ((el = t.closest('.t-card[data-mode]'))) { if (SET.mode !== el.dataset.mode) { SET.mode = el.dataset.mode; saveSettings(); } renderTitle(); return; }
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
+  if ((el = t.closest('[data-ptip]'))) { UI.ptip = UI.ptip === el.dataset.ptip ? null : el.dataset.ptip; renderSheet(false); buzz(6); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }
   if ((el = t.closest('[data-uid]'))) {
     const uid = +el.dataset.uid, where = el.dataset.where;
