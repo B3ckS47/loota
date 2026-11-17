@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-2558bcdff2';
+const CACHE = 'loota-f256851ab1';
 const FILES = [
 "./",
 "index.html",
@@ -180,10 +180,12 @@ const FILES = [
 "art/regalbrett.webp",
 "art/ruecken-schatz.webp",
 "art/ruecken-tuer.webp",
+"art/schriftrolle.webp",
 "art/serie-brett-aus.webp",
 "art/serie-brett.webp",
 "art/sonder-gluecksamulett.webp",
 "art/sonder-ungebetener-gast.webp",
+"art/stoffbanner.webp",
 "art/stufe-aus-dem-wald-zurueckgefunden.webp",
 "art/stufe-bier-aus-dem-keller-geholt.webp",
 "art/stufe-den-strandkorb-erobert.webp",
@@ -195,6 +197,7 @@ const FILES = [
 "art/stufe-wuerfel-angehaucht.webp",
 "art/szene-auftragsbrett.webp",
 "art/szene-kraemerladen.webp",
+"art/szene-offene-partie.webp",
 "art/titelschild.webp",
 "art/verstaerker-riesenhaft.webp",
 "art/verstaerker-stinksauer.webp",

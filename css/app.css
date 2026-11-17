@@ -1240,3 +1240,20 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 @keyframes sk-coinpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 .sk-dot.sk-coin em{top:calc(100% + 4px)}
 .sk-dot.sk-coin.f em{color:#ffb547}
+
+/* ===== Schriftrolle (Truhen-Beute, Abfrage zur offenen Partie) mit Stoffbanner ===== */
+.scroll{background:none center/100% 100% no-repeat;border:0;box-shadow:none;border-radius:0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55))}
+.scroll.b9{border:solid transparent;border-width:46px 52px 44px;border-image:url(../art/schriftrolle.webp) 100 110 95 fill / 46px 52px 44px stretch}
+.ribbon{position:relative;display:grid;place-items:center;width:min(250px,100%);aspect-ratio:520/214;margin:-8px auto 0;background:url(../art/stoffbanner.webp) center/contain no-repeat;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.ribbon span{position:absolute;left:18%;right:18%;top:20%;height:40%;display:flex;align-items:center;justify-content:center;font:700 19px/1 var(--display);color:#fff4dc;text-shadow:0 2px 0 #6a1410,0 0 6px rgba(0,0,0,.4);white-space:nowrap}
+.dialog .dlg-scroll{max-width:340px;padding:52px 60px 50px;background-color:transparent;text-align:center;color:#3b2a1c}
+.dlg-scroll .ribbon{margin:-30px auto 6px;width:110%;margin-left:-5%}
+.dlg-scene{display:block;width:100%;border-radius:6px;border:2px solid rgba(90,60,30,.5);box-shadow:0 4px 10px -4px rgba(0,0,0,.5);margin:2px 0 8px}
+.dlg-stat{font:700 17px/1.2 var(--display);color:#7a3a12;margin:0 0 2px}
+.dlg-scroll p{margin:0 0 10px;font-size:14.5px;line-height:1.35}
+.dlg-scroll .btnrow{gap:8px}
+.dlg-scroll .btn{min-height:42px;font-size:15px;padding:6px 8px}
+.cv-loot.scroll{min-width:0;width:min(300px,86vw);margin-top:-20px;padding:48px 58px 46px;background-color:transparent;border:0;gap:4px;color:#3b2a1c}
+.cv-loot .ribbon{width:120%;margin:-34px -10% 2px}
+.dialog .dlg-scroll{padding-left:54px;padding-right:54px}
+.dlg-scroll .btn{white-space:nowrap;font-size:14px;padding:6px 4px}

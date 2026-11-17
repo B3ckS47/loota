@@ -361,7 +361,8 @@ function playNow() {
 async function freePlay() {
   const fg = freeGame();
   if (!fg) { show('setup'); return; }
-  const ok = await confirmDialog('Freies Spiel', `Deine Partie ist noch offen (Runde ${fg.turn}, Stufe ${fg.lvl}). Spielst du weiter oder fängst du neu an?`, 'Weiterspielen', 'Neue Partie', 'Abbrechen');
+  const ok = await confirmDialog('Freies Spiel', 'Deine Partie wartet noch auf dich. Spielst du weiter oder fängst du neu an?', 'Weiterspielen', 'Neue Partie', 'Abbrechen',
+    {scroll: true, img: 'art/szene-offene-partie.webp', stat: `Runde ${fg.turn} · Stufe ${fg.lvl}`});
   if (ok === null) return;
   if (ok) continueGame(); else show('setup');
 }
@@ -794,22 +795,27 @@ function renderSheet(fresh) {
 const h3 = t => `<h3>${t}</h3>`;
 /* Holzbretter (Auftragsbrett, Ladenregal) als ein einziges Bild in genau passender Größe zeichnen:
    Rahmen unverzerrt, Mitte gestreckt. Als CSS-9-Slice zeigte der Browser je nach Skalierung Haarlinien an den Nähten. */
-const BOARDS = [['.notes', 'art/brett-auftraege.webp', 54, 17], ['.sitems', 'art/ladenregal.webp', 95, 24]];
+// Holzbretter und Schriftrolle: Quelle, Schnittkanten im Bild [oben, rechts, unten, links], Anzeigebreite der Kanten, Alphakanal
+const BOARDS = [
+  {sel: '.notes', src: 'art/brett-auftraege.webp', s: [54, 54, 54, 54], w: [17, 17, 17, 17]},
+  {sel: '.sitems', src: 'art/ladenregal.webp', s: [95, 95, 95, 95], w: [24, 24, 24, 24]},
+  {sel: '.scroll', src: 'art/schriftrolle.webp', s: [100, 110, 95, 110], w: [46, 52, 44, 52], alpha: true}
+];
 const BOARD_IMG = {}, BOARD_URL = {};
 let BOARD_CSS = false;   // true, wenn Zeichnen nicht erlaubt ist
 const boardRO = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => es.forEach(e => paintBoard(e.target))) : null;
 function watchBoards(root) {
-  BOARDS.forEach(([sel]) => root.querySelectorAll(sel).forEach(el => {
+  BOARDS.forEach(({sel}) => root.querySelectorAll(sel).forEach(el => {
     if (!el.__ro) { el.__ro = true; if (boardRO) boardRO.observe(el); }
     // Nicht nur auf den ResizeObserver verlassen: beim Aufklappen des Fensters meldet er sonst einmal 0 und dann nichts mehr
     requestAnimationFrame(() => paintBoard(el)); setTimeout(() => paintBoard(el), 450);
   }));
 }
 function paintBoard(el, tries = 0) {
-  const cfg = BOARDS.find(([sel]) => el.matches(sel)); if (!cfg || !el.isConnected) return;
+  const cfg = BOARDS.find(b => el.matches(b.sel)); if (!cfg || !el.isConnected) return;
   // Direkt als Datei geöffnet (file://) darf Chrome die Zeichenfläche nicht auslesen: dann die CSS-Fassung aus neun Stücken
   if (location.protocol === 'file:' || BOARD_CSS) { el.classList.add('b9'); return; }
-  const [, src, s, bw] = cfg, w = el.offsetWidth, h = el.offsetHeight;
+  const {src, s, w: bw, alpha} = cfg, w = el.offsetWidth, h = el.offsetHeight;
   if (!w || !h) { if (tries < 20) setTimeout(() => paintBoard(el, tries + 1), 100); return; }
   const dpr = Math.min(3, window.devicePixelRatio || 1), key = `${src}|${w}x${h}@${dpr}`;
   if (el.__bk === key) return; el.__bk = key;
@@ -817,12 +823,12 @@ function paintBoard(el, tries = 0) {
   if (BOARD_URL[key]) { apply(BOARD_URL[key]); return; }
   let img = BOARD_IMG[src]; if (!img) { img = BOARD_IMG[src] = new Image(); img.src = src; }
   const draw = () => {
-    const W = Math.round(w * dpr), H = Math.round(h * dpr), b = Math.round(bw * dpr), iw = img.naturalWidth, ih = img.naturalHeight;
+    const W = Math.round(w * dpr), H = Math.round(h * dpr), b = bw.map(v => Math.round(v * dpr)), iw = img.naturalWidth, ih = img.naturalHeight;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
-    const sx = [0, s, iw - s, iw], dx = [0, b, W - b, W], sy = [0, s, ih - s, ih], dy = [0, b, H - b, H];
+    const sx = [0, s[3], iw - s[1], iw], dx = [0, b[3], W - b[1], W], sy = [0, s[0], ih - s[2], ih], dy = [0, b[0], H - b[2], H];
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) g.drawImage(img, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
-    try { c.toBlob(bl => { if (!bl) { BOARD_CSS = true; el.classList.add('b9'); return; } BOARD_URL[key] = URL.createObjectURL(bl); apply(BOARD_URL[key]); }, 'image/jpeg', 0.9); }
+    try { c.toBlob(bl => { if (!bl) { BOARD_CSS = true; el.classList.add('b9'); return; } BOARD_URL[key] = URL.createObjectURL(bl); apply(BOARD_URL[key]); }, alpha ? 'image/png' : 'image/jpeg', 0.9); }
     catch (e) { BOARD_CSS = true; el.classList.add('b9'); }
   };
   if (img.complete && img.naturalWidth) draw(); else img.addEventListener('load', draw, {once: true});
@@ -1036,16 +1042,21 @@ function showEnd(wid) {
   if (mine) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 5) clearInterval(iv); }, 280); }
 }
 // Antwort: true (ja), false (nein) oder null (abgebrochen: Abbrechen-Knopf oder Tippen daneben)
-function confirmDialog(title, text, yes, no, cancel) {
+// opt.scroll: als Schriftrolle mit Stoffbanner als Überschrift, opt.img Bild darunter, opt.stat kurze Zeile in Fett
+function confirmDialog(title, text, yes, no, cancel, opt = {}) {
   return new Promise(res => {
     const d = document.createElement('div'); d.className = 'dialog';
-    d.innerHTML = `<div class="panel"><h3>${title}</h3><p>${text}</p><div class="btnrow"><button type="button" class="btn" data-dlg="0">${no}</button><button type="button" class="btn primary" data-dlg="1">${yes}</button></div>${cancel ? `<button type="button" class="dlg-x" data-dlg="x">${cancel}</button>` : ''}</div>`;
+    const btns = `<div class="btnrow"><button type="button" class="btn" data-dlg="0">${no}</button><button type="button" class="btn primary" data-dlg="1">${yes}</button></div>${cancel ? `<button type="button" class="dlg-x" data-dlg="x">${cancel}</button>` : ''}`;
+    d.innerHTML = opt.scroll
+      ? `<div class="panel scroll dlg-scroll"><span class="ribbon"><span>${title}</span></span>${opt.img ? `<img class="dlg-scene" src="${opt.img}" alt="">` : ''}${opt.stat ? `<p class="dlg-stat">${opt.stat}</p>` : ''}<p>${text}</p>${btns}</div>`
+      : `<div class="panel"><h3>${title}</h3><p>${text}</p>${btns}</div>`;
     d.addEventListener('click', e => {
       if (e.target === d) { d.remove(); res(null); return; }
       const b = e.target.closest('[data-dlg]'); if (!b) return;
       d.remove(); res(b.dataset.dlg === 'x' ? null : b.dataset.dlg === '1');
     });
     document.body.appendChild(d);
+    if (opt.scroll) watchBoards(d);
   });
 }
 
@@ -1243,7 +1254,7 @@ function showChest() {
   const nm = CHESTS[w.t].n, el = document.createElement('div'); el.className = 'chestov ' + w.t;
   el.innerHTML = `<div class="cv-rays" aria-hidden="true"><i></i></div><div class="cv-box"><span class="cv-name">${nm}</span>` +
     `<button type="button" class="cv-chest idle" aria-label="${nm} öffnen"><img class="cv-zu" src="icons/truhe-${w.t}-zu.png" alt=""><img class="cv-auf" src="icons/truhe-${w.t}-auf.png" alt=""></button>` +
-    `<p class="cv-hint">Tippe auf die Truhe!</p><div class="cv-loot" hidden></div><button type="button" class="cv-later">Später öffnen</button></div>`;
+    `<p class="cv-hint">Tippe auf die Truhe!</p><div class="cv-loot scroll" hidden></div><button type="button" class="cv-later">Später öffnen</button></div>`;
   document.body.appendChild(el); Snd.sfx('deal');
   const box = el.querySelector('.cv-chest'), done = () => { el.remove(); if (CUR === 'title') renderTitle(); if (topSheet() && topSheet().id === 'daily') renderSheet(false); };
   el.querySelector('.cv-later').addEventListener('click', done);
@@ -1259,10 +1270,10 @@ function showChest() {
       const b = box.getBoundingClientRect(); Particles.burst(b.left + b.width / 2, b.top + b.height * 0.35, w.t === 'gold' ? 40 : 26, 1.2);
       const k = r.id && r.id.split(':')[0], loot = el.querySelector('.cv-loot');
       loot.innerHTML = r.id
-        ? `<span class="cv-new">Neu für dich</span>${k === 'title' ? `<span class="cv-title">„${esc(COSMETICS.title[r.id.split(':')[1]])}“</span>` : cosPreview(r.id)}<b>${esc(cosmeticName(r.id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]} · im Charakter-Bildschirm auswählen</small>${r.coins ? `<span class="cv-coins sm">${coinImg}+${r.coins}</span>` : ''}`
-        : `<span class="cv-new">Münzen</span><span class="cv-coins">${coinImg}+${r.coins}</span><small>Für den Krämerladen</small>`;
+        ? `<span class="ribbon"><span>Neu für dich</span></span>${k === 'title' ? `<span class="cv-title">„${esc(COSMETICS.title[r.id.split(':')[1]])}“</span>` : cosPreview(r.id)}<b>${esc(cosmeticName(r.id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]} · im Charakter-Bildschirm auswählen</small>${r.coins ? `<span class="cv-coins sm">${coinImg}+${r.coins}</span>` : ''}`
+        : `<span class="ribbon"><span>Münzen</span></span><span class="cv-coins">${coinImg}+${r.coins}</span><small>Für den Krämerladen</small>`;
       loot.insertAdjacentHTML('beforeend', '<button type="button" class="btn primary small cv-ok">Super!</button>');
-      setTimeout(() => { loot.hidden = false; Snd.sfx('coin'); }, 450);
+      setTimeout(() => { loot.hidden = false; watchBoards(el); Snd.sfx('coin'); }, 450);
       loot.querySelector('.cv-ok').addEventListener('click', done);
     }, UI.reduce ? 50 : 1050);
   });
