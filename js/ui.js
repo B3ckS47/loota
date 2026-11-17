@@ -48,6 +48,21 @@ function saveProfile() { try { localStorage.setItem(K_PROFILE, JSON.stringify(PR
 const ALL_PORTRAITS = [...PORTRAITS, ...Object.entries(COSMETICS.portrait).map(([k, v]) => [k, v.n, v.src, 'portrait:' + k])];
 const ALL_FRAMES = [...FRAMES, ...Object.entries(COSMETICS.frame).map(([k, v]) => [k, v.n, v.c, 'frame:' + k])];
 const cosOpen = x => !x[3] || owns(x[3]);
+// Hintergründe: [Schlüssel, Name, Grafik, Freischalt-ID, Schwerpunkt]. Die drei vom Start sind Testmotive aus vorhandenen Bildern.
+const BACKDROPS = [['keiner', 'Ohne', ''], ['laden', 'Krämerladen', 'art/kulisse-laden.webp', null, '50% 55%'], ['meer', 'Hohe See', 'art/kulisse-meer.webp', null, '62% 60%'], ['wald', 'Zauberwald', 'art/kulisse-wald.webp', null, '40% 50%']];
+const ALL_BGS = [...BACKDROPS, ...Object.entries(COSMETICS.bg).map(([k, v]) => [k, v.n, `art/kulisse-${k}.webp`, 'bg:' + k, v.p || '50% 50%'])];
+// Absolute Adresse, weil url() in einer CSS-Variable sonst relativ zu css/ aufgelöst wird
+const bgSrc = (x, small) => x && x[2] ? new URL(small ? x[2].replace('.webp', '-k.webp') : x[2], document.baseURI).href : '';
+function myBg() { return ALL_BGS.find(q => q[0] === PROFILE.bg && cosOpen(q)) || BACKDROPS[0]; }
+// Bots bekommen einen festen Hintergrund passend zum Namen, im Online-Modus kommt er später vom Mitspieler
+function bgOf(p) {
+  if (p.human) return myBg();
+  const art = ALL_BGS.filter(x => x[2] && !x[3]); let h = 0;
+  for (const ch of p.name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return art.length ? art[h % art.length] : BACKDROPS[0];
+}
+// Klasse und Stil für eine Fläche mit Hintergrund (leer, wenn keiner gewählt ist)
+const bgAttr = (x, small) => x && x[2] ? ` hasbg" style="--bg:url('${bgSrc(x, small)}');--bgp:${x[4] || '50% 50%'}` : '';
 // Hinweis, wo man eine gesperrte Optik bekommt
 function cosmeticSource(id) {
   for (const w of WORLDS) for (const st of w.stations) {
@@ -92,16 +107,18 @@ function applyProfile() {
 }
 const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
 function renderProfile() {
-  patch($('#pf-hero'), `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
+  const hb = $('#pf-hero'), bx = myBg(); hb.classList.toggle('hasbg', !!bx[2]); hb.style.setProperty('--bg', bx[2] ? `url('${bgSrc(bx)}')` : ''); hb.style.setProperty('--bgp', bx[4] || '');
+  patch(hb, `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
     `<span class="pf-streak">${candleHtml(streakNow() > 0)}<span><b>Längste Serie: ${streakBest()} ${streakBest() === 1 ? 'Tag' : 'Tage'}</b><small>Aktuell: ${streakNow()} ${streakNow() === 1 ? 'Tag' : 'Tage'}</small></span></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
   const G = PF_GROUPS(), pi = pfPage(), [fg, gl, gs] = G[pi], inG = id => cosmeticGroup(id) === fg, none = '<p class="hint pf-empty">Hier gibt es nichts auf dieser Seite.</p>';
-  const items = [...ALL_PORTRAITS.map(x => x[3]), ...ALL_FRAMES.map(x => x[3]), ...Object.keys(COSMETICS.title).map(k => 'title:' + k)].filter(inG), got = items.filter(id => !id || owns(id)).length;
+  const items = [...ALL_PORTRAITS.map(x => x[3]), ...ALL_FRAMES.map(x => x[3]), ...ALL_BGS.map(x => x[3]), ...Object.keys(COSMETICS.title).map(k => 'title:' + k)].filter(inG), got = items.filter(id => !id || owns(id)).length;
   const arrow = (d, dis) => `<button type="button" class="pf-arr" data-pfpage="${d}" aria-label="${d < 0 ? 'Vorherige' : 'Nächste'} Seite"${dis ? ' disabled' : ''}><svg viewBox="0 0 24 24"><path d="${d < 0 ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}"/></svg></button>`;
   patch($('#pf-filter'), arrow(-1, pi === 0) + `<div class="pf-pg"><b>${esc(gl)}</b><small>${esc(gs)} · ${got} von ${items.length}</small><span class="pf-dots">${G.map((g, i) => `<i class="${i === pi ? 'on' : ''}"></i>`).join('')}</span></div>` + arrow(1, pi === G.length - 1));
   patch($('#pf-portraits'), (ALL_PORTRAITS.filter(x => inG(x[3])).map(x => { const [k, l, src] = x, on = cosOpen(x); return `<button type="button" class="pf-pt${on ? '' : ' locked'}" data-portrait="${k}" aria-pressed="${on && myPortrait() === src && PROFILE.portrait === k}"><img src="${src}" alt="" loading="lazy">${on ? '' : lockI}<span>${l}</span></button>`; }).join('')) || none);
   patch($('#pf-frames'), (ALL_FRAMES.filter(x => inG(x[3])).map(x => { const [k, l, c] = x, on = cosOpen(x); return `<button type="button" class="pf-fr${on ? '' : ' locked'}" data-frame="${k}" aria-pressed="${on && PROFILE.frame === k}" style="--c:${c}">${frameArt(k) ? `<i class="frimg" style="background-image:url('${frameArt(k, true)}')">${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>` : `<i>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i>`}<span>${l}</span></button>`; }).join('')) || none);
+  patch($('#pf-bgs'), (ALL_BGS.filter(x => inG(x[3])).map(x => { const [k, l] = x, on = cosOpen(x); return `<button type="button" class="pf-bg${on ? '' : ' locked'}" data-bg="${k}" aria-pressed="${on && myBg()[0] === k}"><i class="${x[2] ? '' : 'none'}"${x[2] ? ` style="background-image:url('${bgSrc(x, true)}');background-position:${x[4]}"` : ''}>${on ? '' : `<svg viewBox="0 0 24 24">${LOCK_PATH}</svg>`}</i><span>${l}</span></button>`; }).join('')) || none);
   // Titel: nur die freigeschalteten zeigen, gesperrte wären bei vielen Welten nur Ballast
   const titles = Object.entries(COSMETICS.title).filter(([k]) => owns('title:' + k) && inG('title:' + k));
   patch($('#pf-titles'), `<button type="button" class="pf-ti" data-title="" aria-pressed="${!myTitle()}">Kein Titel</button>` + titles.map(([k, l]) => `<button type="button" class="pf-ti" data-title="${k}" aria-pressed="${PROFILE.title === k}">${esc(l)}</button>`).join('') +
@@ -552,7 +569,7 @@ function renderOpps() {
   const C = S.combat, many = S.players.length > 3;
   const html = S.players.filter(p => !p.human).map(p => {
     const role = C && (C.f === p.id ? 'kämpft' : C.h === p.id ? 'hilft' : ''), turn = S.cur === p.id && S.winner == null;
-    return `<button type="button" class="oc${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
+    return `<button type="button" class="oc${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}${bgAttr(bgOf(p), true)}" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
       (role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : '') +
       `<span class="pt"><img src="${portrait(p)}" alt=""><span class="lvb">${p.lvl}</span></span>` +
       `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span>${many ? '' : `<span><img src="${ICON.hand}" alt="">${p.hand.length}</span>`}${p.spore ? `<span class="neg" title="Sporenwolke"><img class="spi" src="${ART['Sporenwolke']}" alt="">−${p.spore}</span>` : ''}</span></span></button>`;
@@ -733,8 +750,9 @@ function renderAct() {
 function renderMe() {
   const p = me();
   const C = S.combat, role = C ? (C.f === 0 ? ' · kämpft' : C.h === 0 ? ' · hilft' : '') : '';
-  const over = p.hand.length > handLimit(p);
-  patch($('#mebar'), `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}${p.spore ? `<em class="neg"> · Sporen −${p.spore}</em>` : ''}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
+  const over = p.hand.length > handLimit(p), mb = $('#mebar'), bx = myBg();
+  mb.classList.toggle('hasbg', !!bx[2]); mb.style.setProperty('--bg', bx[2] ? `url('${bgSrc(bx, true)}')` : ''); mb.style.setProperty('--bgp', bx[4] || '');
+  patch(mb, `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}${p.spore ? `<em class="neg"> · Sporen −${p.spore}</em>` : ''}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
     `<span class="mstats"><button type="button" class="mstat" data-go="equip" aria-label="Kampfstärke ${power(p)}"><img src="${ICON.kampf}" alt="">${power(p)}</button>` +
     `<button type="button" class="mstat" data-go="equip" aria-label="Weglaufen ${sign(runBonus(p))}"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</button>` +
     `<button type="button" class="mstat${over ? ' warn' : ''}" data-go="equip" aria-label="Handkarten ${p.hand.length} von ${handLimit(p)}"><img src="${ICON.hand}" alt="">${p.hand.length}/${handLimit(p)}</button>` +
@@ -785,7 +803,7 @@ function renderSheet(fresh) {
   if (!view) { SHEETS.pop(); renderSheet(true); return; }
   wrap.classList.add('open'); wrap.setAttribute('aria-hidden', 'false');
   const canClose = s.id !== 'sel';
-  const html = `<div class="grab"><i></i></div><div class="sh-head">${SHEETS.length > 1 && canClose ? '<button type="button" class="iconbtn" data-sheetback aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button>' : ''}${view.head || ''}${canClose ? '<button type="button" class="iconbtn" data-sheetclose aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button>' : ''}</div><div class="sh-body">${view.body}</div>`;
+  const html = `<div class="grab"><i></i></div><div class="sh-head${view.hero ? ' has-hero' : ''}">${SHEETS.length > 1 && canClose ? '<button type="button" class="iconbtn" data-sheetback aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button>' : ''}${view.head || ''}${canClose ? '<button type="button" class="iconbtn" data-sheetclose aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button>' : ''}</div><div class="sh-body">${view.body}</div>`;
   const body = el.querySelector('.sh-body'), st = body && !fresh ? body.scrollTop : 0;
   if (fresh) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; }
   if (patch(el, html)) { const nb = el.querySelector('.sh-body'); if (nb) nb.scrollTop = s.id === 'log' && (fresh || s.stick) ? nb.scrollHeight : st; }
@@ -898,13 +916,13 @@ const SHEET_VIEWS = {
     const ab = abilList(p);
     const rows = slotRows(p, false);
     const hand = UI.open && p.hand.length ? `<div class="tipbox"><span class="tip-h">Handkarten (sichtbar, weil eingeschaltet)</span>${p.hand.map(c => linkify(esc(cardLabel(c)))).join(', ')}</div>` : '';
-    return {head: `<img class="pt" src="${portrait(p)}" alt=""><h3>${esc(p.name)}<br><span style="font:700 15px var(--body);color:var(--muted)">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}</h3>`,
-      body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${ab}${stats3(p)}<div class="slots">${rows}</div><div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div>${hand}`};
+    return {hero: true, head: `<div class="sh-hero${bgAttr(bgOf(p))}"><img class="pt" src="${portrait(p)}" alt=""><h3>${esc(p.name)}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`,
+      body: `${ab}${stats3(p)}<div class="slots">${rows}</div><div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div>${hand}`};
   },
   equip() {
     if (!S) return null;
     const p = me(), free = isFree();
-    return {head: `<span class="pfw"><img class="pt me" src="${myPortrait()}" alt=""></span><h3>${esc(myName())}${myTitle() ? `<em class="sh-title">${esc(myTitle())}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span></h3>`, body: `<div class="coins" style="margin:0 0 10px">${coinsHTML(p.lvl)}</div>${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
+    return {hero: true, head: `<div class="sh-hero${bgAttr(myBg())}"><span class="pfw"><img class="pt me" src="${myPortrait()}" alt=""></span><h3>${esc(myName())}${myTitle() ? `<em class="sh-title">${esc(myTitle())}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`, body: `${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
       `<p class="hint">Im Kampf zählen nur Rasse, Klasse und ausgerüstete Gegenstände. Der Rucksack bringt keinen Bonus. Karte antippen für Aktionen.</p>` +
       (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') +
       `<div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="tipbox">${handTip(p)}</div>`};
@@ -1553,6 +1571,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-toggle]'))) { const k = el.dataset.toggle; SET[k] = !SET[k]; saveSettings(); renderControls(); if (k === 'music' && SET.music) { Snd.unlock(); Snd.startMusic(); } if (CUR === 'game') render(); return; }
   if ((el = t.closest('[data-portrait]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('portrait:' + el.dataset.portrait)); return; } PROFILE.portrait = el.dataset.portrait; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-frame]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('frame:' + el.dataset.frame)); return; } PROFILE.frame = el.dataset.frame; saveProfile(); renderProfile(); return; }
+  if ((el = t.closest('[data-bg]'))) { if (el.classList.contains('locked')) { toast(cosmeticSource('bg:' + el.dataset.bg)); return; } PROFILE.bg = el.dataset.bg; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-worldrules]'))) { openSheet({id: 'worldrules', w: el.dataset.worldrules}); return; }
   if ((el = t.closest('[data-buyworld]'))) { openSheet({id: 'buyworld', w: el.dataset.buyworld}); return; }

@@ -1266,3 +1266,50 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .dlg-rib .ribbon{width:86%;margin:-34px auto -14px}
 .dlg-rib .dlg-scene{margin-top:0}
 .dlg-rib p{margin:0 0 12px}
+
+/* ===== Hintergründe hinter Porträt und Werten =====
+   Grafik im Querformat 3 : 1, jede Fläche zeigt ihren Ausschnitt (cover, Schwerpunkt --bgp).
+   Alles Lesbare liegt auf einer hellen Plakette, ein leichter Schleier dämpft bunte Motive. */
+.hasbg{background:linear-gradient(rgba(25,14,6,.12),rgba(25,14,6,.3)),var(--bg) var(--bgp,50% 50%)/cover no-repeat}
+.plak{background:rgba(255,248,230,.94);border:1.5px solid var(--edge);border-radius:9px;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+/* Gegner-Kacheln */
+.oc.hasbg{border-color:#5a3d22}
+.oc.hasbg{gap:0;padding-right:3px}
+.oc.hasbg .pt{z-index:1}
+/* Namensschild steckt hinter dem Porträt, so bleibt die Breite für Name und Werte wie ohne Hintergrund */
+.oc.hasbg .ot{flex:1 1 auto;margin-left:-15px;padding:2px 3px 3px 19px;background:rgba(255,248,230,.94);border:1.5px solid var(--edge);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.oc.hasbg .pt img{border-color:#fff3d6;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+.oc.hasbg.turn{border-color:var(--gold)}
+/* Eigene Leiste */
+.mebar.hasbg{border-color:#5a3d22}
+.mebar.hasbg .lv{padding:3px 8px 4px;background:rgba(255,248,230,.94);border:1.5px solid var(--edge);border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.mebar.hasbg .mstat{box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.mebar.hasbg .pt{box-shadow:0 1px 4px rgba(0,0,0,.5)}
+/* Kopfbereich im Profil während der Partie (eigenes und Gegner) */
+.sh-head.has-hero{position:relative;padding:0 12px 10px}
+.sh-head.has-hero [data-sheetclose]{position:absolute;right:20px;top:8px;z-index:2}
+.sh-head.has-hero [data-sheetback]{position:absolute;left:20px;top:8px;z-index:2}
+.sh-hero{flex:1;display:flex;align-items:center;gap:12px;min-height:112px;padding:12px 64px 12px 14px;border-radius:16px;border:2px solid var(--edge);background-color:#ead6b0;background-image:radial-gradient(ellipse at 30% 40%,rgba(255,248,230,.6),rgba(255,248,230,0) 70%);box-shadow:inset 0 0 0 2px rgba(255,248,230,.35)}
+.sh-hero.hasbg{border-color:#5a3d22;background-image:linear-gradient(rgba(25,14,6,.1),rgba(25,14,6,.28)),var(--bg);background-position:center,var(--bgp,50% 50%);background-size:cover;background-repeat:no-repeat}
+.sh-hero h3{flex:0 1 auto;min-width:0;margin:0;padding:6px 10px 7px;font:700 23px/1.05 var(--display);background:rgba(255,248,230,.94);border:1.5px solid var(--edge);border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,.3);overflow-wrap:anywhere}
+.sh-hero .pt{flex:0 0 auto;width:62px;height:62px;border-radius:50%;border:2.5px solid #fff3d6;background:var(--paper);object-fit:cover;object-position:50% 20%;box-shadow:0 2px 6px rgba(0,0,0,.45)}
+.sh-hero .pfw .pt.me{border-color:var(--pf,#fff3d6)}
+html.pf-art .sh-hero .pfw{margin:6px 10px 6px 6px}
+html.pf-art .sh-hero .pfw .pt.me{border:0;box-shadow:none}
+.sh-hero .pfw{filter:drop-shadow(0 3px 5px rgba(0,0,0,.4))}
+.sh-hero .coins{margin-top:5px}
+.sh-hero .opp-style{font-size:12.5px}
+/* Charakter-Bildschirm oben */
+.pf-hero.hasbg{border-color:#5a3d22}
+.pf-hero.hasbg .pf-who{padding:8px 12px 10px;background:rgba(255,248,230,.94);border:1.5px solid var(--edge);border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.pf-hero.hasbg .pf-big{border-color:var(--pf,#e9cf9a)}
+/* Auswahl im Charakter-Bildschirm */
+.pf-bgs{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px}
+.pf-bg{appearance:none;display:flex;flex-direction:column;gap:5px;padding:0;border:0;background:none;font:700 13px var(--body);color:var(--ink);text-align:center}
+.pf-bg i{position:relative;display:grid;place-items:center;aspect-ratio:3/1;border-radius:10px;border:2px solid var(--edge);background:#ead6b0 center/cover no-repeat;box-shadow:0 2px 0 var(--wood-dark)}
+.pf-bg i.none{background-image:repeating-linear-gradient(-45deg,rgba(120,90,60,.12) 0 6px,transparent 6px 12px)}
+.pf-bg[aria-pressed="true"] i{border-color:var(--gold);box-shadow:0 0 0 2.5px var(--gold),0 2px 0 var(--wood-dark)}
+.pf-bg.locked i{filter:grayscale(.85) brightness(.75)}
+.pf-bg.locked svg{width:22px;height:22px;fill:none;stroke:#fff3d6;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pf-bg.locked span{color:var(--muted)}
+.oc.hasbg .os{gap:3px;padding-left:4px}

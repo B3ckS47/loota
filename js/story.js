@@ -92,12 +92,14 @@ const COSMETICS = {
     minka: {n: 'Tavernenkatze Minka', src: 'icons/portrait-minka.png'},
     klappi: {n: 'Mimik Klappi', src: 'icons/portrait-klappi.png'},
     kurt: {n: 'Schlüsselmeister Kurt', src: 'icons/portrait-kurt.png'}
-  }
+  },
+  // Hintergründe hinter Porträt und Werten. Grafik im Querformat 3 : 1 (art/kulisse-…), p = Schwerpunkt für den Ausschnitt
+  bg: {}
 };
 function cosmeticName(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
   if (!c) return id;
-  const kind = {title: 'Titel', frame: 'Rahmen', portrait: 'Porträt'}[k];
+  const kind = {title: 'Titel', frame: 'Rahmen', portrait: 'Porträt', bg: 'Hintergrund'}[k];
   return `${kind} „${typeof c === 'string' ? c : c.n}“`;
 }
 
