@@ -1220,6 +1220,5 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .sitem .sbuy:disabled{opacity:.85}
 .sitem.own .sbuy{background:#cdbb9c;color:#6b5434;border-color:#a8916c;box-shadow:none}
 .sitem .si-t{margin-top:2px}
-.sitem .si-t{margin-top:28px}
-.sitem .sbuy{margin-top:8px}
-.ptag{left:2px;bottom:-30px}
+/* Pappschild als Bild statt brauner Fläche */
+.sale{background:url(../icons/pappschild.webp) center/100% 100% no-repeat;border-radius:0;box-shadow:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));width:54px;height:50px;padding-top:6px}

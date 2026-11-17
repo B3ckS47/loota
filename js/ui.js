@@ -1259,7 +1259,7 @@ SHEET_VIEWS.shop = () => {
   // Preisschild links am Brett (beim Tagesangebot durchgestrichen, daneben das Pappschild mit dem neuen Preis), darunter Kaufen
   const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), price = shopPrice(id), deal = shopDeal(id), poor = STORY.coins < price, [k, key] = id.split(':'), nm = esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''));
     const ware = k === 'title' ? `<span class="sp-ti"><span>${esc(COSMETICS.title[key])}</span></span>` : cosPreview(id);
-    const tag = `<span class="ptag${deal ? ' old' : ''}"><span>${coinImg}<s>${it.price}</s></span>${own ? '<i class="tstamp"></i>' : ''}</span>`;
+    const tag = `<span class="ptag${deal ? ' old' : ''}"><span>${coinImg}<s>${it.price}</s></span></span>`;
     const sale = deal ? `<span class="sale" aria-label="Angebot: ${price} Münzen statt ${it.price}"><b>${price}</b><em>−${deal.pct} %</em></span>` : '';
     return `<div class="sitem${own ? ' own' : ''}${deal ? ' deal' : ''}"><span class="si-ware">${tag}${ware}${sale}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
       `<button type="button" class="btn small sbuy${own || poor ? '' : ' primary'}" data-shopbuy="${id}"${own || poor ? ' disabled' : ''}>${own ? 'Gekauft' : 'Kaufen'}</button></div>`; }).join('');
