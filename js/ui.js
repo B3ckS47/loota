@@ -171,12 +171,12 @@ function storySave() { const d = load(K_STORYSAVE); return d && d.st && d.S && s
 function clearStorySave() { try { localStorage.removeItem(K_STORYSAVE); } catch (e) {} }
 const SET_V = 2;
 const SAVED_SET = load(K_SET);
-const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', bots: 3, diff: 'normal', foes: 'zufall', test: false, mode: 'free'}, SAVED_SET || {});
+const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate: true, reduce: false, advice: false, coach: false, open: false, speed: 'normal', goal: 10, bots: 3, diff: 'normal', foes: 'zufall', test: false, mode: 'free'}, SAVED_SET || {});
 // Lernhilfen sind ab Einstellungs-Version 2 standardmäßig aus, auch für bereits gespeicherte Einstellungen
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
 function applySettings() {
-  UI.advice = SET.advice && !SCN; UI.coach = SET.coach && !SCN; UI.open = SET.open; UI.speed = SET.speed;
+  UI.advice = SET.advice && !SCN; UI.coach = SET.coach && !SCN; UI.open = SET.open; UI.speed = SET.speed; UI.goal = SET.goal || 10;
   if (!SCN) { UI.bots = SET.bots; UI.diff = SET.diff; }
   UI.reduce = SET.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.documentElement.classList.toggle('reduce', !!SET.reduce);
@@ -425,7 +425,7 @@ const DIFF_TXT = {gemuetlich: 'Die Bots greifen selten ein und verfluchen wenig.
 function renderControls() {
   $$('.seg[data-set]').forEach(seg => { const k = seg.dataset.set; seg.querySelectorAll('button').forEach(b => { const lk = !moodOk(b.dataset.v); b.classList.toggle('locked', lk); b.setAttribute('aria-pressed', String(!lk && String(moodOk(SET[k]) ? SET[k] : 'taverne') === b.dataset.v)); }); });
   $$('[data-toggle]').forEach(sw => sw.setAttribute('aria-checked', String(!!SET[sw.dataset.toggle])));
-  $$('[data-range]').forEach(r => { r.value = SET[r.dataset.range]; });
+  $$('[data-range]').forEach(r => { r.value = SET[r.dataset.range]; }); goalLabel();
   $('#diff-hint').textContent = DIFF_TXT[SET.diff] || '';
   $('#row-vibrate').hidden = !('vibrate' in navigator);
 }
@@ -450,7 +450,14 @@ function renderSaveInfo() {
 document.addEventListener('input', e => {
   const r = e.target.closest('[data-range]'); if (!r) return;
   SET[r.dataset.range] = +r.value; saveSettings();
+  if (r.dataset.range === 'goal') { UI.goal = +r.value; goalLabel(); }
 });
+// Länge der Partie im freien Spiel: Siegstufe 2 bis 10
+function goalLabel() {
+  const g = SET.goal || 10, el = $('#goal-val'); if (!el) return;
+  el.textContent = `Stufe ${g}`;
+  $('#goal-hint').textContent = g >= 10 ? 'Die ganze Partie wie im Original.' : g >= 7 ? 'Eine etwas kürzere Partie.' : g >= 4 ? 'Eine kurze Partie für zwischendurch.' : 'Eine ganz schnelle Runde, oft nach wenigen Kämpfen vorbei.';
+}
 
 /* ================= Spiel starten ================= */
 async function startNewGame() {
@@ -1161,7 +1168,7 @@ function showEnd(wid) {
   const w = P(wid), mine = w.human;
   Snd.sfx(mine ? 'victory' : 'defeat'); buzz(mine ? [40, 60, 40, 60, 120] : 200);
   const el = document.createElement('div'); el.className = 'endov';
-  el.innerHTML = `<div class="panel"><img src="${portrait(w)}" alt=""><h2>${mine ? (PROFILE.name ? `Gewonnen, ${esc(PROFILE.name)}!` : 'Gewonnen!') : esc(w.name) + ' gewinnt'}</h2><p>${mine ? 'Stufe 10 durch einen Monstersieg. Die ganze Beute gehört dir!' : 'Kein Drama, die nächste Runde wartet schon. In den Notizen siehst du, wie es dazu kam.'}</p><button type="button" class="btn primary" data-go="again">Nochmal spielen</button><button type="button" class="btn" data-go="log">Notizen ansehen</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
+  el.innerHTML = `<div class="panel"><div class="end-hero${bgAttr(bgOf(w))}">${bigPortrait(w)}</div><h2>${mine ? (PROFILE.name ? `Gewonnen, ${esc(PROFILE.name)}!` : 'Gewonnen!') : esc(w.name) + ' gewinnt'}</h2><p>${mine ? `Stufe ${WINLVL()} durch einen Monstersieg. Die ganze Beute gehört dir!` : 'Kein Drama, die nächste Runde wartet schon. In den Notizen siehst du, wie es dazu kam.'}</p><button type="button" class="btn primary" data-go="again">Nochmal spielen</button><button type="button" class="btn" data-go="log">Notizen ansehen</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div>`;
   document.body.appendChild(el);
   if (mine) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 5) clearInterval(iv); }, 280); }
 }

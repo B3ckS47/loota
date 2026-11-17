@@ -472,7 +472,8 @@ function track(k, n=1){ if(!TRACK_HANDLER || (SCN && (SCN.fight || SCN.tut))) re
    {target, bots:[Namen], counts, start:{lvl, race, cls, eq:[], hand:[], deal}, boss:'Kartenname',
     fight:{mons:[], enh:[]}, perks:{freeHelp:'Name'}} */
 let SCN = null;
-const WINLVL = () => (SCN && SCN.target) || 10;
+// Siegstufe: Station im Storymodus, sonst die im freien Spiel gewählte Länge (2 bis 10), sonst 10
+const WINLVL = () => (SCN && SCN.target) || (S && S.goal) || 10;
 // Spielweisen der Gegner (gelten auch im freien Spiel)
 // l = kurze Beschreibung für das Gegnerblatt
 const STYLES = {
@@ -762,6 +763,7 @@ function newGame(allBots){
   const d=buildDecks(sc && sc.counts);
   S={players:[], door:d.door, tr:d.tr, doorDisc:[], trDisc:[], cur:0, turn:1, phase:0, combat:null, reveal:null, log:[], winner:null,
      scn: sc ? sc.id||true : null, stats:{played:0, lvlLost:0, curses:0, help:0, ran:0, bossBy:null, bossHelped:false, fightWon:false}};
+  if(!sc && !allBots && UI.goal && UI.goal !== 10) S.goal = UI.goal;   // kürzere Partie im freien Spiel
   // Freies Spiel: zufällige Gegner aus UI.roster (Name, Bild, Spielweise), sonst der Stammtisch
   const roster = !sc && UI.roster && UI.roster.length >= UI.bots ? UI.roster.slice(0, UI.bots) : null;
   const names = sc && sc.bots ? sc.bots : roster ? roster.map(r=>r.name) : ['Berta','Kalle','Uschi'].slice(0, UI.bots);
@@ -784,7 +786,7 @@ function newGame(allBots){
   if(sc && sc.fight) log('Rätselkampf: Gewinne diesen einen Kampf mit dem, was du hast.','sys');
   else if(sc && sc.tut) log('Probespiel mit Hilde: Wer zuerst Stufe '+WINLVL()+' erreicht, gewinnt.','sys');
   else if(sc) log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt.${sc.boss?` Irgendwo im Türstapel lauert ${sc.boss}: Wer ihn besiegt, gewinnt sofort.`:''} Du beginnst.`,'sys');
-  else log('Neue Partie. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.','sys');
+  else log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.`,'sys');
   if(sc && sc.stars && sc.stars.length) log(`Sterne in dieser Station: ${sc.stars.map(t=>'★ '+t).join(' · ')}`,'sys');
   rule('Tippe deine Handkarten an, um sie auszuspielen. Rasse, Klasse und Gegenstände darfst du gleich jetzt auslegen.');
   fx('newgame');
@@ -997,7 +999,7 @@ async function botManage(p){
   if(canPfanne(p).ok) doPfanne(p);
   if(p.sun){ const cr=p.hand.find(c=>c.cream); if(cr) useCream(p,cr); }
   if(mapSet(p)) doDig(p);
-  for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.'); } }
+  for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup',`Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe ${WINLVL()}.`); } }
   botSell(p);
   for(const cu of p.hand.filter(c=>c.k==='curse')){
     if(!p.hand.includes(cu)) continue;   // nach Seegang schon weitergewandert
@@ -1623,7 +1625,7 @@ function playCurseOn(c,t){
 function useLevelUp(c){
   const p=me(); if(p.lvl>=WINLVL()-1) return; take(p,c); discard(c); p.lvl++;
   log(`Du spielst „${c.n}“: Stufe ${p.lvl}.`,'good');
-  ruleOnce('levelup','Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe 10.');
+  ruleOnce('levelup',`Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe ${WINLVL()}.`);
 }
 async function startSell(pre){
   const p=me(); if(!isFree()) return;
@@ -1916,7 +1918,7 @@ function cardMeaning(c){
     case 'curse': return 'Fluch. Beim Aufstoßen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen.';
     case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
-    case 'levelup': return 'Stufenkarte: Jederzeit spielbar, auch im Zug der anderen. Bringt 1 Stufe, aber nie die Siegstufe 10.';
+    case 'levelup': return 'Stufenkarte: Jederzeit spielbar, auch im Zug der anderen. Bringt 1 Stufe, aber nie die Siegstufe.';
     case 'enh': return `Monsterverstärker: Jeder darf ihn in jedem Kampf auf ein Monster spielen. ${sign(c.v)} Stufen, ${c.trm>0?'+':'−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm),'Schatz','Schätze')}.`;
     default: return '';
   }
