@@ -122,8 +122,9 @@ function applyProfile() {
 const PROFILE_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,15}$/u;
 function renderProfile() {
   const hb = $('#pf-hero'), bx = myBg(); hb.classList.toggle('hasbg', !!bx[2]); hb.style.setProperty('--bg', bx[2] ? `url('${bgSrc(bx)}')` : ''); hb.style.setProperty('--bgp', bx[4] || '');
-  patch(hb, `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><div class="pf-who"><b>${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}<span>${esc((ALL_PORTRAITS.find(q => q[2] === myPortrait()) || PORTRAITS[0])[1])} · Rahmen ${esc((ALL_FRAMES.find(q => q[2] === myFrame()) || FRAMES[0])[1])}</span>` +
+  patch(hb, `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><div class="pf-who"><b class="fitname">${esc(PROFILE.name || 'Namenlos')}</b>${myTitle() ? `<em class="pf-title">${esc(myTitle())}</em>` : ''}` +
     `</div>`);
+  fitNames(hb);
   // Unter dem Kopf: links die längste Serie, rechts die Spielerstufe (kommt mit dem Online-Modus)
   const days = n => `${n} ${n === 1 ? 'Tag' : 'Tage'}`;
   patch($('#pf-stats'), `<div class="panel pf-stat">${candleHtml(streakNow() > 0)}<span><small>Längste Serie</small><b>${days(streakBest())}</b><em>Aktuell: ${days(streakNow())}</em></span></div>` +
@@ -834,7 +835,7 @@ function renderSheet(fresh) {
   if (fresh) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; }
   if (patch(el, html)) { const nb = el.querySelector('.sh-body'); if (nb) nb.scrollTop = s.id === 'log' && (fresh || s.stick) ? nb.scrollHeight : st; }
   if (s.id === 'log') W.logSeen = S ? S.log.length : 0;
-  watchBoards(el);
+  watchBoards(el); fitNames(el);
 }
 const h3 = t => `<h3>${t}</h3>`;
 /* Holzbretter (Auftragsbrett, Ladenregal) als ein einziges Bild in genau passender Größe zeichnen:
@@ -1000,10 +1001,19 @@ function abilList(p) {
    Kopf mit Hintergrund, Porträt, Rahmen, Titel und Stufe. Darunter drei Werte (antippen = Rechnung),
    Rasse und Klasse mit Fähigkeiten, die Ausrüstung als Figur (Kopf, Hände, Rüstung, Schuhe, Sonstiges in den Ecken)
    und der Rucksack als Leiste. */
+// Lange Namen werden kleiner geschrieben statt abgeschnitten (bis zur Mindestgröße)
+function fitNames(root) {
+  requestAnimationFrame(() => $$('.fitname', root).forEach(el => {
+    if (!el.clientWidth) return;
+    const max = parseFloat(el.dataset.fmax || (el.dataset.fmax = getComputedStyle(el).fontSize)), min = max * 0.55;
+    let f = max; el.style.fontSize = f + 'px';
+    while (el.scrollWidth > el.clientWidth + 1 && f > min) { f -= 1; el.style.fontSize = f + 'px'; }
+  }));
+}
 function heroHead(p) {
   const title = p.human ? myTitle() : '';
   return `<div class="sh-hero${bgAttr(bgOf(p))}"><span class="hh-pt">${bigPortrait(p)}<b class="hh-lvl" aria-label="Stufe ${p.lvl}">${p.lvl}</b></span>` +
-    `<h3>${esc(p.human ? myName() : p.name)}${title ? `<em class="sh-title">${esc(title)}</em>` : ''}${p.dead ? '<span class="sh-lvl">tot</span>' : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`;
+    `<h3><span class="fitname">${esc(p.human ? myName() : p.name)}</span>${title ? `<em class="sh-title">${esc(title)}</em>` : ''}${p.dead ? '<span class="sh-lvl">tot</span>' : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`;
 }
 function heroStats(p) {
   const pw = power(p), eqb = pw - p.lvl, rb = runBonus(p), need = Math.max(1, 5 - rb), over = p.hand.length > handLimit(p), open = UI.ptip;
