@@ -1118,7 +1118,8 @@ input[type=range]{accent-color:#ff8a1f}
 html.pf-art .sh-head .pfw{margin:6px 12px 6px 8px}
 html.pf-art #sheet .sh-head .pt.me{width:62px;height:62px;border:0}
 html.pf-art .pf-bigw{margin:0 8px}
-html.pf-art .pf-big{width:88px;height:88px;border:0;box-shadow:0 8px 18px -6px rgba(0,0,0,.6)}
+html.pf-art .pf-big{width:88px;height:88px;border:0;box-shadow:none}
+html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatten unter Rahmen und Porträt gemeinsam, sonst lugt er unten durch */
 .pf-fr i.frimg{position:relative;width:32px;height:32px;margin:-6px -2px -6px -4px;background-color:transparent;background-position:center;background-size:contain;background-repeat:no-repeat;box-shadow:none;border-radius:0}
 .pf-fr i.frimg svg{position:absolute;inset:0;margin:auto}
 
