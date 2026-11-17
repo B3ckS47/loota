@@ -1331,3 +1331,10 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .pf-lvl{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;background:url(../icons/muenze-voll.png) center/contain no-repeat;font:800 16px/1 var(--body);color:#3b2a1c;text-shadow:0 0 2px #fff6d8}
 .pf-stat.soon .pf-lvl{filter:grayscale(1);opacity:.55}
 .pf-stat.soon b{color:var(--muted)}
+/* Milchglas über dem Hintergrund: große Köpfe deutlich durchscheinend (60 %), kleine Kacheln nur leicht (78 %).
+   Die Unschärfe dahinter hält unruhige Motive ruhig, Unterzeilen werden dunkler statt grau. */
+.pf-hero.hasbg .pf-who,.sh-hero.hasbg h3{background:rgba(255,248,230,.6);-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1)}
+.oc.hasbg .ot,.mebar.hasbg .lv{background:rgba(255,248,230,.78);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.pf-hero.hasbg .pf-who span{color:#4a3826}
+.sh-hero.hasbg .sh-lvl,.sh-hero.hasbg .opp-style{color:#4a3826}
+.oc.hasbg .os{color:#5a4632}
