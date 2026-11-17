@@ -1421,16 +1421,19 @@ function cosPreview(id) {
   if (k === 'frame') return frameArt(key) ? `<span class="sp-fa" style="--fa:url('${new URL(frameArt(key, true), document.baseURI).href}')"><img src="${myPortrait()}" alt=""></span>` : `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
   return '';   // Titel brauchen kein Bild, der Name steht daneben
 }
+// Ein Fach im Regal: Ware auf dem Regalbrett (Titel auf einem Holzschild), Preisschild links am Brett,
+// beim Angebot durchgestrichen mit Pappschild daneben, darunter Name und Kaufen. Für Krämerladen und Händler im Storymodus.
+function shelfItem(id, base, price, pct, buyAttr) {
+  const own = owns(id), poor = STORY.coins < price, [k, key] = id.split(':'), nm = esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''));
+  const ware = k === 'title' ? `<span class="sp-ti"><span>${esc(COSMETICS.title[key])}</span></span>` : cosPreview(id);
+  const tag = `<span class="ptag${pct ? ' old' : ''}"><span>${coinImg}<s>${base}</s></span></span>`;
+  const sale = pct ? `<span class="sale" aria-label="Angebot: ${price} Münzen statt ${base}"><b>${price}</b><em>−${pct} %</em></span>` : '';
+  return `<div class="sitem${own ? ' own' : ''}${pct ? ' deal' : ''}"><span class="si-ware">${tag}${ware}${sale}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', bg: 'Hintergrund', title: 'Titel'}[k]}</small></span>` +
+    `<button type="button" class="btn small sbuy${own || poor ? '' : ' primary'}" ${buyAttr}="${id}"${own || poor ? ' disabled' : ''}>${own ? 'Gekauft' : 'Kaufen'}</button></div>`;
+}
 SHEET_VIEWS.shop = () => {
   const st = dailyState();
-  // Regal mit Fächern: Ware auf dem Regalbrett (Titel auf einem Holzschild), darunter Name und Preisschild zum Antippen
-  // Preisschild links am Brett (beim Tagesangebot durchgestrichen, daneben das Pappschild mit dem neuen Preis), darunter Kaufen
-  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), price = shopPrice(id), deal = shopDeal(id), poor = STORY.coins < price, [k, key] = id.split(':'), nm = esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''));
-    const ware = k === 'title' ? `<span class="sp-ti"><span>${esc(COSMETICS.title[key])}</span></span>` : cosPreview(id);
-    const tag = `<span class="ptag${deal ? ' old' : ''}"><span>${coinImg}<s>${it.price}</s></span></span>`;
-    const sale = deal ? `<span class="sale" aria-label="Angebot: ${price} Münzen statt ${it.price}"><b>${price}</b><em>−${deal.pct} %</em></span>` : '';
-    return `<div class="sitem${own ? ' own' : ''}${deal ? ' deal' : ''}"><span class="si-ware">${tag}${ware}${sale}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', bg: 'Hintergrund', title: 'Titel'}[k]}</small></span>` +
-      `<button type="button" class="btn small sbuy${own || poor ? '' : ' primary'}" data-shopbuy="${id}"${own || poor ? ' disabled' : ''}>${own ? 'Gekauft' : 'Kaufen'}</button></div>`; }).join('');
+  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const deal = shopDeal(id); return shelfItem(id, it.price, shopPrice(id), deal ? deal.pct : 0, 'data-shopbuy'); }).join('');
   return {head: h3('Krämerladen'),
     body: `<img class="scene" src="art/szene-kraemerladen.webp" alt=""><div class="say"><img src="icons/portrait-kuno.png" alt=""><p>Krämer Kuno: „Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
       `<div class="sitems">${items || '<p class="hint">Du hast schon alles aus dem Laden. Hut ab!</p>'}</div>` +
@@ -1470,7 +1473,7 @@ function buyItem(id) {
   const st = stationById(s.st), item = (st.shop || []).find(x => x.id === id); if (!item) return;
   const r = buyCosmetic(item);
   if (r === 'poor') { toast(`Dafür brauchst du ${item.price} Münzen.`); buzz(40); return; }
-  if (r === 'ok') { Snd.sfx('coin'); toast(`${cosmeticName(id)} gehört dir. Auswählen kannst du ihn im Charakter-Bildschirm.`); }
+  if (r === 'ok') { Snd.sfx('coin'); buzz([20, 30, 20]); toast(`${cosmeticName(id)} gehört dir. Auswählen kannst du ihn im Charakter-Bildschirm.`); }
   renderSheet(false); renderStory();
 }
 function cosmeticPreview(id) {
@@ -1549,8 +1552,8 @@ SHEET_VIEWS.station = s => {
     body += ch ? `<p class="st-chosen">${starSvg(true)}<span>Entschieden: <b>${esc(st.choices.find(c => c.v === ch).l)}</b>. ${esc(st.choices.find(c => c.v === ch).d)}</span></p><div class="acts"><button type="button" class="btn" data-storyclose>Schließen</button></div>`
       : `<div class="st-choices">${st.choices.map(c => `<button type="button" class="btn st-choice" data-story-choice="${c.v}"><b>${esc(c.l)}</b><small>${esc(c.d)}</small></button>`).join('')}</div><p class="hint">Die Entscheidung gilt für diesen Durchgang der Welt.</p>`;
   } else if (st.type === 'shop') {
-    body += `<p class="st-purse">${coinImg}Du hast <b>${STORY.coins}</b> Münzen.</p><div class="shop">${st.shop.map(it => { const own = owns(it.id), poor = STORY.coins < it.price;
-      return `<div class="shop-item">${cosmeticPreview(it.id)}<span>${esc(cosmeticName(it.id))}</span>${own ? '<em>Gehört dir</em>' : `<button type="button" class="btn small${poor ? ' poor' : ''}" data-buy="${it.id}">${coinImg}${it.price}</button>`}</div>`; }).join('')}</div>` +
+    // Händler im Storymodus: gleiches Regal wie der Krämerladen, je Welt mit eigener Optik (Klasse rg-w1 … rg-w5)
+    body += `<p class="st-purse">${coinImg}Du hast <b>${STORY.coins}</b> Münzen.</p><div class="sitems rg-${st.id.slice(0, 2)}">${st.shop.map(it => shelfItem(it.id, it.price, it.price, 0, 'data-buy')).join('')}</div>` +
       `<div class="acts"><button type="button" class="btn primary" data-storyclose>${esc(st.onward || 'Weiter')}</button></div>`;
   } else if (st.type === 'tutorial') {
     body += `<ul class="st-goals"><li class="${stars[0] ? 'ok' : ''}">${starSvg(!!stars[0])}<span>Probespiel schaffen</span></li></ul>`;

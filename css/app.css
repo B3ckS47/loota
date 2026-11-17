@@ -1497,3 +1497,9 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .si-ware .easel{width:112px;margin:0 0 -4px}
 .cv-loot .easel{width:150px}
 .easel.small{width:58px;margin:-6px -2px}
+/* Staffelei mit Leinwand im Format 3 : 1 */
+.easel{aspect-ratio:507/327}
+.easel i{left:1.6%;top:23.5%;width:96.6%;height:49.9%}
+.si-ware .easel{width:128px;margin:0 0 -2px}
+.cv-loot .easel{width:180px}
+.easel.small{width:66px;margin:0 -2px}
