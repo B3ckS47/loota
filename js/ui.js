@@ -1234,7 +1234,7 @@ SHEET_VIEWS.daily = () => {
     const m = missionById(e.id); if (!m) return '';
     const done = e.p >= m.n, pct = Math.round(e.p / m.n * 100), prog = m.k === 'gold' ? `${fmt(e.p)} / ${fmt(m.n)} Gold` : `${e.p} / ${m.n}`;
     return `<div class="note d${m.d}${done ? ' done' : ''}"><span class="nl">${MISSION_LEVEL[m.d]}<span class="nc">${coinImg}+${MISSION_COINS[m.d]}</span></span><b>${esc(m.t)}</b>` +
-      `<span class="nbar"><i style="width:${pct}%"></i></span><span class="np">${done ? `${prog}<em class="nstamp" role="img" aria-label="Erledigt"></em>` : prog}${!done && !st.rer ? `<button type="button" class="btn small" data-reroll="${i}">Tauschen</button>` : ''}</span></div>`;
+      `<span class="nbar"><i style="width:${pct}%"></i></span><span class="np"><span class="npv">${prog}</span>${done ? '<em class="nstamp" role="img" aria-label="Erledigt"></em>' : ''}${!done && !st.rer ? `<button type="button" class="btn small" data-reroll="${i}">Tauschen</button>` : ''}</span></div>`;
   }).join('');
   const streak = streakBox(sk);
   return {head: h3('Hildes Auftragsbrett'),
