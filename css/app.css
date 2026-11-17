@@ -1445,3 +1445,18 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .pack::before{content:none}
 .pack.b9{padding:0;border:solid transparent;border-width:22px;border-image:url(../art/leder-rucksack.webp) 72 fill / 22px stretch;background:none}
 .pack .et{border-color:#4a2c16}
+/* Eigene Leiste: Stufe als Münze mit 2/10, Status als Schild oben rechts, ganzer Bereich antippbar */
+.mebar{position:relative;cursor:pointer}
+.mebar .tag{position:absolute;top:-9px;right:10px;z-index:2;padding:0 7px;border-radius:999px;font:800 10.5px/17px var(--body);background:var(--ink);color:var(--card-hi);text-transform:uppercase;letter-spacing:.04em}
+.mebar .tag.red{background:var(--red)}
+.mlv{position:relative;flex:0 0 auto;display:flex;align-items:center;gap:4px;padding:3px 9px 3px 4px;border-radius:999px;background:var(--card-hi);border:1.5px solid var(--edge);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.mlv img{width:22px;height:22px}
+.mlv b{font:800 15px/1 var(--body);white-space:nowrap}
+.mlv small{font-size:12px;font-weight:700;color:var(--muted)}
+.mlv em.neg{position:absolute;top:-8px;right:-8px;padding:0 5px;border-radius:999px;background:#b3261e;color:#fff;font:800 10px/15px var(--body);font-style:normal}
+.mlv.pop img{animation:coinpop .6s ease}
+.mebar.hasbg .mlv{background:rgba(255,248,230,.86);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.mebar .mstats{margin-left:auto}
+/* Heldenbogen: drei gleich große Werte */
+.hstats{grid-template-columns:repeat(3,1fr)}
+.hs.main b{font-size:27px}

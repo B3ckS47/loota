@@ -767,10 +767,14 @@ function renderAct() {
 }
 function renderMe() {
   const p = me();
-  const C = S.combat, role = C ? (C.f === 0 ? ' · kämpft' : C.h === 0 ? ' · hilft' : '') : '';
+  const C = S.combat, role = C ? (C.f === 0 ? 'kämpft' : C.h === 0 ? 'hilft' : '') : '', turn = S.cur === 0 && S.winner == null;
   const over = p.hand.length > handLimit(p), mb = $('#mebar'), bx = myBg();
   mb.classList.toggle('hasbg', !!bx[2]); mb.style.setProperty('--bg', bx[2] ? `url('${bgSrc(bx, true)}')` : ''); mb.style.setProperty('--bgp', bx[4] || '');
-  patch(mb, `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button><span class="lv"><b>Stufe ${p.lvl}${p.dead ? ' · tot' : role}${p.spore ? `<em class="neg"> · Sporen −${p.spore}</em>` : ''}</b><span class="coins${W.coinPop ? ' pop' : ''}">${coinsHTML(p.lvl)}</span></span>` +
+  // Ganzer Bereich öffnet das eigene Profil; Status wie bei den Gegnern als Schild oben rechts
+  mb.dataset.go = 'equip'; mb.setAttribute('role', 'button'); mb.setAttribute('aria-label', `Deine Werte und Ausrüstung, Stufe ${p.lvl} von ${WINLVL()}`);
+  const tag = role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : '';
+  patch(mb, tag + `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button>` +
+    `<span class="mlv${W.coinPop ? ' pop' : ''}" title="Stufe ${p.lvl} von ${WINLVL()}"><img src="icons/muenze-voll.png" alt=""><b>${p.lvl}<small>/${WINLVL()}</small></b>${p.spore ? `<em class="neg" title="Sporenwolke">−${p.spore}</em>` : ''}</span>` +
     `<span class="mstats"><button type="button" class="mstat" data-go="equip" aria-label="Kampfstärke ${power(p)}"><img src="${ICON.kampf}" alt="">${power(p)}</button>` +
     `<button type="button" class="mstat" data-go="equip" aria-label="Weglaufen ${sign(runBonus(p))}"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</button>` +
     `<button type="button" class="mstat${over ? ' warn' : ''}" data-go="equip" aria-label="Handkarten ${p.hand.length} von ${handLimit(p)}"><img src="${ICON.hand}" alt="">${p.hand.length}/${handLimit(p)}</button>` +
@@ -995,7 +999,7 @@ function abilList(p) {
 function heroHead(p) {
   const title = p.human ? myTitle() : '';
   return `<div class="sh-hero${bgAttr(bgOf(p))}"><span class="hh-pt">${bigPortrait(p)}<b class="hh-lvl" aria-label="Stufe ${p.lvl}">${p.lvl}</b></span>` +
-    `<h3>${esc(p.human ? myName() : p.name)}${title ? `<em class="sh-title">${esc(title)}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl} von ${WINLVL()}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`;
+    `<h3>${esc(p.human ? myName() : p.name)}${title ? `<em class="sh-title">${esc(title)}</em>` : ''}${p.dead ? '<span class="sh-lvl">tot</span>' : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`;
 }
 function heroStats(p) {
   const pw = power(p), eqb = pw - p.lvl, rb = runBonus(p), need = Math.max(1, 5 - rb), over = p.hand.length > handLimit(p), open = UI.ptip;
