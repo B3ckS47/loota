@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-bb1c46f04a';
+const CACHE = 'loota-0891ed2899';
 const FILES = [
 "./",
 "index.html",
@@ -18,6 +18,7 @@ const FILES = [
 "fonts/kalam-latin-700-normal.woff2",
 "art/besonders-schatzkarte-links.webp",
 "art/besonders-schatzkarte-rechts.webp",
+"art/brett-auftraege.webp",
 "art/einmal-champignon.webp",
 "art/einmal-fischbroetchen.webp",
 "art/einmal-flasche-drachenschnaps.webp",
@@ -195,6 +196,7 @@ const FILES = [
 "art/verstaerker-riesenhaft.webp",
 "art/verstaerker-stinksauer.webp",
 "art/verstaerker-winzig.webp",
+"art/zettel-auftrag.webp",
 "icons/icon-haende.png",
 "icons/icon-klasse.png",
 "icons/icon-kopf.png",
@@ -294,12 +296,14 @@ const FILES = [
 "icons/rahmen-walblau.webp",
 "icons/rahmen-wochenstammgast-k.webp",
 "icons/rahmen-wochenstammgast.webp",
+"icons/reisszwecke.webp",
 "icons/st-boss.png",
 "icons/st-duel.png",
 "icons/st-event.png",
 "icons/st-lock.png",
 "icons/st-puzzle.png",
 "icons/st-shop.png",
+"icons/stempel-erledigt.webp",
 "icons/stern-leer.png",
 "icons/stern-voll.png",
 "icons/sym-auftraege.png",
