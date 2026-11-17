@@ -507,7 +507,7 @@ const BOT_STYLES = [
 ];
 const styleOf = p => (p && (p.style || STYLES[p.name])) || {};
 function stat(k, n=1){ if(S && S.stats) S.stats[k]=(S.stats[k]||0)+n; }
-const SPEEDS = {langsam:1500, normal:900, schnell:380};
+const SPEEDS = {langsam:2400, normal:1500, schnell:380};
 const spd = (f=1) => HEADLESS ? 0 : SPEEDS[UI.speed]*f;
 
 function sleep(ms){ const t=TOKEN; return new Promise((res,rej)=>{ const done=()=>{ if(t!==TOKEN) return rej(STALE); if(UI.paused && !HEADLESS) return setTimeout(done,150); res(); }; setTimeout(done, HEADLESS?0:ms); }); }
