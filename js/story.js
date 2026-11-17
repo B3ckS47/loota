@@ -636,9 +636,14 @@ function rollMissions(day) {
   const used = [];   // kein Zähler doppelt, z. B. nicht „3 Kämpfe“ und „6 Kämpfe“ am selben Tag
   return [0, 1, 2].map(d => { const pool = MISSIONS.filter(m => m.d === d && missionOk(m) && !used.includes(m.k)); const m = pool[Math.floor(r() * pool.length)]; used.push(m.k); return {id: m.id, p: 0}; });
 }
-function rollShop(day) {
-  const r = seeded('laden-' + day), pool = SHOP_POOL.filter(x => !owns(x.id)).slice();
-  const out = []; while (pool.length && out.length < SHOP_N) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0].id);
+// Tagesangebot: je ein Porträt, ein Rahmen und ein Titel, dazu ein beliebiges viertes Stück (nur, was man noch nicht hat).
+// Fehlt eine Sorte, füllt der Rest auf. salt würfelt für Tests ein anderes Angebot am selben Tag.
+function rollShop(day, salt) {
+  const r = seeded('laden-' + day + (salt || '')), open = SHOP_POOL.filter(x => !owns(x.id)).map(x => x.id);
+  const take = a => a.length ? a.splice(Math.floor(r() * a.length), 1)[0] : null, out = [];
+  ['portrait', 'frame', 'title'].forEach(k => { const id = take(open.filter(id => id.startsWith(k + ':'))); if (id) out.push(id); });
+  const rest = open.filter(id => !out.includes(id));
+  while (rest.length && out.length < SHOP_N) out.push(take(rest));
   return out;
 }
 let DAILY = null;
@@ -649,6 +654,8 @@ function dailyState() {
   if (!DAILY) DAILY = {day: null, list: [], rer: false, streak: {n: 0, last: null}, shop: []};
   const today = dayKey();
   if (DAILY.day !== today) { DAILY.day = today; DAILY.list = rollMissions(today); DAILY.rer = false; DAILY.shop = rollShop(today); saveDaily(); }
+  // Leeres Angebot (z. B. weil damals schon alles gekauft war), inzwischen gibt es aber wieder etwas: gleich neu bestücken
+  else if (!DAILY.shop.length && SHOP_POOL.some(x => !owns(x.id))) { DAILY.shop = rollShop(today); saveDaily(); }
   return DAILY;
 }
 // Laufende Serie: zählt, solange gestern oder heute mindestens ein Auftrag erledigt wurde

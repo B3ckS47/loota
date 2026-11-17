@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-a89d4b8326';
+const CACHE = 'loota-9f49824eff';
 const FILES = [
 "./",
 "index.html",
@@ -110,6 +110,7 @@ const FILES = [
 "art/klasse-pirat.webp",
 "art/klasse-priester.webp",
 "art/klasse-zauberer.webp",
+"art/ladenregal.webp",
 "art/logo-emblem.webp",
 "art/logo-plundo.webp",
 "art/monster-bademeister-golem.webp",
@@ -176,6 +177,7 @@ const FILES = [
 "art/rasse-halbling.webp",
 "art/rasse-mensch.webp",
 "art/rasse-zwerg.webp",
+"art/regalbrett.webp",
 "art/ruecken-schatz.webp",
 "art/ruecken-tuer.webp",
 "art/serie-brett-aus.webp",
@@ -193,6 +195,7 @@ const FILES = [
 "art/stufe-wuerfel-angehaucht.webp",
 "art/szene-auftragsbrett.webp",
 "art/szene-kraemerladen.webp",
+"art/titelschild.webp",
 "art/verstaerker-riesenhaft.webp",
 "art/verstaerker-stinksauer.webp",
 "art/verstaerker-winzig.webp",
@@ -248,6 +251,7 @@ const FILES = [
 "icons/portrait-walter.png",
 "icons/portrait-zauberer.png",
 "icons/portrait-zwerg.png",
+"icons/preisschild.webp",
 "icons/rahmen-abendrot-k.webp",
 "icons/rahmen-abendrot.webp",
 "icons/rahmen-bierdeckel-k.webp",

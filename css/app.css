@@ -1176,3 +1176,29 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .note .np .btn{grid-column:2;grid-row:1}
 .notes{padding:20px 4px;gap:20px}
 .note::before{top:-13px}
+
+/* ===== Kunos Krämerladen: Regal mit Fächern ===== */
+.sitems{grid-template-columns:1fr 1fr;gap:14px 10px;border:solid transparent;border-width:24px;border-image:url(../art/ladenregal.webp) 95 fill / 24px stretch;padding:4px 0 2px;box-shadow:0 12px 22px -12px rgba(0,0,0,.75)}
+.sitem{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:0;padding:0 0 6px;border:0;border-radius:0;background:none;text-align:center}
+.sitem.own{opacity:1}
+.si-ware{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;height:96px;padding-bottom:22px;background:url(../art/regalbrett.webp) center bottom/100% auto no-repeat}
+.si-ware .sp-pt{width:62px;height:62px;border-width:3px;box-shadow:0 4px 6px -2px rgba(0,0,0,.55)}
+.sp-fa{position:relative;display:block;width:52px;height:52px;margin-bottom:6px}
+.sp-fa img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#f3e3c3}
+.sp-fa::after{content:'';position:absolute;inset:-21.5%;background:var(--fa) center/contain no-repeat}
+.sp-ti{display:grid;place-items:center;width:100%;max-width:150px;aspect-ratio:520/207;margin-bottom:4px;background:url(../art/titelschild.webp) center/contain no-repeat;filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
+.sp-ti span{font:700 13px/1.1 var(--display);color:#4a2f17;padding:0 18px;transform:rotate(-2deg);text-shadow:0 1px 0 rgba(255,240,210,.5)}
+.sitem .si-t{display:grid;gap:0;color:#fff1d6;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.7)}
+.sitem .si-t b{font-size:14px;line-height:1.2}
+.sitem .si-t small{font-size:11.5px;font-weight:700;color:#e3caa0;text-transform:uppercase;letter-spacing:.06em}
+.ptag{appearance:none;position:relative;width:84px;height:62px;margin-top:2px;border:0;padding:0;background:url(../icons/preisschild.webp) center/contain no-repeat;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));cursor:pointer;transition:transform .12s}
+.ptag span{position:absolute;left:24%;right:4%;top:36%;bottom:6%;display:flex;align-items:center;justify-content:center;gap:3px;font:800 15px/1 var(--body);color:#3b2a1c;transform:rotate(14deg)}
+.ptag span img{width:16px;height:16px}
+.ptag:not(:disabled):active{transform:scale(.94) rotate(-3deg)}
+.ptag:disabled{filter:grayscale(.8) brightness(.8) drop-shadow(0 3px 3px rgba(0,0,0,.5));cursor:default}
+.ptag:disabled span{color:#7a6650}
+.sitem .nstamp{position:relative;right:auto;top:auto;margin:0;width:58px;height:58px}
+.sitem.own .si-ware{filter:saturate(.6) brightness(.9)}
+
+.ptag{width:112px;height:82px;margin:0 0 0 22px}
+.ptag span{left:2%;width:42%;top:20%;height:60%;right:auto;bottom:auto;font-size:15px;transform:rotate(17deg);flex-direction:column;gap:1px}

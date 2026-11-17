@@ -1250,14 +1250,16 @@ SHEET_VIEWS.online = () => ({head: h3('Online spielen'),
 function cosPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
   if (k === 'portrait') return `<img class="sp-pt" src="${c.src}" alt="">`;
-  if (k === 'frame') return `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
+  if (k === 'frame') return frameArt(key) ? `<span class="sp-fa" style="--fa:url('${new URL(frameArt(key, true), document.baseURI).href}')"><img src="${myPortrait()}" alt=""></span>` : `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
   return '';   // Titel brauchen kein Bild, der Name steht daneben
 }
 SHEET_VIEWS.shop = () => {
   const st = dailyState();
-  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), poor = STORY.coins < it.price, [k] = id.split(':');
-    return `<div class="sitem${own ? ' own' : ''}${k === 'title' ? ' ti' : ''}">${cosPreview(id)}<span class="si-t"><b>${esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
-      (own ? '<em class="stamp">Gekauft</em>' : `<button type="button" class="btn small${poor ? '' : ' primary'}" data-shopbuy="${id}"${poor ? ' disabled' : ''}>${coinImg}${it.price}</button>`) + '</div>'; }).join('');
+  // Regal mit Fächern: Ware auf dem Regalbrett (Titel auf einem Holzschild), darunter Name und Preisschild zum Antippen
+  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), poor = STORY.coins < it.price, [k, key] = id.split(':'), nm = esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''));
+    const ware = k === 'title' ? `<span class="sp-ti"><span>${esc(COSMETICS.title[key])}</span></span>` : cosPreview(id);
+    return `<div class="sitem${own ? ' own' : ''}${poor && !own ? ' poor' : ''}"><span class="si-ware">${ware}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
+      (own ? '<em class="nstamp" role="img" aria-label="Gekauft"></em>' : `<button type="button" class="ptag" data-shopbuy="${id}"${poor ? ' disabled' : ''} aria-label="Für ${it.price} Münzen kaufen"><span>${coinImg}${it.price}</span></button>`) + '</div>'; }).join('');
   return {head: h3('Krämerladen'),
     body: `<img class="scene" src="art/szene-kraemerladen.webp" alt=""><div class="say"><img src="icons/portrait-kuno.png" alt=""><p>Krämer Kuno: „Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
       `<div class="sitems">${items || '<p class="hint">Du hast schon alles aus dem Laden. Hut ab!</p>'}</div>` +
@@ -1421,6 +1423,7 @@ function go(a) {
     case 'streakreset': resetStreak(); toast('Serie auf 0 gesetzt'); renderSaveInfo(); break;
     case 'unlockall': confirmDialog('Alles freischalten?', 'Alle Welten werden gekauft, jede Station gilt mit allen Sternen als geschafft, und alle Decks, Tische, Musikstücke, Titel, Rahmen und Porträts werden freigeschaltet.', 'Freischalten', 'Abbrechen').then(ok => { if (!ok) return; unlockAll(); toast('Alles freigeschaltet'); renderSaveInfo(); renderControls(); }); break;
     case 'buyreset': PURCHASE.worlds = {}; savePurchase(); toast('Käufe zurückgesetzt'); renderSaveInfo(); break;
+    case 'shopreroll': { const st = dailyState(); st.shop = rollShop(dayKey(), ':' + Date.now()); saveDaily(); toast(st.shop.length ? 'Laden neu bestückt' : 'Im Laden gibt es nichts mehr, das du nicht hast'); break; }
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;
