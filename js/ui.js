@@ -362,7 +362,7 @@ async function freePlay() {
   const fg = freeGame();
   if (!fg) { show('setup'); return; }
   const ok = await confirmDialog('Freies Spiel', 'Deine Partie wartet noch auf dich. Spielst du weiter oder fängst du neu an?', 'Weiterspielen', 'Neue Partie', 'Abbrechen',
-    {scroll: true, img: 'art/szene-offene-partie.webp', stat: `Runde ${fg.turn} · Stufe ${fg.lvl}`});
+    {ribbon: true, img: 'art/szene-offene-partie.webp', stat: `Runde ${fg.turn} · Stufe ${fg.lvl}`});
   if (ok === null) return;
   if (ok) continueGame(); else show('setup');
 }
@@ -1042,13 +1042,13 @@ function showEnd(wid) {
   if (mine) { let k = 0; const iv = setInterval(() => { Particles.burst(Math.random() * innerWidth, innerHeight * 0.25, 18, 1.4); if (++k > 5) clearInterval(iv); }, 280); }
 }
 // Antwort: true (ja), false (nein) oder null (abgebrochen: Abbrechen-Knopf oder Tippen daneben)
-// opt.scroll: als Schriftrolle mit Stoffbanner als Überschrift, opt.img Bild darunter, opt.stat kurze Zeile in Fett
+// opt.ribbon: Überschrift auf dem roten Stoffband, opt.img Bild darunter, opt.stat kurze Zeile in Fett
 function confirmDialog(title, text, yes, no, cancel, opt = {}) {
   return new Promise(res => {
     const d = document.createElement('div'); d.className = 'dialog';
     const btns = `<div class="btnrow"><button type="button" class="btn" data-dlg="0">${no}</button><button type="button" class="btn primary" data-dlg="1">${yes}</button></div>${cancel ? `<button type="button" class="dlg-x" data-dlg="x">${cancel}</button>` : ''}`;
-    d.innerHTML = opt.scroll
-      ? `<div class="panel scroll dlg-scroll"><span class="ribbon"><span>${title}</span></span>${opt.img ? `<img class="dlg-scene" src="${opt.img}" alt="">` : ''}${opt.stat ? `<p class="dlg-stat">${opt.stat}</p>` : ''}<p>${text}</p>${btns}</div>`
+    d.innerHTML = opt.ribbon
+      ? `<div class="panel dlg-rib"><span class="ribbon"><span>${title}</span></span>${opt.img ? `<img class="dlg-scene" src="${opt.img}" alt="">` : ''}${opt.stat ? `<p class="dlg-stat">${opt.stat}</p>` : ''}<p>${text}</p>${btns}</div>`
       : `<div class="panel"><h3>${title}</h3><p>${text}</p>${btns}</div>`;
     d.addEventListener('click', e => {
       if (e.target === d) { d.remove(); res(null); return; }
@@ -1056,7 +1056,6 @@ function confirmDialog(title, text, yes, no, cancel, opt = {}) {
       d.remove(); res(b.dataset.dlg === 'x' ? null : b.dataset.dlg === '1');
     });
     document.body.appendChild(d);
-    if (opt.scroll) watchBoards(d);
   });
 }
 
