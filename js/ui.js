@@ -1191,7 +1191,7 @@ function confirmDialog(title, text, yes, no, cancel, opt = {}) {
 }
 
 /* ================= Karten-Übersicht und Quiz ================= */
-const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Rassen'], ['class', 'Klassen'], ['enh', 'Monsterverstärker'], ['wander', 'Sonderkarten (Tür)'], ['item', 'Gegenstände'], ['oneshot', 'Einmal einsetzbar'], ['levelup', 'Stufenkarten'], ['amulet', 'Sonderkarten (Schatz)']];
+const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Rassen'], ['class', 'Klassen'], ['enh', 'Monster-Zusätze'], ['wander', 'Sonderkarten (Tür)'], ['item', 'Gegenstände'], ['oneshot', 'Einmal einsetzbar'], ['levelup', 'Stufenkarten'], ['amulet', 'Sonderkarten (Schatz)']];
 const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Rasse/Klasse'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
 const SLOT_ORDER = ['kopf', 'ruestung', 'schuhe', 'hand', 'none'];
 /* Filterleiste: dunkler Grund nur, solange sie oben festklebt */

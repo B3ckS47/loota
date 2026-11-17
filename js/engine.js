@@ -274,7 +274,7 @@ const LEVELUPS = ['Pizza für alle bestellt','Regelheft gelesen','Würfel angeha
 
 const TYPES = {
   monster:{l:'Monster',d:'Tür'}, curse:{l:'Fluch',d:'Tür'}, race:{l:'Rasse',d:'Tür'}, class:{l:'Klasse',d:'Tür'},
-  enh:{l:'Monsterverstärker',s:'Verstärker',d:'Tür'}, wander:{l:'Sonderkarte',d:'Tür'},
+  enh:{l:'Monster-Zusatz',s:'Zusatz',d:'Tür'}, wander:{l:'Sonderkarte',d:'Tür'},
   item:{l:'Gegenstand',d:'Schatz'}, oneshot:{l:'Einmal einsetzbar',s:'Einmal',d:'Schatz'}, levelup:{l:'Stufenkarte',s:'Stufe',d:'Schatz'}, amulet:{l:'Sonderkarte',d:'Schatz'}
 };
 // Kartenbilder: Kartenname -> Bilddatei im Ordner art/
@@ -1335,7 +1335,7 @@ function botPlayAgainst(b,C,threat){
   if(!pick){ if(!threat) return false; pick=opts[opts.length-1]; }
   const f=P(C.f);
   fx('interfere',{by:b, kind:pick.kind});
-  if(pick.kind==='enh'){ take(b,pick.c); const m=strongestMon(C); m.enh.push(pick.c); log(`${b.name} spielt „${pick.c.n}“ (${sign(pick.c.v)}) auf ${m.c.n}!`,'bad'); ruleOnce('enh','Monsterverstärker darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.'); }
+  if(pick.kind==='enh'){ take(b,pick.c); const m=strongestMon(C); m.enh.push(pick.c); log(`${b.name} spielt „${pick.c.n}“ (${sign(pick.c.v)}) auf ${m.c.n}!`,'bad'); ruleOnce('enh','Monster-Zusätze darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.'); }
   else if(pick.kind==='os'){ take(b,pick.c); C.used.push(pick.c); C.mB.push({l:`${pick.c.n} (von ${b.name})`,v:pick.v}); log(`${b.name} setzt ${pick.c.n} für das Monster ein (+${pick.v})!`,'bad'); ruleOnce('osmon','Einmal-Gegenstände dürfen auch für das Monster gespielt werden, direkt von der Hand.'); }
   else if(pick.kind==='wander'){ take(b,pick.c); take(b,pick.m); discard(pick.c); C.mons.push({c:pick.m,enh:[]}); log(`${b.name} spielt „Ungebetener Gast“: <b>${pick.m.n}</b> (Stufe ${pick.m.lvl}) mischt mit!`,'bad'); ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.'); }
   else if(pick.kind==='stab'){ const c=b.hand.slice().sort((x,y)=>keepValue(b,x)-keepValue(b,y))[0]; take(b,c); discard(c); C.stabbed[b.id]=true; C.pB.push({l:`${b.name} fällt in den Rücken (Dieb)`,v:-2}); log(`${b.name} fällt ${nmD(f)} als Dieb in den Rücken: −2!`,'bad'); }
@@ -1549,7 +1549,7 @@ function cardActions(c, where){
       }
       case 'enh': {
         if(live) C.mons.forEach(m=>A.push({l:`Auf ${m.c.n} spielen (${sign(c.v)})`, fn:()=>playEnh(c,m), kind:'primary'}));
-        else A.push({info:'Monsterverstärker spielst du während eines Kampfes auf ein Monster, in jedem Kampf.'});
+        else A.push({info:'Monster-Zusätze spielst du während eines Kampfes auf ein Monster, in jedem Kampf.'});
         break;
       }
       case 'wander': {
@@ -1604,7 +1604,7 @@ function playOneShot(c,side){
 function playEnh(c,m){
   const p=me(), C=S.combat; take(p,c); m.enh.push(c); stat('played'); if(C.f!==0 && C.h!==0) track('intf');
   log(`Du spielst „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`);
-  ruleOnce('enh','Monsterverstärker darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.');
+  ruleOnce('enh','Monster-Zusätze darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.');
   if(C.f!==0 && C.h!==0 && c.v>0) C.asked[0]=true;
   markIntf();
 }
@@ -1919,7 +1919,7 @@ function cardMeaning(c){
     case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
     case 'levelup': return 'Stufenkarte: Jederzeit spielbar, auch im Zug der anderen. Bringt 1 Stufe, aber nie die Siegstufe.';
-    case 'enh': return `Monsterverstärker: Jeder darf ihn in jedem Kampf auf ein Monster spielen. ${sign(c.v)} Stufen, ${c.trm>0?'+':'−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm),'Schatz','Schätze')}.`;
+    case 'enh': return `Monster-Zusatz: Jeder darf ihn in jedem Kampf auf ein Monster spielen. ${sign(c.v)} Stufen, ${c.trm>0?'+':'−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm),'Schatz','Schätze')}.`;
     default: return '';
   }
 }
@@ -1970,6 +1970,6 @@ const QUIZ=[
   {q:'Beim Durchsuchen des Raums ziehst du verdeckt einen Fluch. Was jetzt?', o:['Er trifft dich sofort.','Er kommt auf deine Hand. Du kannst ihn später auf jemanden spielen.','Du musst ihn sofort auf den Spieler links spielen.','Er wird abgelegt.'], a:1, e:'Verdeckt gezogene Flüche sind Handkarten. Spielen darfst du sie jederzeit, auf jeden.'},
   {q:'Du stirbst. Was behältst du?', o:['Gar nichts, du fängst auf Stufe 1 an.','Stufe, Rasse und Klasse.','Deine Handkarten.','Deine ausgerüsteten Gegenstände.'], a:1, e:'Stufe, Rasse und Klasse bleiben. Deine Gegenstände teilen sich die anderen, Handkarten werden abgelegt. Im nächsten Zug ziehst du 4 Tür- und 4 Schatzkarten.'},
   {q:'Mitten im Kampf ziehst du einen besseren Helm. Darfst du ihn anlegen?', o:['Ja, jederzeit.','Nein, Gegenstände nur im eigenen Zug außerhalb von Kämpfen.','Ja, wenn du verlierst.','Nur mit Erlaubnis des Helfers.'], a:1, e:'Ausrüstung änderst du nur außerhalb von Kämpfen. Ausnahme: Einmal einsetzbare Gegenstände spielst du direkt von der Hand.'},
-  {q:'Wer darf einen Monsterverstärker wie „+5“ spielen?', o:['Nur der Kämpfer.','Nur wer gerade nicht kämpft.','Jeder Spieler, in jedem Kampf.','Niemand, die Karte liegt einfach im Spiel.'], a:2, e:'Jeder darf ihn in jeden Kampf spielen, auch auf das eigene Monster. Verstärker verändern meist auch die Zahl der Schätze.'},
+  {q:'Wer darf einen Monster-Zusatz wie „+5“ spielen?', o:['Nur der Kämpfer.','Nur wer gerade nicht kämpft.','Jeder Spieler, in jedem Kampf.','Niemand, die Karte liegt einfach im Spiel.'], a:2, e:'Jeder darf ihn in jeden Kampf spielen, auch auf das eigene Monster. Zusätze verändern meist auch die Zahl der Schätze.'},
   {q:'Du hilfst Kalle als Elf, und ihr besiegt das Monster. Was bekommst du?', o:['Nur die versprochene Beute.','Die versprochene Beute und 1 Stufe.','Alle Schätze.','2 Stufen.'], a:1, e:'Aufsteigen tut normalerweise nur, wer kämpft. Elfen steigen aber auch als Helfer 1 Stufe auf. Dazu kommt, was ihr als Belohnung vereinbart habt.'}
 ];
