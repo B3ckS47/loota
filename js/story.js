@@ -94,7 +94,18 @@ const COSMETICS = {
     kurt: {n: 'Schlüsselmeister Kurt', src: 'icons/portrait-kurt.png'}
   },
   // Hintergründe hinter Porträt und Werten. Grafik im Querformat 3 : 1 (art/kulisse-…), p = Schwerpunkt für den Ausschnitt
-  bg: {}
+  bg: {
+    staedtchen: {n: 'Städtchen', p: '50% 55%'},
+    weinkeller: {n: 'Weinkeller', p: '50% 60%'},
+    zauberwald: {n: 'Zauberwald', p: '50% 55%'},
+    sandstrand: {n: 'Sandstrand', p: '40% 55%'},
+    hohesee: {n: 'Hohe See', p: '50% 62%'},
+    // Krämerladen
+    sternennacht: {n: 'Sternennacht', p: '50% 55%'},
+    abendrot: {n: 'Abendrot', p: '50% 55%'},
+    // Nur aus der Goldtruhe
+    schatzkammer: {n: 'Schatzkammer', p: '50% 62%'}
+  }
 };
 function cosmeticName(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
@@ -168,8 +179,8 @@ const WORLDS = [{
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
     {id: 'w1s7', ax: 51.4, ay: 77.0, no: '7', x: 50, y: 770, type: 'shop', name: 'Rast im Gasthof', place: 'Gasthof', reqAny: ['w1s6a', 'w1s6b'],
       text: 'Kurz vor der Drachenhöhle steht ein kleiner Gasthof. Der Wirt zeigt auf ein Regal voller Kram: „Für ein paar Münzen ist alles zu haben. Wer weiß, ob du wiederkommst.“',
-      goal: 'Tausche Münzen gegen Rahmen und Porträts. Danach geht es zum Drachen.',
-      shop: [{id: 'frame:moewenfeder', price: 30}, {id: 'portrait:gartenzwerg', price: 40}, {id: 'portrait:rentner', price: 40}], onward: 'Weiter zum Drachen'},
+      goal: 'Tausche Münzen gegen Rahmen, Porträts und einen Hintergrund. Danach geht es zum Drachen.',
+      shop: [{id: 'frame:moewenfeder', price: 30}, {id: 'portrait:gartenzwerg', price: 40}, {id: 'portrait:rentner', price: 40}, {id: 'bg:staedtchen', price: 50}], onward: 'Weiter zum Drachen'},
     {id: 'w1s8', luck: 0.25, face: 'art/monster-drache-des-montagmorgens.webp', ax: 80.7, ay: 90.8, no: '8', x: 50, y: 895, type: 'boss', name: 'Der Drache des Montagmorgens', place: 'Drachenhöhle', req: ['w1s7'],
       text: 'Jeden Montag legt der Drache das Städtchen lahm: kein Kaffee, keine Laune, kein Durchkommen. Heute stellst du dich ihm. Die drei vom Stammtisch wollen den Ruhm natürlich selbst.',
       goal: 'Gegen Berta, Kalle und Uschi. Der Drache steckt in der unteren Hälfte des Türstapels und ist montags noch nicht ganz wach: Stufe 13 statt 16. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
@@ -234,8 +245,8 @@ const WORLDS = [{
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
     {id: 'w2s7', ax: 19.4, ay: 82.3, via: {w2s6a: [[24, 58.5], [16, 64], [16, 75]]}, no: '7', type: 'shop', name: 'Rast beim Kellermeister', place: 'Kellermeister', reqAny: ['w2s6a', 'w2s6b'],
       text: 'Kurz vor dem Thronsaal hat der alte Kellermeister seinen Stand: Kerzenstummel, Korken und allerlei Krimskrams. „Für ein paar Münzen ist alles zu haben. Rüdiger zahlt ja nie.“',
-      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Rüdiger.',
-      shop: [{id: 'title:fassfluesterer', price: 30}, {id: 'frame:kerzenwachs', price: 40}, {id: 'portrait:rosi', price: 60}], onward: 'Weiter zu Rüdiger'},
+      goal: 'Tausche Münzen gegen Rahmen, Titel, Porträts und Hintergründe. Danach geht es zu Rüdiger.',
+      shop: [{id: 'title:fassfluesterer', price: 30}, {id: 'frame:kerzenwachs', price: 40}, {id: 'portrait:rosi', price: 60}, {id: 'bg:weinkeller', price: 60}], onward: 'Weiter zu Rüdiger'},
     {id: 'w2s8', luck: 0.25, face: 'art/monster-rattenkoenig-ruediger.webp', ax: 49.2, ay: 90.4, no: '8', type: 'boss', name: 'Rüdigers Thronsaal', place: 'Thronsaal', req: ['w2s7'],
       text: 'Auf einem Thron aus Pfandkisten sitzt Rattenkönig Rüdiger, den Kronkorken schief auf dem Kopf. Rosi, Fridolin und Gustav sitzen schon am Tisch. „Wer mich besiegt, kriegt das Bier“, piepst Rüdiger. „Aber das schafft eh keiner.“',
       goal: 'Gegen Rosi, Fridolin und Gustav. Rüdiger steckt in der unteren Hälfte des Türstapels und ist nach dem Festmahl etwas träge: Stufe 13 statt 14. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
@@ -297,8 +308,8 @@ const WORLDS = [{
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
     {id: 'w3s7', ax: 25, ay: 79, no: '7', type: 'shop', name: 'Hütte der Kräuterhexe', place: 'Kräuterhütte', reqAny: ['w3s6a', 'w3s6b'],
       text: 'Die Kräuterhexe hat ihre Hütte nicht weit von Morchellas Palast gebaut, „wegen der Kundschaft“. Zwischen Kräuterbündeln und Salbentöpfen gibt es allerlei zu kaufen.',
-      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Morchella.',
-      shop: [{id: 'title:schwammerlsucher', price: 30}, {id: 'frame:fliegenpilz', price: 40}, {id: 'portrait:flora', price: 60}], onward: 'Weiter zu Morchella'},
+      goal: 'Tausche Münzen gegen Rahmen, Titel, Porträts und Hintergründe. Danach geht es zu Morchella.',
+      shop: [{id: 'title:schwammerlsucher', price: 30}, {id: 'frame:fliegenpilz', price: 40}, {id: 'portrait:flora', price: 60}, {id: 'bg:zauberwald', price: 60}], onward: 'Weiter zu Morchella'},
     {id: 'w3s8', luck: 0.1, face: 'art/monster-pilzkoenigin-morchella.webp', ax: 73, ay: 88, no: '8', type: 'boss', name: 'Morchellas Sporenpalast', place: 'Sporenpalast', req: ['w3s7'],
       text: 'Morchellas Sporenpalast leuchtet wie eine riesige Laterne. Die Königin thront in der Mitte, ihr Mann hält ihr die Schleppe. Flora, Trudi und Walter sitzen schon am Tisch. „Wer mich besiegt, darf gehen“, säuselt Morchella. „Alle anderen werden Kompost.“',
       goal: 'Gegen Flora, Trudi und Walter. Morchella steckt in der unteren Hälfte des Türstapels: Stufe 14. Wer sie besiegt, gewinnt. Besiegt sie jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
@@ -325,8 +336,8 @@ const WORLDS = [{
       reward: 'title:sandfuss'},
     {id: 'w4s7', ax: 80.8, ay: 32.9, no: '2', type: 'shop', name: 'Paules Bauchladen', place: 'Dünenkamm', req: ['w4s1'],
       text: 'Oben auf der Düne steht Pommes-Paule mit seinem Bauchladen und winkt jedem, der vom Bach herunterkommt. „Pommes, Eis, Strandmode! Alles frisch, fast alles.“ Zwischen den Pommestüten liegen Titel, ein Rahmen und ein Porträt.',
-      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es hinunter zu den Strandkörben.',
-      shop: [{id: 'title:wellenreiter', price: 30}, {id: 'frame:rettungsring', price: 40}, {id: 'portrait:sunny', price: 60}], onward: 'Weiter zum Strand'},
+      goal: 'Tausche Münzen gegen Rahmen, Titel, Porträts und Hintergründe. Danach geht es hinunter zu den Strandkörben.',
+      shop: [{id: 'title:wellenreiter', price: 30}, {id: 'frame:rettungsring', price: 40}, {id: 'portrait:sunny', price: 60}, {id: 'bg:sandstrand', price: 60}], onward: 'Weiter zum Strand'},
     {id: 'w4s2', luck: 0.15, face: 'icons/portrait-berta.png', ax: 42.5, ay: 46.6, no: '3', type: 'duel', name: 'Handtuchkrieg', place: 'Strandkörbe', req: ['w4s7'],
       text: 'Ein einziger Strandkorb ist noch frei, und Berta hat ihn auch gesehen. Sie wirft ihr Handtuch, du wirfst deins. Beide landen gleichzeitig. „Dann spielen wir drum“, sagt Berta und mischt schon.',
       goal: '1 gegen 1 gegen Berta, mit dem Strand-Deck: Erreiche Stufe 5 vor ihr. Achte auf Ebbe und Flut.',
@@ -426,8 +437,8 @@ const WORLDS = [{
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}, {t: 'In weniger als 12 Runden', ok: (st, S) => S.turn < 12}]},
     {id: 'w5s7', ax: 32, ay: 77, no: '7', type: 'shop', name: 'Fietes Floß', place: 'Riff', reqAny: ['w5s6a', 'w5s6b'],
       text: 'Über dem Riff treibt Fischhändler Fiete auf seinem Floß, zwischen Kisten voller Muscheln und Fischbrötchen. „Moin! Alles frisch aus dem Meer, sogar die Rahmen.“',
-      goal: 'Tausche Münzen gegen Rahmen, Titel und Porträts. Danach geht es zu Achtarm.',
-      shop: [{id: 'title:seebaer', price: 30}, {id: 'frame:dublonengold', price: 40}, {id: 'portrait:walburga', price: 60}], onward: 'Weiter zu Achtarm'},
+      goal: 'Tausche Münzen gegen Rahmen, Titel, Porträts und Hintergründe. Danach geht es zu Achtarm.',
+      shop: [{id: 'title:seebaer', price: 30}, {id: 'frame:dublonengold', price: 40}, {id: 'portrait:walburga', price: 60}, {id: 'bg:hohesee', price: 60}], onward: 'Weiter zu Achtarm'},
     {id: 'w5s8', luck: 0.1, face: 'art/monster-kaeptn-achtarm.webp', ax: 75, ay: 86, no: '8', type: 'boss', name: 'Achtarms Flaggschiff', place: 'Flaggschiff', req: ['w5s7'],
       text: 'Das schwarze Flaggschiff liegt vor euch, eine Krake als Galionsfigur. An Deck sitzt Uschi und mischt die Karten, Pepe und Sardella sind auch schon da. Achtarm lehnt am Mast und schwingt alle acht Säbel. „Wer mich besiegt, kriegt das Schiff. Und die Dame da gleich mit, die schuldet mir nämlich schon drei Truhen.“',
       goal: 'Gegen Pepe, Sardella und Uschi. Achtarm steckt in der unteren Hälfte des Türstapels: Stufe 16, Pirat und Tiefsee. Wer ihn besiegt, gewinnt. Besiegt ihn jemand anderes, hast du verloren. Stufe 10 gewinnt wie gewohnt.',
@@ -610,7 +621,8 @@ const SHOP_POOL = [
   {id: 'frame:bierdeckel', price: 40}, {id: 'frame:abendrot', price: 40}, {id: 'frame:mitternacht', price: 50}, {id: 'frame:eichenholz', price: 40},
   {id: 'frame:lavendel', price: 40}, {id: 'frame:perlmutt', price: 50},
   {id: 'title:gluckspilz', price: 30}, {id: 'title:wuerfelkoenig', price: 30}, {id: 'title:kartenhai', price: 30},
-  {id: 'title:fruehaufsteher', price: 30}, {id: 'title:nachteule', price: 30}, {id: 'title:schatzsucher', price: 30}
+  {id: 'title:fruehaufsteher', price: 30}, {id: 'title:nachteule', price: 30}, {id: 'title:schatzsucher', price: 30},
+  {id: 'bg:sternennacht', price: 70}, {id: 'bg:abendrot', price: 70}
 ];
 const SHOP_N = 4;
 const STREAK_FRAME = 'frame:wochenstammgast';
@@ -618,7 +630,7 @@ const STREAK_FRAME = 'frame:wochenstammgast';
 // Gezogen wird nur, was in COSMETICS steht.
 const CHEST_ITEMS = {
   holz: ['title:truhenknacker', 'title:gluecksritter', 'title:dauerbrenner'],
-  gold: ['title:stammtischlegende', 'portrait:minka', 'portrait:klappi', 'portrait:kurt', 'frame:truhenbeschlag', 'frame:schluesselbund', 'frame:edelsteine']
+  gold: ['title:stammtischlegende', 'portrait:minka', 'portrait:klappi', 'portrait:kurt', 'frame:truhenbeschlag', 'frame:schluesselbund', 'frame:edelsteine', 'bg:schatzkammer']
 };
 const cosmeticExists = id => { const [k, key] = id.split(':'); return !!(COSMETICS[k] && COSMETICS[k][key]); };
 const chestItem = id => id === STREAK_FRAME || CHEST_ITEMS.holz.includes(id) || CHEST_ITEMS.gold.includes(id);

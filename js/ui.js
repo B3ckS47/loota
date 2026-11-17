@@ -48,18 +48,32 @@ function saveProfile() { try { localStorage.setItem(K_PROFILE, JSON.stringify(PR
 const ALL_PORTRAITS = [...PORTRAITS, ...Object.entries(COSMETICS.portrait).map(([k, v]) => [k, v.n, v.src, 'portrait:' + k])];
 const ALL_FRAMES = [...FRAMES, ...Object.entries(COSMETICS.frame).map(([k, v]) => [k, v.n, v.c, 'frame:' + k])];
 const cosOpen = x => !x[3] || owns(x[3]);
-// Hintergründe: [Schlüssel, Name, Grafik, Freischalt-ID, Schwerpunkt]. Die drei vom Start sind Testmotive aus vorhandenen Bildern.
-const BACKDROPS = [['keiner', 'Ohne', ''], ['laden', 'Krämerladen', 'art/kulisse-laden.webp', null, '50% 55%'], ['meer', 'Hohe See', 'art/kulisse-meer.webp', null, '62% 60%'], ['wald', 'Zauberwald', 'art/kulisse-wald.webp', null, '40% 50%']];
+// Hintergründe: [Schlüssel, Name, Grafik, Freischalt-ID, Schwerpunkt]. Vom Start an gibt es nur „Ohne“.
+const BACKDROPS = [['keiner', 'Ohne', '']];
 const ALL_BGS = [...BACKDROPS, ...Object.entries(COSMETICS.bg).map(([k, v]) => [k, v.n, `art/kulisse-${k}.webp`, 'bg:' + k, v.p || '50% 50%'])];
 // Absolute Adresse, weil url() in einer CSS-Variable sonst relativ zu css/ aufgelöst wird
 const bgSrc = (x, small) => x && x[2] ? new URL(small ? x[2].replace('.webp', '-k.webp') : x[2], document.baseURI).href : '';
 function myBg() { return ALL_BGS.find(q => q[0] === PROFILE.bg && cosOpen(q)) || BACKDROPS[0]; }
-// Bots bekommen einen festen Hintergrund passend zum Namen, im Online-Modus kommt er später vom Mitspieler
-function bgOf(p) {
-  if (p.human) return myBg();
-  const art = ALL_BGS.filter(x => x[2] && !x[3]); let h = 0;
-  for (const ch of p.name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return art.length ? art[h % art.length] : BACKDROPS[0];
+// Bots: feste Optik passend zum Namen, aus stimmigen Paaren von Hintergrund und Rahmen.
+// Im Online-Modus kommt sie später vom Mitspieler selbst.
+const BOT_LOOKS = [
+  ['staedtchen', 'kupferkessel', 'bierdeckel', 'eichenholz', 'gold'], ['weinkeller', 'rattengrau', 'kerzenwachs', 'goldkronkorken', 'bronze'],
+  ['zauberwald', 'moosgruen', 'fliegenpilz', 'leuchtpilz', 'smaragd'], ['sandstrand', 'strandtuch', 'moewenfeder', 'rettungsring', 'saphir'],
+  ['hohesee', 'walblau', 'meeresschaum', 'dublonengold', 'korallenrot'], ['sternennacht', 'mitternacht', 'lavendel', 'perlmutt', 'silber'],
+  ['abendrot', 'abendrot', 'eichenholz', 'rubin'], ['schatzkammer', 'truhenbeschlag', 'schluesselbund', 'edelsteine', 'gold'],
+  ['keiner', 'gold', 'silber', 'bronze', 'rubin', 'smaragd', 'saphir']];
+function botLook(p) {
+  let h = 0; for (const ch of p.name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const L = BOT_LOOKS[h % BOT_LOOKS.length], fk = L[1 + (h >>> 8) % (L.length - 1)];
+  return {bg: ALL_BGS.find(x => x[0] === L[0]) || BACKDROPS[0], frame: ALL_FRAMES.find(x => x[0] === fk) || FRAMES[0]};
+}
+function bgOf(p) { return p.human ? myBg() : botLook(p).bg; }
+// Rahmen eines Spielers: [Schlüssel, Name, Farbe]
+function frameOf(p) { return p.human ? (ALL_FRAMES.find(q => q[0] === PROFILE.frame && cosOpen(q)) || FRAMES[0]) : botLook(p).frame; }
+// Porträt mit Rahmengrafik für die großen Köpfe (Profil im Spiel)
+function bigPortrait(p) {
+  const f = frameOf(p), art = frameArt(f[0]), me = p.human ? ' me' : '';
+  return `<span class="pfw${art ? ' fa' : ''}" style="--pfimgk:${art ? `url('${new URL(frameArt(f[0], true), document.baseURI).href}')` : 'none'};--fc:${f[2]}"><img class="pt${me}" src="${portrait(p)}" alt=""></span>`;
 }
 // Klasse und Stil für eine Fläche mit Hintergrund (leer, wenn keiner gewählt ist)
 const bgAttr = (x, small) => x && x[2] ? ` hasbg" style="--bg:url('${bgSrc(x, small)}');--bgp:${x[4] || '50% 50%'}` : '';
@@ -569,7 +583,7 @@ function renderOpps() {
   const C = S.combat, many = S.players.length > 3;
   const html = S.players.filter(p => !p.human).map(p => {
     const role = C && (C.f === p.id ? 'kämpft' : C.h === p.id ? 'hilft' : ''), turn = S.cur === p.id && S.winner == null;
-    return `<button type="button" class="oc${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}${bgAttr(bgOf(p), true)}" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
+    return `<button type="button" class="oc${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}${bgAttr(bgOf(p), true) || '" style="'};--fc:${frameOf(p)[2]}" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
       (role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : '') +
       `<span class="pt"><img src="${portrait(p)}" alt=""><span class="lvb">${p.lvl}</span></span>` +
       `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span>${many ? '' : `<span><img src="${ICON.hand}" alt="">${p.hand.length}</span>`}${p.spore ? `<span class="neg" title="Sporenwolke"><img class="spi" src="${ART['Sporenwolke']}" alt="">−${p.spore}</span>` : ''}</span></span></button>`;
@@ -916,13 +930,13 @@ const SHEET_VIEWS = {
     const ab = abilList(p);
     const rows = slotRows(p, false);
     const hand = UI.open && p.hand.length ? `<div class="tipbox"><span class="tip-h">Handkarten (sichtbar, weil eingeschaltet)</span>${p.hand.map(c => linkify(esc(cardLabel(c)))).join(', ')}</div>` : '';
-    return {hero: true, head: `<div class="sh-hero${bgAttr(bgOf(p))}"><img class="pt" src="${portrait(p)}" alt=""><h3>${esc(p.name)}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`,
+    return {hero: true, head: `<div class="sh-hero${bgAttr(bgOf(p))}">${bigPortrait(p)}<h3>${esc(p.name)}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span>${styleOf(p).l ? `<small class="opp-style">${esc(styleOf(p).l)}</small>` : ''}<span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`,
       body: `${ab}${stats3(p)}<div class="slots">${rows}</div><div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div>${hand}`};
   },
   equip() {
     if (!S) return null;
     const p = me(), free = isFree();
-    return {hero: true, head: `<div class="sh-hero${bgAttr(myBg())}"><span class="pfw"><img class="pt me" src="${myPortrait()}" alt=""></span><h3>${esc(myName())}${myTitle() ? `<em class="sh-title">${esc(myTitle())}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`, body: `${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
+    return {hero: true, head: `<div class="sh-hero${bgAttr(myBg())}">${bigPortrait(p)}<h3>${esc(myName())}${myTitle() ? `<em class="sh-title">${esc(myTitle())}</em>` : ''}<span class="sh-lvl">Stufe ${p.lvl}${p.dead ? ' · tot' : ''}</span><span class="coins">${coinsHTML(p.lvl)}</span></h3></div>`, body: `${stats3(p)}${abilList(p)}<div class="slots">${slotRows(p, true)}</div>` +
       `<p class="hint">Im Kampf zählen nur Rasse, Klasse und ausgerüstete Gegenstände. Der Rucksack bringt keinen Bonus. Karte antippen für Aktionen.</p>` +
       (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') +
       `<div class="tipbox" style="margin-top:12px">${powerTip(p)}</div><div class="tipbox">${runTip(p)}</div><div class="tipbox">${handTip(p)}</div>`};
@@ -1287,7 +1301,7 @@ function showChest() {
       const b = box.getBoundingClientRect(); Particles.burst(b.left + b.width / 2, b.top + b.height * 0.35, w.t === 'gold' ? 40 : 26, 1.2);
       const k = r.id && r.id.split(':')[0], loot = el.querySelector('.cv-loot');
       loot.innerHTML = r.id
-        ? `<span class="ribbon"><span>Neu für dich</span></span>${k === 'title' ? `<span class="cv-title">„${esc(COSMETICS.title[r.id.split(':')[1]])}“</span>` : cosPreview(r.id)}<b>${esc(cosmeticName(r.id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]} · im Charakter-Bildschirm auswählen</small>${r.coins ? `<span class="cv-coins sm">${coinImg}+${r.coins}</span>` : ''}`
+        ? `<span class="ribbon"><span>Neu für dich</span></span>${k === 'title' ? `<span class="cv-title">„${esc(COSMETICS.title[r.id.split(':')[1]])}“</span>` : cosPreview(r.id)}<b>${esc(cosmeticName(r.id).replace(/^\S+ „|“$/g, ''))}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', bg: 'Hintergrund', title: 'Titel'}[k]} · im Charakter-Bildschirm auswählen</small>${r.coins ? `<span class="cv-coins sm">${coinImg}+${r.coins}</span>` : ''}`
         : `<span class="ribbon"><span>Münzen</span></span><span class="cv-coins">${coinImg}+${r.coins}</span><small>Für den Krämerladen</small>`;
       loot.insertAdjacentHTML('beforeend', '<button type="button" class="btn primary small cv-ok">Super!</button>');
       setTimeout(() => { loot.hidden = false; watchBoards(el); Snd.sfx('coin'); }, 450);
@@ -1317,6 +1331,7 @@ SHEET_VIEWS.online = () => ({head: h3('Online spielen'),
 function cosPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k] && COSMETICS[k][key];
   if (k === 'portrait') return `<img class="sp-pt" src="${c.src}" alt="">`;
+  if (k === 'bg') return `<span class="sp-bg" style="background-image:url('${new URL(`art/kulisse-${key}-k.webp`, document.baseURI).href}');background-position:${c.p || '50% 50%'}"></span>`;
   if (k === 'frame') return frameArt(key) ? `<span class="sp-fa" style="--fa:url('${new URL(frameArt(key, true), document.baseURI).href}')"><img src="${myPortrait()}" alt=""></span>` : `<span class="sp-fr" style="--c:${c.c}"><img src="${myPortrait()}" alt=""></span>`;
   return '';   // Titel brauchen kein Bild, der Name steht daneben
 }
@@ -1328,7 +1343,7 @@ SHEET_VIEWS.shop = () => {
     const ware = k === 'title' ? `<span class="sp-ti"><span>${esc(COSMETICS.title[key])}</span></span>` : cosPreview(id);
     const tag = `<span class="ptag${deal ? ' old' : ''}"><span>${coinImg}<s>${it.price}</s></span></span>`;
     const sale = deal ? `<span class="sale" aria-label="Angebot: ${price} Münzen statt ${it.price}"><b>${price}</b><em>−${deal.pct} %</em></span>` : '';
-    return `<div class="sitem${own ? ' own' : ''}${deal ? ' deal' : ''}"><span class="si-ware">${tag}${ware}${sale}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
+    return `<div class="sitem${own ? ' own' : ''}${deal ? ' deal' : ''}"><span class="si-ware">${tag}${ware}${sale}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', bg: 'Hintergrund', title: 'Titel'}[k]}</small></span>` +
       `<button type="button" class="btn small sbuy${own || poor ? '' : ' primary'}" data-shopbuy="${id}"${own || poor ? ' disabled' : ''}>${own ? 'Gekauft' : 'Kaufen'}</button></div>`; }).join('');
   return {head: h3('Krämerladen'),
     body: `<img class="scene" src="art/szene-kraemerladen.webp" alt=""><div class="say"><img src="icons/portrait-kuno.png" alt=""><p>Krämer Kuno: „Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
@@ -1376,6 +1391,7 @@ function cosmeticPreview(id) {
   const [k, key] = id.split(':'), c = COSMETICS[k][key];
   if (k === 'portrait') return `<img class="cos-pt" src="${c.src}" alt="">`;
   if (k === 'frame') return `<i class="cos-fr" style="--c:${c.c}"></i>`;
+  if (k === 'bg') return `<i class="cos-bg" style="background-image:url('art/kulisse-${key}-k.webp');background-position:${c.p || '50% 50%'}"></i>`;
   return `<i class="cos-ti">„“</i>`;
 }
 // Story-Text, wenn bekannt mit dem Gesicht dessen, der spricht oder auftritt
@@ -1433,7 +1449,7 @@ SHEET_VIEWS.worldrules = s => {
 };
 SHEET_VIEWS.storyintro = s => {
   const w = worldById(s.w);
-  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du beim Händler gegen Rahmen, Titel und Porträts.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
+  return {head: h3(`Welt ${w.n} · ${esc(w.name)}`), body: `${sayHTML(w.face, w.intro)}<ul class="st-howto"><li>${starSvg(true)}<span>Jede Station gibt bis zu 3 Sterne: einen fürs Schaffen, zwei für Zusatzziele.</span></li><li>${coinImg}<span>Für Siege und Sterne gibt es Münzen. Die tauschst du beim Händler gegen Rahmen, Titel, Porträts und Hintergründe.</span></li><li><svg viewBox="0 0 24 24" class="noadv"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z M9.5 20h5 M4 4l16 16" /></svg><span>Im Storymodus gibt es keine Tipps und keine Zug-Empfehlung.</span></li></ul><div class="acts"><button type="button" class="btn primary" data-storyclose>Auf geht’s</button></div>`};
 };
 SHEET_VIEWS.station = s => {
   const st = stationById(s.st); if (!st) return null;
