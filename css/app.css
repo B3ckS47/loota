@@ -1137,3 +1137,5 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 
 .sh-head h3 .sh-title{display:block;font:800 14px/1.2 var(--body);font-style:normal;color:var(--red);margin-top:3px}
 .sh-head h3 .sh-lvl{display:block;font:700 15px/1.2 var(--body);color:var(--muted);margin-top:2px}
+/* Porträt im Rahmen als Block, sonst legt der Browser Platz für Unterlängen darunter und der Ring sitzt zu tief */
+.pf-bigw>img,.pfw>img{display:block}
