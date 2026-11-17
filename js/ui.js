@@ -844,6 +844,12 @@ const h3 = t => `<h3>${t}</h3>`;
 // Holzbretter und Schriftrolle: Quelle, Schnittkanten im Bild [oben, rechts, unten, links], Anzeigebreite der Kanten, Alphakanal
 const BOARDS = [
   {sel: '.notes', src: 'art/brett-auftraege.webp', s: [54, 54, 54, 54], w: [17, 17, 17, 17]},
+  // Händler im Storymodus: je Welt eigenes Regal (vor dem allgemeinen Eintrag, der erste passende gewinnt)
+  {sel: '.sitems.rg-w1', src: 'art/regal-w1.webp', s: [120, 120, 120, 120], w: [30, 30, 30, 30]},
+  {sel: '.sitems.rg-w2', src: 'art/regal-w2.webp', s: [200, 190, 190, 190], w: [48, 46, 46, 46]},
+  {sel: '.sitems.rg-w3', src: 'art/regal-w3.webp', s: [215, 150, 110, 150], w: [50, 36, 28, 36]},
+  {sel: '.sitems.rg-w4', src: 'art/regal-w4.webp', s: [105, 105, 105, 105], w: [26, 26, 26, 26]},
+  {sel: '.sitems.rg-w5', src: 'art/regal-w5.webp', s: [185, 185, 185, 185], w: [44, 44, 44, 44]},
   {sel: '.sitems', src: 'art/ladenregal.webp', s: [95, 95, 95, 95], w: [24, 24, 24, 24]},
   {sel: '.scroll', src: 'art/schriftrolle.webp', s: [100, 110, 95, 110], w: [46, 52, 44, 52], alpha: true},
   {sel: '.pack', src: 'art/leder-rucksack.webp', s: [72, 72, 72, 72], w: [22, 22, 22, 22], alpha: true}

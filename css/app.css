@@ -1503,3 +1503,21 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .si-ware .easel{width:128px;margin:0 0 -2px}
 .cv-loot .easel{width:180px}
 .easel.small{width:66px;margin:0 -2px}
+
+/* Händler im Storymodus: Regal und Regalbrett je Welt; Innenabstand passend zur Rahmenbreite */
+.sitems.rg-w1{padding:34px 30px 32px 30px}
+.sitems.rg-w1 .si-ware{background-image:url(../art/regalbrett-w1.webp)}
+.sitems.rg-w1.b9{padding:4px 0 2px;border-width:30px 30px 30px 30px;border-image:url(../art/regal-w1.webp) 120 120 120 120 fill / 30px 30px 30px 30px stretch}
+.sitems.rg-w2{padding:52px 46px 48px 46px}
+.sitems.rg-w2 .si-ware{background-image:url(../art/regalbrett-w2.webp)}
+.sitems.rg-w2.b9{padding:4px 0 2px;border-width:48px 46px 46px 46px;border-image:url(../art/regal-w2.webp) 200 190 190 190 fill / 48px 46px 46px 46px stretch}
+.sitems.rg-w3{padding:54px 36px 30px 36px}
+.sitems.rg-w3 .si-ware{background-image:url(../art/regalbrett-w3.webp)}
+.sitems.rg-w3.b9{padding:4px 0 2px;border-width:50px 36px 28px 36px;border-image:url(../art/regal-w3.webp) 215 150 110 150 fill / 50px 36px 28px 36px stretch}
+.sitems.rg-w4{padding:30px 26px 28px 26px}
+.sitems.rg-w4 .si-ware{background-image:url(../art/regalbrett-w4.webp)}
+.sitems.rg-w4.b9{padding:4px 0 2px;border-width:26px 26px 26px 26px;border-image:url(../art/regal-w4.webp) 105 105 105 105 fill / 26px 26px 26px 26px stretch}
+.sitems.rg-w5{padding:48px 44px 46px 44px}
+.sitems.rg-w5 .si-ware{background-image:url(../art/regalbrett-w5.webp)}
+.sitems.rg-w5.b9{padding:4px 0 2px;border-width:44px 44px 44px 44px;border-image:url(../art/regal-w5.webp) 185 185 185 185 fill / 44px 44px 44px 44px stretch}
+.sitem .si-t{position:relative;z-index:2}
