@@ -656,6 +656,11 @@ function dailyState() {
   if (DAILY.day !== today) { DAILY.day = today; DAILY.list = rollMissions(today); DAILY.rer = false; DAILY.shop = rollShop(today); saveDaily(); }
   // Leeres Angebot (z. B. weil damals schon alles gekauft war), inzwischen gibt es aber wieder etwas: gleich neu bestücken
   else if (!DAILY.shop.length && SHOP_POOL.some(x => !owns(x.id))) { DAILY.shop = rollShop(today); saveDaily(); }
+  // Tagesangebot: das vierte Stück ist reduziert
+  if (DAILY.shop.length && (!DAILY.deal || !DAILY.shop.includes(DAILY.deal.id))) {
+    const r = seeded('angebot-' + today + DAILY.shop.join());
+    DAILY.deal = {id: DAILY.shop[DAILY.shop.length - 1], pct: DEAL_PCT[Math.floor(r() * DEAL_PCT.length)]}; saveDaily();
+  }
   return DAILY;
 }
 // Laufende Serie: zählt, solange gestern oder heute mindestens ein Auftrag erledigt wurde
@@ -720,5 +725,9 @@ function rerollMission(i) {
   return true;
 }
 const shopItem = id => SHOP_POOL.find(x => x.id === id);
-function buyShopItem(id) { const it = shopItem(id); if (!it || !dailyState().shop.includes(id)) return 'gone'; return buyCosmetic(it); }
+const DEAL_PCT = [20, 25, 30, 40, 50];
+const shopDeal = id => { const d = dailyState().deal; return d && d.id === id ? d : null; };
+// Preis heute: beim Tagesangebot reduziert, auf 5 Münzen gerundet
+function shopPrice(id) { const it = shopItem(id), d = it && shopDeal(id); return !it ? 0 : d ? Math.max(5, Math.round(it.price * (100 - d.pct) / 500) * 5) : it.price; }
+function buyShopItem(id) { const it = shopItem(id); if (!it || !dailyState().shop.includes(id)) return 'gone'; return buyCosmetic(Object.assign({}, it, {price: shopPrice(id)})); }
 if (typeof module !== 'undefined') module.exports = {WORLDS, STORY, COSMETICS, scenarioFor, finishStation, chooseEvent, stationById, stationUnlocked, maxStars, openWorlds, worldStars, worldMaxStars, dailyState, dailyTrack, rerollMission, streakNow, MISSIONS, buyShopItem};

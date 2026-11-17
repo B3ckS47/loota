@@ -1256,10 +1256,13 @@ function cosPreview(id) {
 SHEET_VIEWS.shop = () => {
   const st = dailyState();
   // Regal mit Fächern: Ware auf dem Regalbrett (Titel auf einem Holzschild), darunter Name und Preisschild zum Antippen
-  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), poor = STORY.coins < it.price, [k, key] = id.split(':'), nm = esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''));
+  // Preisschild links am Brett (beim Tagesangebot durchgestrichen, daneben das Pappschild mit dem neuen Preis), darunter Kaufen
+  const items = st.shop.map(id => { const it = shopItem(id); if (!it) return ''; const own = owns(id), price = shopPrice(id), deal = shopDeal(id), poor = STORY.coins < price, [k, key] = id.split(':'), nm = esc(cosmeticName(id).replace(/^\S+ „|“$/g, ''));
     const ware = k === 'title' ? `<span class="sp-ti"><span>${esc(COSMETICS.title[key])}</span></span>` : cosPreview(id);
-    return `<div class="sitem${own ? ' own' : ''}${poor && !own ? ' poor' : ''}"><span class="si-ware">${ware}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
-      (own ? '<em class="nstamp" role="img" aria-label="Gekauft"></em>' : `<button type="button" class="ptag" data-shopbuy="${id}"${poor ? ' disabled' : ''} aria-label="Für ${it.price} Münzen kaufen"><span>${coinImg}${it.price}</span></button>`) + '</div>'; }).join('');
+    const tag = `<span class="ptag${deal ? ' old' : ''}"><span>${coinImg}<s>${it.price}</s></span>${own ? '<i class="tstamp"></i>' : ''}</span>`;
+    const sale = deal ? `<span class="sale" aria-label="Angebot: ${price} Münzen statt ${it.price}"><b>${price}</b><em>−${deal.pct} %</em></span>` : '';
+    return `<div class="sitem${own ? ' own' : ''}${deal ? ' deal' : ''}"><span class="si-ware">${tag}${ware}${sale}</span><span class="si-t"><b>${nm}</b><small>${{portrait: 'Porträt', frame: 'Rahmen', title: 'Titel'}[k]}</small></span>` +
+      `<button type="button" class="btn small sbuy${own || poor ? '' : ' primary'}" data-shopbuy="${id}"${own || poor ? ' disabled' : ''}>${own ? 'Gekauft' : 'Kaufen'}</button></div>`; }).join('');
   return {head: h3('Krämerladen'),
     body: `<img class="scene" src="art/szene-kraemerladen.webp" alt=""><div class="say"><img src="icons/portrait-kuno.png" alt=""><p>Krämer Kuno: „Frisch reingekommen, nur heute! Na ja, fast nur heute.“</p></div><p class="shop-coins">${coinImg}<b>${STORY.coins}</b> Münzen</p>` +
       `<div class="sitems">${items || '<p class="hint">Du hast schon alles aus dem Laden. Hut ab!</p>'}</div>` +
@@ -1423,7 +1426,7 @@ function go(a) {
     case 'streakreset': resetStreak(); toast('Serie auf 0 gesetzt'); renderSaveInfo(); break;
     case 'unlockall': confirmDialog('Alles freischalten?', 'Alle Welten werden gekauft, jede Station gilt mit allen Sternen als geschafft, und alle Decks, Tische, Musikstücke, Titel, Rahmen und Porträts werden freigeschaltet.', 'Freischalten', 'Abbrechen').then(ok => { if (!ok) return; unlockAll(); toast('Alles freigeschaltet'); renderSaveInfo(); renderControls(); }); break;
     case 'buyreset': PURCHASE.worlds = {}; savePurchase(); toast('Käufe zurückgesetzt'); renderSaveInfo(); break;
-    case 'shopreroll': { const st = dailyState(); st.shop = rollShop(dayKey(), ':' + Date.now()); saveDaily(); toast(st.shop.length ? 'Laden neu bestückt' : 'Im Laden gibt es nichts mehr, das du nicht hast'); break; }
+    case 'shopreroll': { const st = dailyState(); st.shop = rollShop(dayKey(), ':' + Date.now()); st.deal = null; saveDaily(); dailyState(); toast(st.shop.length ? 'Laden neu bestückt' : 'Im Laden gibt es nichts mehr, das du nicht hast'); break; }
     case 'online': closeAllSheets(); openSheet({id: 'online'}); break;
     case 'setup': freePlay(); break;
     case 'tutorial': closeAllSheets(); startStation('w1s0'); break;

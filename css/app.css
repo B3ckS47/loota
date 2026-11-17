@@ -1202,3 +1202,24 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 
 .ptag{width:112px;height:82px;margin:0 0 0 22px}
 .ptag span{left:2%;width:42%;top:20%;height:60%;right:auto;bottom:auto;font-size:15px;transform:rotate(17deg);flex-direction:column;gap:1px}
+
+/* Laden v2: Preisschild hängt links am Brett, Kaufen-Knopf mittig, Tagesangebot mit Pappschild rechts */
+.si-ware{overflow:visible}
+.ptag{position:absolute;left:-4px;bottom:-26px;width:62px;height:46px;margin:0;z-index:2;pointer-events:none;transform:rotate(-6deg)}
+.ptag span{left:2%;width:44%;top:20%;height:60%;font-size:12px;gap:0}
+.ptag span img{width:11px;height:11px}
+.ptag s{text-decoration:none}
+.ptag.old s{text-decoration:line-through;text-decoration-color:#c0281e;text-decoration-thickness:2px}
+.ptag.old span{color:#7a6650}
+.tstamp{position:absolute;left:-6%;top:6%;width:62%;height:84%;background:url(../icons/stempel-erledigt.webp) center/contain no-repeat;transform:rotate(-12deg);animation:nstamp .45s cubic-bezier(.2,1.4,.5,1) both}
+.sale{position:absolute;right:2px;bottom:21px;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;width:50px;height:44px;padding-top:2px;background:#c79a62 var(--pappe,none) center/100% 100% no-repeat;border-radius:3px 6px 2px 5px;box-shadow:0 3px 4px -1px rgba(0,0,0,.55);transform:rotate(7deg);font-family:'Kalam',var(--body);color:#c0181a;line-height:1}
+.sale b{font-size:19px;font-weight:700}
+.sale em{font-style:normal;font-size:12px;font-weight:700}
+.sitem.deal .si-ware>:not(.ptag):not(.sale){transform:translateX(-10px)}
+.sitem .sbuy{margin-top:30px;min-width:96px;justify-content:center}
+.sitem .sbuy:disabled{opacity:.85}
+.sitem.own .sbuy{background:#cdbb9c;color:#6b5434;border-color:#a8916c;box-shadow:none}
+.sitem .si-t{margin-top:2px}
+.sitem .si-t{margin-top:28px}
+.sitem .sbuy{margin-top:8px}
+.ptag{left:2px;bottom:-30px}
