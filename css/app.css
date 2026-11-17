@@ -1470,3 +1470,9 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .sh-hero h3{flex:1 1 0;min-width:0}
 .sh-hero h3 .fitname{display:block}
 .sh-hero{min-width:0}
+/* Gegner-Kacheln: Schild nur so breit wie Name und Werte, daneben bleibt der Hintergrund frei */
+.oc.hasbg .ot{flex:0 1 auto;min-width:0}
+/* Ein oder zwei Gegner: Kacheln etwas höher mit größerem Porträt, damit mehr vom Motiv zu sehen ist */
+.opps.few .oc{min-height:66px}
+.opps.few .oc .pt img{width:46px;height:46px}
+.opps.few .oc .lvb{width:25px;height:25px;font-size:12.5px;right:-7px;bottom:-6px}

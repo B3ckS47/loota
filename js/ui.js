@@ -593,7 +593,8 @@ function renderOpps() {
       `<span class="pt"><img src="${portrait(p)}" alt=""><span class="lvb">${p.lvl}</span></span>` +
       `<span class="ot"><span class="on">${esc(p.name)}</span><span class="os"><span><img src="${ICON.kampf}" alt="">${power(p)}</span><span><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span>${many ? '' : `<span><img src="${ICON.hand}" alt="">${p.hand.length}</span>`}${p.spore ? `<span class="neg" title="Sporenwolke"><img class="spi" src="${ART['Sporenwolke']}" alt="">−${p.spore}</span>` : ''}</span></span></button>`;
   }).join('');
-  patch($('#opps'), html);
+  const ob = $('#opps'); ob.classList.toggle('few', S.players.length <= 3);   // ein oder zwei Gegner: höhere Kacheln
+  patch(ob, html);
   if (W.pulse.size) { W.pulse.forEach(id => { const el = $(`.oc[data-opp="${id}"]`); if (el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); } }); W.pulse.clear(); }
 }
 /* Spielfeld: große Bildfläche für Kampf und aufgedeckte Karten */
