@@ -1222,3 +1222,8 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .sitem .si-t{margin-top:2px}
 /* Pappschild als Bild statt brauner Fläche */
 .sale{background:url(../icons/pappschild.webp) center/100% 100% no-repeat;border-radius:0;box-shadow:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));width:54px;height:50px;padding-top:6px}
+
+/* Bretter: Bild kommt aus paintBoard (ein Stück, ohne Nähte); Rand jetzt als Innenabstand */
+.notes{border:0;border-image:none;padding:37px 21px;background:#3a2414 center/100% 100% no-repeat}
+.sitems{border:0;border-image:none;padding:28px 24px 26px;row-gap:26px;background:#3a2414 center/100% 100% no-repeat}
+.sitem .sbuy{margin-top:6px}

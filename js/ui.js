@@ -789,8 +789,35 @@ function renderSheet(fresh) {
   if (fresh) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; }
   if (patch(el, html)) { const nb = el.querySelector('.sh-body'); if (nb) nb.scrollTop = s.id === 'log' && (fresh || s.stick) ? nb.scrollHeight : st; }
   if (s.id === 'log') W.logSeen = S ? S.log.length : 0;
+  watchBoards(el);
 }
 const h3 = t => `<h3>${t}</h3>`;
+/* Holzbretter (Auftragsbrett, Ladenregal) als ein einziges Bild in genau passender Größe zeichnen:
+   Rahmen unverzerrt, Mitte gestreckt. Als CSS-9-Slice zeigte der Browser je nach Skalierung Haarlinien an den Nähten. */
+const BOARDS = [['.notes', 'art/brett-auftraege.webp', 54, 17], ['.sitems', 'art/ladenregal.webp', 95, 24]];
+const BOARD_IMG = {}, BOARD_URL = {};
+const boardRO = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => es.forEach(e => paintBoard(e.target))) : null;
+function watchBoards(root) {
+  BOARDS.forEach(([sel]) => root.querySelectorAll(sel).forEach(el => { if (el.__ro) return; el.__ro = true; boardRO ? boardRO.observe(el) : paintBoard(el); }));
+}
+function paintBoard(el) {
+  const cfg = BOARDS.find(([sel]) => el.matches(sel)); if (!cfg) return;
+  const [, src, s, bw] = cfg, w = el.offsetWidth, h = el.offsetHeight; if (!w || !h) return;
+  const dpr = Math.min(3, window.devicePixelRatio || 1), key = `${src}|${w}x${h}@${dpr}`;
+  if (el.__bk === key) return; el.__bk = key;
+  const apply = u => { if (el.__bk === key) el.style.backgroundImage = `url(${u})`; };
+  if (BOARD_URL[key]) { apply(BOARD_URL[key]); return; }
+  let img = BOARD_IMG[src]; if (!img) { img = BOARD_IMG[src] = new Image(); img.src = src; }
+  const draw = () => {
+    const W = Math.round(w * dpr), H = Math.round(h * dpr), b = Math.round(bw * dpr), iw = img.naturalWidth, ih = img.naturalHeight;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+    const sx = [0, s, iw - s, iw], dx = [0, b, W - b, W], sy = [0, s, ih - s, ih], dy = [0, b, H - b, H];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) g.drawImage(img, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
+    c.toBlob(bl => { if (!bl) return; BOARD_URL[key] = URL.createObjectURL(bl); apply(BOARD_URL[key]); }, 'image/jpeg', 0.9);
+  };
+  if (img.complete && img.naturalWidth) draw(); else img.addEventListener('load', draw, {once: true});
+}
 /* Ausrüsten: was steckt schon im Slot, was wandert in den Rucksack, wie ändert sich die Kampfstärke */
 function equipInfo(p, c) {
   if (!p || !c || c.k !== 'item' || !c.slot || c.slot === 'none' || p.eq.includes(c)) return null;
