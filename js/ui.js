@@ -814,12 +814,16 @@ function renderDice() {
 const SHEETS = [];
 const topSheet = () => SHEETS[SHEETS.length - 1];
 function updatePaused() { UI.paused = CUR !== 'game' || document.hidden || SHEETS.some(s => s.id !== 'sel' && s.id !== 'log'); }
-function openSheet(s) { SHEETS.push(s); renderSheet(true); Snd.sfx('page'); }
+function openSheet(s) {
+  if (TUT && SCN && SCN.tut) { if (s.id === 'equip') TUT.sawMe = true; if (s.id === 'opp') TUT.sawOpp = true; }   // Probespiel: Profile einmal ansehen
+  SHEETS.push(s); renderSheet(true); Snd.sfx('page');
+}
 function popSheet() { SHEETS.pop(); renderSheet(true); }
 function closeAllSheets() { while (SHEETS.length && topSheet().id !== 'sel') SHEETS.pop(); if (SHEETS.length && topSheet().id === 'sel') { renderSheet(false); return; } renderSheet(true); }
 function renderSheet(fresh) {
   const wrap = $('#sheetwrap'), el = $('#sheet');
   updatePaused();
+  if (SCN && SCN.tut && fresh) setTimeout(tutUpdate, 0);
   if (!SHEETS.length) { wrap.classList.remove('open'); wrap.setAttribute('aria-hidden', 'true'); el.innerHTML = ''; el.__h = ''; return; }
   const s = topSheet(), view = SHEET_VIEWS[s.id](s);
   if (!view) { SHEETS.pop(); renderSheet(true); return; }
@@ -1942,6 +1946,10 @@ const TUT_LESSONS = [
     text: 'Ein Monster! Unten links steht deine Kampfstärke, also Stufe plus Gegenstände. Rechts steht die des Monsters. Ist deine höher, gewinnst du: Tipp auf „Monster besiegen“.'},
   {id: 'helm', when: () => tCtx() && tHand('Topfhelm mit Delle'), done: () => tEq('Topfhelm mit Delle') || !tHand('Topfhelm mit Delle'), hl: () => tCard('Topfhelm mit Delle'),
     text: 'Gewonnen! Für jeden Sieg steigst du eine Stufe auf und bekommst Schätze. Der Topfhelm kommt auf den Kopf: Leg ihn genauso an wie das Schwert.'},
+  {id: 'profil', when: () => tCtx() && S.turn === 1 && tEq('Topfhelm mit Delle'), done: () => TUT.sawMe && !SHEETS.length, only: () => false, hl: () => '#mebar', sheet: 'equip',
+    text: 'Deine Ausrüstung siehst du jederzeit: Tipp unten auf deinen Bereich mit dem Porträt. Schau nach, wo Schwert und Topfhelm jetzt sitzen, und schließ das Fenster danach wieder.'},
+  {id: 'gegner', when: () => tCtx() && S.turn === 1 && TUT.fin.has('profil'), done: () => TUT.sawOpp && !SHEETS.length, only: () => false, hl: () => '.oc[data-opp="1"]', sheet: 'opp',
+    text: 'Genauso bei den anderen: Tipp oben auf Berta. Dann siehst du ihre Stufe, ihre Werte und was sie trägt. Danach schließt du das Fenster wieder.'},
   {id: 'zugende', when: () => tCtx() === 'charity' && S.turn === 1, done: () => tCtx() !== 'charity', hl: () => '#act .btn.primary',
     text: 'Am Ende deines Zuges darfst du höchstens 5 Karten auf der Hand behalten. Du hast weniger, also beende deinen Zug. Dann ist Berta dran.'},
   {id: 'berta', when: () => S.cur === 1, done: () => S.cur === 0,
@@ -1982,7 +1990,7 @@ function tutUpdate() {
   if (L && (TUT.fin.has(L.id) || (L.done && L.done()))) { TUT.fin.add(L.id); L = null; TUT.cur = null; }
   if (!L) { L = TUT_LESSONS.find(l => !TUT.fin.has(l.id) && l.when()); if (L) TUT.cur = L.id; }
   if (TUT.cur !== was) render();   // Knöpfe im Dock neu sperren oder freigeben
-  if (!L) { box.hidden = true; return; }
+  if (!L || (L.sheet && SHEETS.length)) { box.hidden = true; return; }
   patch(box, `<img src="icons/portrait-hilde.png" alt=""><div class="tt"><b>Hilde</b><p>${esc(L.text)}</p>${L.ok ? '<button type="button" class="btn small" data-tutok>Verstanden</button>' : ''}</div>`);
   box.dataset.lesson = L.id; box.hidden = false;
   if (L.hl) { let h = L.hl(); (Array.isArray(h) ? h : [h]).forEach(sel => { if (sel) $$(sel).forEach(e => e.classList.add('tut-hl')); }); }
