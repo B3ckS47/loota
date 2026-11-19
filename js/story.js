@@ -116,25 +116,70 @@ function cosmeticName(id) {
 
 const storyWon = S => S.winner === 0;
 const WORLDS = [{
+  /* Welt 0: Einführung bei Hilde. Jede Station bringt ein Thema bei, Hilde erklärt Schritt für Schritt (Lektionen in ui.js, je Station).
+     Wer die Regeln kennt, startet direkt in Welt 1: die ist von Anfang an offen. */
+  id: 'w0', n: 0, name: 'Hildes Taverne', short: 'Einführung', face: 'icons/portrait-hilde.png', deck: 'grund', mapH: 600, intro0: true,
+  intro: 'Hilde wischt gerade die Theke, als du hereinkommst. „Neu hier? Dann zeig ich dir erst mal, wie bei uns gespielt wird. Keine Sorge, Berta beißt nicht.“ Wer die Regeln schon kennt, kann gleich mit Welt 1 loslegen.',
+  outro: 'Hilde nickt zufrieden: „Jetzt kennst du alles, was du brauchst. Der Rest kommt mit der Übung.“ Am Stammtisch tuscheln Berta, Kalle und Uschi schon über dich.',
+  landmarks: [['Theke', 50, 30], ['Ecktisch', 72, 175], ['Hinterzimmer', 30, 285], ['Kellertür', 72, 395], ['Stammtisch', 30, 505]],
+  stations: [
+    {id: 'w0s1', face: 'icons/portrait-hilde.png', no: '1', x: 50, y: 80, type: 'tutorial', name: 'Die erste Tür', place: 'Theke',
+      text: 'Hilde schiebt dir einen Stapel Karten hin: „Fangen wir ganz vorne an. Tür auf, Monster hauen, Schatz einstecken. Berta spielt mit, die ist heute friedlich.“',
+      goal: 'Erreiche Stufe 3. Hilde zeigt dir Tür, Kampf, Schätze und Ausrüstung.',
+      scn: {tut: 'w0s1', target: 3, bots: ['Berta'], diff: 'gemuetlich',
+        start: {lvl: 1, hand: ['Rostiges Schwert', 'Trank der Tapferkeit'], deal: false},
+        botStart: {Berta: {lvl: 1, eq: ['Riesenhammer', 'Hörnerhelm'], deal: false}},
+        botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'heute ganz friedlich'}},
+        // Reihenfolge: deine Tür, Bertas Tür und Raum, deine Tür …
+        deck: {door: ['Schleimige Socke', 'Halbling', 'Zauberer', 'Wütender Gartenzwerg', 'Priester', 'Krieger'],
+          tr: ['Topfhelm mit Delle', 'Lederschürze', 'Glücksumhang']}},
+      winText: 'Hilde klatscht in die Hände: „Na also! Tür, Kampf, Schatz, das sitzt. Als Nächstes zeige ich dir, wer du eigentlich bist.“'},
+    {id: 'w0s2', req: ['w0s1'], face: 'icons/portrait-hilde.png', no: '2', x: 22, y: 190, type: 'tutorial', name: 'Wer bin ich?', place: 'Ecktisch',
+      text: '„Mensch ohne Klasse? Das geht besser“, lacht Hilde. „Heute wirst du Elf und Krieger, und ich zeige dir, wie man alten Kram zu Gold macht.“',
+      goal: 'Erreiche Stufe 4. Du lernst Rasse und Klasse, Verkaufen und die Almosen am Zugende.',
+      scn: {tut: 'w0s2', target: 4, bots: ['Berta'], diff: 'gemuetlich',
+        start: {lvl: 2, hand: ['Elf', 'Krieger', 'Breitschwert der Angeberei', 'Protzige Goldkette', 'Hörnerhelm', 'Trank der Tapferkeit', 'Stinkbombe', 'Gummihuhn mit Quietsch', 'Windböe'], deal: false},
+        botStart: {Berta: {lvl: 1, eq: ['Topfhelm mit Delle'], deal: false}},
+        botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'heute ganz friedlich'}},
+        deck: {door: ['Halbling', 'Zauberer', 'Priester', 'Elf', 'Rentner-Ritter', 'Dieb', 'Zwerg'],
+          tr: ['Lederschürze', 'Schnelle Latschen', 'Flasche Drachenschnaps']}},
+      winText: '„Elf, Krieger, reich und großzügig“, zählt Hilde auf. „Jetzt fehlt nur noch, was man tut, wenn ein Monster zu stark ist.“'},
+    {id: 'w0s3', req: ['w0s2'], face: 'icons/portrait-hilde.png', no: '3', x: 78, y: 300, type: 'tutorial', name: 'Zu stark!', place: 'Hinterzimmer',
+      text: 'Im Hinterzimmer riecht es nach Ärger. „Nicht jedes Monster haust du allein um“, sagt Hilde. „Dann brauchst du einen Trick, Freunde oder schnelle Beine.“',
+      goal: 'Erreiche Stufe 4. Du lernst Flüche, Einmal-Gegenstände, Hilfe holen und Weglaufen.',
+      scn: {tut: 'w0s3', target: 4, bots: ['Berta'], diff: 'gemuetlich',
+        start: {lvl: 3, eq: ['Topfhelm mit Delle', 'Rostiges Schwert'], hand: ['Trank der Tapferkeit', 'Nebelpulver'], deal: false},
+        botStart: {Berta: {lvl: 2, eq: ['Riesenhammer', 'Hörnerhelm'], deal: false}},
+        botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'hilft dir gern'}},
+        perks: {freeHelp: 'Berta', always: true, why: 'Für dich doch immer!'},
+        deck: {door: ['Pechsträhne', 'Windböe', 'Halbling', 'Zauberer', 'Pilzkönig', 'Priester', 'Krieger', 'Bürokratie-Golem', 'Elf', 'Dieb', 'Troll unter der Autobahnbrücke'],
+          tr: ['Gusseiserne Bratpfanne', 'Glücksumhang', 'Lederschürze', 'Schnelle Latschen', 'Flasche Drachenschnaps']}},
+      winText: '„Mit Hilfe geht alles“, sagt Hilde. „Aber pass auf: Am Stammtisch hilft dir keiner umsonst. Die mischen sich lieber in deine Kämpfe ein.“'},
+    {id: 'w0s4', req: ['w0s3'], face: 'icons/portrait-kalle.png', no: '4', x: 22, y: 410, type: 'tutorial', name: 'Alle gegen dich', place: 'Kellertür',
+      text: 'Kalle setzt sich dazu und reibt sich die Hände. „Jetzt wird es lustig“, sagt Hilde. „Bei uns mischt jeder in jedem Kampf mit. Zeig Kalle, wie das geht.“',
+      goal: 'Erreiche Stufe 5. Du lernst Monster herausfordern und Monster-Zusätze, in fremden und in eigenen Kämpfen.',
+      scn: {tut: 'w0s4', target: 5, bots: ['Kalle'], diff: 'gemuetlich',
+        start: {lvl: 3, eq: ['Rostiges Schwert', 'Stahlkappenstiefel'], hand: ['Wütender Gartenzwerg', 'Stinksauer', 'Winzig', 'Trank der Tapferkeit'], deal: false},
+        botStart: {Kalle: {lvl: 3, eq: ['Rostiges Schwert', 'Hörnerhelm'], deal: false}},
+        botStyles: {Kalle: {help: 0, curse: 0, intf: 0, l: 'will unbedingt gewinnen'}},
+        deck: {door: ['Halbling', 'Rentner-Ritter', 'Bürokratie-Golem', 'Zauberer', 'Priester', 'Elf'],
+          tr: ['Lederschürze', 'Topfhelm mit Delle', 'Glücksumhang', 'Schnelle Latschen', 'Flasche Drachenschnaps']}},
+      winText: 'Kalle verschränkt die Arme: „Das war gemein.“ Hilde grinst: „Das war Plundo. Jetzt bist du bereit für eine richtige Partie.“'},
+    {id: 'w0s5', req: ['w0s4'], face: 'icons/portrait-hilde.png', no: '5', x: 78, y: 520, type: 'duel', name: 'Die Probepartie', place: 'Stammtisch', final: true,
+      text: 'Zum Abschluss eine ganze Partie, wie am Stammtisch. „Ich halte mich raus“, sagt Hilde. „Wenn du nicht weiterweißt, hilft dir der Tipp-Knopf.“',
+      goal: 'Gegen Berta und Kalle: Erreiche als Erster Stufe 5.',
+      scn: {target: 5, bots: ['Berta', 'Kalle'], diff: 'gemuetlich', tips: true, start: {lvl: 2, eq: ['Rostiges Schwert']}, perks: {freeHelp: 'Berta', why: 'Einmal helf ich dir noch!'}, botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'hilft dir gern'}, Kalle: {help: 0, curse: 1, intf: 1, l: 'will unbedingt gewinnen'}}},
+      extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}],
+      reward: 'title:neuling'}
+  ],
+  finalTitle: 'Einführung geschafft!'
+}, {
   id: 'w1', n: 1, name: 'Rund um die Taverne', face: 'icons/portrait-hilde.png', deck: 'grund', mapH: 1000, map: 'art/karte-welt1.webp', mapRatio: 768 / 1376,
   intro: 'Du bist neu in der Taverne. Berta, Kalle und Uschi sitzen jeden Abend am Stammtisch und lachen über jeden Neuen. Wirtin Hilde zwinkert dir zu: „Willst du dir einen Namen machen? Das Städtchen hat Plagen genug. Fang im Garten an.“',
   outro: 'Der Drache trollt sich, das Städtchen atmet auf. Am Stammtisch ist plötzlich ein Stuhl für dich frei. Da ruft Hilde aus der Küche: „Das Bier ist alle! Und aus dem Keller kommen komische Geräusche …“',
   landmarks: [['Taverne', 50, 22], ['Garten', 80, 92], ['Hafen', 88, 312], ['Autobahnbrücke', 5, 548], ['Rathaus', 5, 604], ['Flohmarkt', 95, 604], ['Drachenhöhle', 95, 862]],
   stations: [
-    {id: 'w1s0', face: 'icons/portrait-hilde.png', ax: 80, ay: 7, no: '0', type: 'tutorial', name: 'Hildes Probespiel', place: 'Taverne',
-      text: 'Bevor du dich mit dem Stammtisch anlegst, winkt dich Hilde an einen freien Tisch: „Komm, ich zeig dir erst mal, wie das hier läuft. Berta spielt mit, die ist heute ganz friedlich.“',
-      goal: 'Eine kurze Übungspartie gegen Berta bis Stufe 4. Hilde erklärt dir dabei jeden Schritt.',
-      scn: {tut: true, target: 4, bots: ['Berta'], diff: 'gemuetlich',
-        start: {lvl: 1, hand: ['Rostiges Schwert', 'Trank der Tapferkeit', 'Wütender Gartenzwerg'], deal: false},
-        botStart: {Berta: {lvl: 1, eq: ['Riesenhammer', 'Hörnerhelm'], deal: false}},
-        botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'im Probespiel ganz friedlich'}},
-        perks: {freeHelp: 'Berta', always: true, why: 'Für dich doch immer!'},
-        // Reihenfolge der Züge: du, Berta (Tür + Raum durchsuchen), du, …
-        deck: {door: ['Schleimige Socke', 'Krieger', 'Halbling', 'Elf', 'Zauberer', 'Priester', 'Pechsträhne', 'Windböe', 'Krieger', 'Halbling', 'Pilzkönig', 'Zauberer', 'Priester', 'Troll unter der Autobahnbrücke'],
-          tr: ['Topfhelm mit Delle', 'Schnelle Latschen', 'Lederschürze', 'Gusseiserne Bratpfanne', 'Glücksumhang', 'Flasche Drachenschnaps', 'Protzige Goldkette']}},
-      winText: 'Hilde klatscht in die Hände: „Na also! Jetzt kennst du die Grundlagen. Ab hier sage ich nichts mehr, das schaffst du allein. Alles Weitere steht in den Regeln.“',
-      reward: 'title:neuling'},
-    {id: 'w1s1', req: ['w1s0'], face: 'icons/portrait-hilde.png', ax: 72.9, ay: 19.6, no: '1', x: 50, y: 90, type: 'puzzle', name: 'Ärger im Beet', place: 'Garten',
+    {id: 'w1s1', face: 'icons/portrait-hilde.png', ax: 72.9, ay: 19.6, no: '1', x: 50, y: 90, type: 'puzzle', name: 'Ärger im Beet', place: 'Garten',
       text: 'Hildes Gartenzwerg ist schon wieder stinksauer und bewacht das Kräuterbeet mit dem Rechen. „Ich brauche Petersilie“, seufzt Hilde. „Und zwar heute.“',
       goal: 'Besiege den stinksauren Wütenden Gartenzwerg (Kampfstärke 6). Du hast Stufe 2, eine Bratpfanne und drei Karten auf der Hand.',
       scn: {fight: {mons: ['Wütender Gartenzwerg'], enh: ['Stinksauer']}, start: {lvl: 2, eq: ['Gusseiserne Bratpfanne'], hand: ['Winzig', 'Trank der Tapferkeit', 'Riesenböller'], deal: false}, bots: []},
@@ -452,8 +497,12 @@ const WORLDS = [{
 // map fehlt noch: dann zeigt der Nebel eine schlichte Fläche. teaser in Prozent des sichtbaren Ausschnitts
 const WORLDS_SOON = [];
 // Welten, die gerade offen sind: Welt 1 immer, jede weitere nach Abschluss der vorigen
-const openWorlds = () => WORLDS.filter((w, i) => i === 0 || STORY.worlds[WORLDS[i - 1].id]);
-const currentWorld = () => { const o = openWorlds(); return o[o.length - 1]; };
+const openWorlds = () => WORLDS.filter((w, i) => i <= 1 || STORY.worlds[WORLDS[i - 1].id]);
+const currentWorld = () => {
+  const o = openWorlds(), last = o[o.length - 1];
+  if (last.id === 'w1' && !STORY.worlds.w0 && !last.stations.some(st => STORY.done[st.id])) return WORLDS[0];
+  return last;
+};
 // Die erste noch verschlossene Welt, als Nebel-Teaser (echte Welt mit fog-Daten oder Vorschau)
 function fogWorld() {
   const o = openWorlds(), w = WORLDS[o.length];
@@ -468,6 +517,7 @@ const STORY = (() => {
   return Object.assign(base, s || {});
 })();
 function saveStory() { try { localStorage.setItem(K_STORY, JSON.stringify(STORY)); } catch (e) {} }
+if (STORY.done.w1s0 && !STORY.worlds.w0) { STORY.worlds.w0 = true; STORY.intro.w0 = true; }
 
 /* ================= Käufe =================
    Kaufwelten (paid) sind sichtbar, sobald die Welt davor geschafft ist, spielbar aber erst nach dem Kauf.
