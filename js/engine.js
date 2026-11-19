@@ -941,7 +941,7 @@ async function humanTurn(p){
     const over=p.hand.length-handLimit(p);
     if(over<=0) continue;
     const sel=await selectCards({ctx:'charity', title:'Almosen', text:`Wähle ${over} ${pl(over,'Karte','Karten')}, die du abgibst.`, min:over, max:over, cancel:true,
-      filter:(c,w)=>w==='hand', confirm:()=> 'Abgeben'});
+      filter:(c,w)=>w==='hand' && !(SCN && SCN.keep && SCN.keep.includes(c.n) && p.hand.length-over>0), confirm:()=> 'Abgeben'});   // Einführung: wichtige Karte bleibt
     if(!sel) continue;
     doCharity(p, sel.map(findCard).filter(Boolean));
   }
