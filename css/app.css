@@ -1557,3 +1557,6 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .tsteps{display:flex;gap:4px}
 .tsteps i{width:7px;height:7px;border-radius:50%;background:#d9c39a}
 .tsteps i.on{background:var(--red)}
+/* Hinweisrahmen im geöffneten Fenster: auf hellem Papier kräftiger */
+#sheet .tut-hl{outline:3px solid #e7a93a;outline-offset:3px;animation:tutPulseSh 1.3s ease-in-out infinite}
+@keyframes tutPulseSh{0%,100%{outline-color:#e7a93a;box-shadow:0 0 0 0 rgba(231,169,58,0)}50%{outline-color:#f5c45a;box-shadow:0 0 16px 4px rgba(231,169,58,.55)}}

@@ -2014,8 +2014,8 @@ const TUT_LESSONS = [
     text: 'Ganz unten liegen deine Handkarten. Die hast du in Reserve und spielst sie aus, wenn du sie brauchst.'},
   {id: 't6', st: S1, ok: 'Alles klar', spot: '#scr-game .topbar', step: [10, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Und ganz oben: Links ist das Menü, falls du eine Pause brauchst. In der Mitte siehst du, in welchem Schritt deines Zuges du gerade bist. Rechts stehen die Notizen mit allem, was im Spiel passiert ist.'},
-  {id: 'karte', st: S1, sheet: 'card', when: () => tCtx() === 'kick' && S.turn === 1, done: () => TUT.sawCard && !SHEETS.length, only: () => false, hl: () => '#hand .mc',
-    text: 'Tipp mal auf deine Karte. Dann siehst du groß, was sie kann. Den Helm darfst du auch gleich aufsetzen, mehr dazu beim nächsten Mal. Danach schließt du das Fenster wieder.'},
+  {id: 'karte', st: S1, sheet: 'card', when: () => tCtx() === 'kick' && S.turn === 1, done: () => TUT.sawCard && !SHEETS.length, only: () => false, hl: () => '#hand .mc', shl: () => $$('#sheet [data-cact]').find(b => /Ausrüsten/.test(b.textContent)),
+    text: 'Tipp mal auf deine Karte. Dann siehst du groß, was sie kann. Mit „Ausrüsten“ setzt du den Helm auf und wirst stärker.'},
   {id: 'tuer', st: S1, when: () => tCtx() === 'kick' && S.turn === 1, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
     text: 'Jetzt geht es los. Jeder Zug beginnt damit, dass du eine Tür aufstößt. Dahinter kann ein Monster lauern. Tipp auf „Tür aufstoßen“.'},
   {id: 'staerke', st: S1, ok: 'Weiter', spot: '#table .hud', only: () => false, when: () => tFight(),
@@ -2098,7 +2098,11 @@ function tutUpdate() {
   if (!L) { L = TUT_LESSONS.find(l => (!l.st || l.st.includes(SCN.tut)) && !TUT.fin.has(l.id) && l.when()); if (L) TUT.cur = L.id; }
   if (TUT.cur !== was) render();   // Knöpfe im Dock neu sperren oder freigeben
   const dim = $('#tutdim');
-  if (!L || (L.sheet && SHEETS.length)) { box.hidden = true; if (dim) dim.hidden = true; return; }
+  if (!L || (L.sheet && SHEETS.length)) {
+    box.hidden = true; if (dim) dim.hidden = true;
+    if (L && L.shl && SHEETS.length) { const e = L.shl(); if (e) e.classList.add('tut-hl'); }   // Hinweisrahmen im geöffneten Fenster
+    return;
+  }
   const okL = L.ok === true ? 'Verstanden' : L.ok;
   const dots = L.step ? `<span class="tsteps">${Array.from({length: L.step[1]}, (_, i) => `<i${i < L.step[0] ? ' class="on"' : ''}></i>`).join('')}</span>` : '';
   patch(box, `<img src="icons/portrait-hilde.png" alt=""><div class="tt"><b>Hilde</b><p>${esc(typeof L.text === 'function' ? L.text() : L.text)}</p>${okL || dots ? `<div class="tfoot">${okL ? `<button type="button" class="btn small${L.dim || L.spot ? ' primary' : ''}" data-tutok>${esc(okL)}</button>` : ''}${dots}</div>` : ''}</div>`);
