@@ -844,7 +844,7 @@ const SHEETS = [];
 const topSheet = () => SHEETS[SHEETS.length - 1];
 function updatePaused() { UI.paused = CUR !== 'game' || document.hidden || SHEETS.some(s => s.id !== 'sel' && s.id !== 'log'); }
 function openSheet(s) {
-  if (TUT && SCN && SCN.tut) { if (s.id === 'equip') TUT.sawMe = true; if (s.id === 'opp') TUT.sawOpp = true; }   // Probespiel: Profile einmal ansehen
+  if (TUT && SCN && SCN.tut) { if (s.id === 'equip') TUT.sawMe = true; if (s.id === 'card') TUT.sawCard = true; if (s.id === 'opp') TUT.sawOpp = true; }   // Probespiel: Profile einmal ansehen
   SHEETS.push(s); renderSheet(true); Snd.sfx('page');
 }
 function popSheet() { SHEETS.pop(); renderSheet(true); }
@@ -1993,29 +1993,35 @@ const S1 = ['w0s1'], S2 = ['w0s2'], S3 = ['w0s3'], S4 = ['w0s4'];
 const tMon = n => S.combat && S.combat.mons.some(m => m.c.n === n);
 const tAsk = c => UI.prompt && UI.prompt.ctx === c;   // auch außerhalb des eigenen Zugs (Einmischen)
 const TUT_LESSONS = [
-  /* ---- Station 1: Die erste Tür ---- */
-  {id: 'hallo', st: S1, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
-    text: 'Schön, dass du da bist! Ich zeige dir die Grundlagen. Wer zuerst Stufe 3 erreicht, gewinnt diese Runde. Berta spielt mit, die ist heute ganz friedlich.'},
-  {id: 'schwert', st: S1, when: () => tCtx() === 'kick' && tHand('Rostiges Schwert'), done: () => tEq('Rostiges Schwert'), only: () => false, hl: () => tCard('Rostiges Schwert'),
-    text: 'Unten liegen deine Handkarten. Das Rostige Schwert macht dich stärker: Zieh es aufs Spielfeld oder tipp es an und wähle „Ausrüsten“.'},
+  /* ---- Station 1: Willkommen ---- */
+  {id: 'w1', st: S1, ok: 'Weiter', big: true, dim: true, step: [1, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Willkommen in meiner Taverne! Ich bin Hilde. Hier spielen wir Plundo. Du bist Abenteurer und fängst ganz unten an, auf Stufe 1.'},
+  {id: 'w2', st: S1, ok: 'Weiter', big: true, dim: true, step: [2, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Wer zuerst die Zielstufe erreicht, gewinnt. Normalerweise ist das Stufe 10. Zum Üben reicht heute Stufe 2.'},
+  {id: 'w3', st: S1, ok: 'Weiter', big: true, dim: true, step: [3, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Stufen bekommst du vor allem, wenn du Monster besiegst. Dafür brauchst du Ausrüstung: Schwerter, Helme, Stiefel und allerlei Unsinn. Ein rostiges Schwert hab ich dir schon in die Hand gedrückt.'},
+  {id: 'w4', st: S1, ok: 'Zeig her', big: true, dim: true, step: [4, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Die anderen am Tisch wollen dasselbe. Mal helfen sie dir, mal legen sie dich rein. Genau das macht den Spaß aus. Komm, ich zeig dir den Tisch.'},
+  {id: 't1', st: S1, ok: 'Weiter', spot: '#opps', step: [5, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Oben sitzen die anderen Spieler, heute nur Berta. Du siehst ihr Bild, ihre Stufe und was sie gerade macht.'},
+  {id: 't2', st: S1, ok: 'Weiter', spot: '#table', step: [6, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'In der Mitte ist das Spielfeld. Hier tauchen Monster auf, und hier wird gekämpft.'},
+  {id: 't3', st: S1, ok: 'Weiter', spot: '#act', step: [7, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Darunter stehen deine Möglichkeiten. Der orange Knopf ist fast immer der nächste Schritt.'},
+  {id: 't4', st: S1, ok: 'Weiter', spot: '#mebar', step: [8, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Das bist du. Die Münze zeigt deine Stufe: 1 von 2. Die Zahlen daneben erkläre ich dir, wenn wir sie brauchen. Tippst du hier drauf, siehst du deine Ausrüstung.'},
+  {id: 't5', st: S1, ok: 'Weiter', spot: '#hand', step: [9, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Ganz unten liegen deine Handkarten. Die hast du in Reserve und spielst sie aus, wenn du sie brauchst.'},
+  {id: 't6', st: S1, ok: 'Alles klar', spot: '#scr-game .topbar', step: [10, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
+    text: 'Und ganz oben: Links ist das Menü, falls du eine Pause brauchst. In der Mitte siehst du, in welchem Schritt deines Zuges du gerade bist. Rechts stehen die Notizen mit allem, was im Spiel passiert ist.'},
+  {id: 'karte', st: S1, sheet: 'card', when: () => tCtx() === 'kick' && S.turn === 1, done: () => TUT.sawCard && !SHEETS.length, only: () => false, hl: () => '#hand .mc',
+    text: 'Tipp mal auf deine Karte. Dann siehst du groß, was sie kann. Den Helm darfst du auch gleich aufsetzen, mehr dazu beim nächsten Mal. Danach schließt du das Fenster wieder.'},
   {id: 'tuer', st: S1, when: () => tCtx() === 'kick' && S.turn === 1, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
-    text: 'Jeder Zug beginnt damit, dass du die Tür aufstößt. Dahinter kann ein Monster lauern oder etwas Nützliches liegen.'},
-  {id: 'kampf', st: S1, when: () => tFight() && S.turn === 1 && evalCombat(S.combat).win, done: () => !tFight(), hl: () => ['#table .hud', '#act .btn.primary'],
-    text: 'Ein Monster! Unten links steht deine Kampfstärke, also Stufe plus Gegenstände. Rechts steht die des Monsters. Ist deine höher, gewinnst du: Tipp auf „Monster besiegen“.'},
-  {id: 'helm', st: S1, when: () => tCtx() && tHand('Topfhelm mit Delle'), done: () => tEq('Topfhelm mit Delle') || !tHand('Topfhelm mit Delle'), hl: () => tCard('Topfhelm mit Delle'),
-    text: 'Gewonnen! Für jeden Sieg steigst du eine Stufe auf und bekommst Schätze. Der Topfhelm kommt auf den Kopf: Leg ihn genauso an wie das Schwert.'},
-  {id: 'profil', st: S1, when: () => tCtx() && S.turn === 1 && tEq('Topfhelm mit Delle'), done: () => TUT.sawMe && !SHEETS.length, only: () => false, hl: () => '#mebar', sheet: 'equip',
-    text: 'Deine Ausrüstung siehst du jederzeit: Tipp unten auf deinen Bereich mit dem Porträt. Schau nach, wo Schwert und Topfhelm jetzt sitzen, und schließ das Fenster danach wieder.'},
-  {id: 'gegner', st: S1, when: () => tCtx() && S.turn === 1 && TUT.fin.has('profil'), done: () => TUT.sawOpp && !SHEETS.length, only: () => false, hl: () => '.oc[data-opp="1"]', sheet: 'opp',
-    text: 'Genauso bei den anderen: Tipp oben auf Berta. Dann siehst du ihre Stufe, ihre Werte und was sie trägt. Danach schließt du das Fenster wieder.'},
-  {id: 'zugende', st: S1, when: () => tCtx() === 'charity' && S.turn === 1, done: () => tCtx() !== 'charity', hl: () => '#act .btn.primary',
-    text: 'Mehr gibt es in diesem Zug nicht zu tun. Beende ihn, dann ist Berta dran.'},
-  {id: 'berta', st: [...S1, ...S2, ...S3], when: () => S.cur === 1 && S.turn === 1, done: () => S.cur === 0,
-    text: 'Berta spielt nach denselben Regeln: Tür aufstoßen, kämpfen oder den Raum durchsuchen. Schau ihr kurz zu.'},
-  {id: 'tuer2', st: S1, ok: true, when: () => tCtx() === 'kick' && S.turn === 2, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
-    text: 'Dein nächster Zug. Den Ablauf kennst du jetzt: Tür auf und schauen, was kommt.'},
-  {id: 'kampf2', st: S1, when: () => tFight() && S.turn === 2 && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
-    text: 'Der Wütende Gartenzwerg ist schwach. Besiege ihn, dann hast du Stufe 3 und die Runde gewonnen.'},
+    text: 'Jetzt geht es los. Jeder Zug beginnt damit, dass du eine Tür aufstößt. Dahinter kann ein Monster lauern. Tipp auf „Tür aufstoßen“.'},
+  {id: 'staerke', st: S1, ok: 'Weiter', spot: '#table .hud', only: () => false, when: () => tFight(),
+    text: () => `Ein Monster! Ein Wütender Gartenzwerg. Links steht deine Stärke: ${power(me())}. Das ist deine Stufe plus alles, was du trägst. Rechts steht die Stärke des Monsters: ${S.combat.mons[0].c.lvl}.`},
+  {id: 'sieg', st: S1, when: () => tFight() && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
+    text: 'Ist deine Zahl höher, gewinnst du. Bei Gleichstand gewinnt das Monster. Deine ist höher, also tipp auf „Monster besiegen“.'},
   /* ---- Station 2: Wer bin ich? ---- */
   {id: 'hallo2', st: S2, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Diesmal geht es um dich: Rasse, Klasse und was du mit Gegenständen machst, die du nicht brauchst. Ziel ist Stufe 4.'},
@@ -2091,15 +2097,39 @@ function tutUpdate() {
   if (L && (TUT.fin.has(L.id) || (L.done && L.done()))) { TUT.fin.add(L.id); L = null; TUT.cur = null; }
   if (!L) { L = TUT_LESSONS.find(l => (!l.st || l.st.includes(SCN.tut)) && !TUT.fin.has(l.id) && l.when()); if (L) TUT.cur = L.id; }
   if (TUT.cur !== was) render();   // Knöpfe im Dock neu sperren oder freigeben
-  if (!L || (L.sheet && SHEETS.length)) { box.hidden = true; return; }
-  patch(box, `<img src="icons/portrait-hilde.png" alt=""><div class="tt"><b>Hilde</b><p>${esc(L.text)}</p>${L.ok ? '<button type="button" class="btn small" data-tutok>Verstanden</button>' : ''}</div>`);
-  box.dataset.lesson = L.id; box.hidden = false;
+  const dim = $('#tutdim');
+  if (!L || (L.sheet && SHEETS.length)) { box.hidden = true; if (dim) dim.hidden = true; return; }
+  const okL = L.ok === true ? 'Verstanden' : L.ok;
+  const dots = L.step ? `<span class="tsteps">${Array.from({length: L.step[1]}, (_, i) => `<i${i < L.step[0] ? ' class="on"' : ''}></i>`).join('')}</span>` : '';
+  patch(box, `<img src="icons/portrait-hilde.png" alt=""><div class="tt"><b>Hilde</b><p>${esc(typeof L.text === 'function' ? L.text() : L.text)}</p>${okL || dots ? `<div class="tfoot">${okL ? `<button type="button" class="btn small${L.dim || L.spot ? ' primary' : ''}" data-tutok>${esc(okL)}</button>` : ''}${dots}</div>` : ''}</div>`);
+  box.dataset.lesson = L.id; box.hidden = false; box.classList.toggle('big', !!L.big);
+  if (dim) { dim.hidden = !(L.dim || L.spot); if (!dim.hidden) tutSpot(L); }
   if (L.hl) { let h = L.hl(); (Array.isArray(h) ? h : [h]).forEach(sel => { if (sel) $$(sel).forEach(e => e.classList.add('tut-hl')); }); }
   tutPlace(); clearTimeout(TUT.pt); TUT.pt = setTimeout(tutPlace, 500);   // nach Einblend-Animationen noch einmal
 }
 // Oben oder unten auf dem Spielfeld, je nachdem, wo nichts Wichtiges verdeckt wird (Kampfanzeige, Hervorgehobenes)
+// Abdunkeln: alles außer dem erklärten Bereich (Loch mit großem Schatten); fängt Klicks ab
+function tutSpot(L) {
+  const dim = $('#tutdim'), hole = dim.firstElementChild;
+  const els = L.spot ? $$(L.spot).filter(e => e.offsetParent) : [];
+  if (!els.length) { Object.assign(hole.style, {left: '50%', top: '50%', width: '0px', height: '0px'}); dim.dataset.at = ''; return; }
+  const rs = els.map(e => e.getBoundingClientRect()), pad = 6;
+  const l = Math.min(...rs.map(r => r.left)) - pad, t = Math.min(...rs.map(r => r.top)) - pad, r = Math.max(...rs.map(r => r.right)) + pad, b = Math.max(...rs.map(r => r.bottom)) + pad;
+  Object.assign(hole.style, {left: Math.max(2, l) + 'px', top: Math.max(2, t) + 'px', width: (Math.min(innerWidth - 2, r) - Math.max(2, l)) + 'px', height: (Math.min(innerHeight - 2, b) - Math.max(2, t)) + 'px'});
+  dim.dataset.at = [t, b].join(',');
+}
 function tutPlace() {
   const box = $('#tutor'), t = $('#table'); if (!box || box.hidden || !t || !S) return;
+  const L = tutLesson(), dim = $('#tutdim');
+  if (L && (L.dim || L.spot)) {
+    if (dim && !dim.hidden) tutSpot(L);
+    const bh = box.offsetHeight, at = dim && dim.dataset.at ? dim.dataset.at.split(',').map(Number) : null;
+    let y;
+    if (!at) y = (innerHeight - bh) / 2;
+    else if ((at[0] + at[1]) / 2 > innerHeight / 2) y = Math.max(8, at[0] - bh - 12);   // Bereich unten: Hinweis darüber
+    else y = Math.min(innerHeight - bh - 8, at[1] + 12);                                // Bereich oben: Hinweis darunter
+    box.style.top = Math.round(y) + 'px'; return;
+  }
   const tr = t.getBoundingClientRect(), bh = box.offsetHeight;
   const rects = els => [...els].map(e => e.getBoundingClientRect()).filter(r => r.height && r.bottom > tr.top && r.top < tr.bottom);
   const hard = rects([...$$('.tut-hl'), ...(S.combat ? $$('#table .hud') : [])]), soft = rects($$('#table .art-top'));   // Kampfanzeige muss frei bleiben, Monstername möglichst

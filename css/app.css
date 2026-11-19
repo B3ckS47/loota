@@ -1539,3 +1539,21 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .t-dots{position:relative;z-index:1;display:flex;justify-content:center;gap:7px;margin-top:8px;min-height:8px}
 .t-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,241,214,.45);box-shadow:0 1px 2px rgba(0,0,0,.6);transition:background .2s,transform .2s}
 .t-dots i.on{background:#ffd98a;transform:scale(1.25)}
+
+/* Einführung: abdunkeln mit Loch, große Erklärseiten, Schrittpunkte */
+.tutdim{position:fixed;inset:0;z-index:29}
+.tutdim[hidden]{display:none}
+.tutdim>i{position:fixed;border-radius:14px;box-shadow:0 0 0 200vmax rgba(18,10,4,.74);outline:3px solid #f3c873;outline-offset:0;transition:left .3s ease,top .3s ease,width .3s ease,height .3s ease}
+.tutdim>i[style*="width: 0px"]{outline:0}
+.tutor{transition:top .3s ease}
+.tutor.big{flex-direction:column;align-items:center;text-align:center;padding:18px 18px 14px;gap:8px}
+.tutor.big img{width:84px;height:84px}
+.tutor.big b{font-size:19px}
+.tutor.big p{font-size:16px;line-height:1.45}
+.tutor .tfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.tutor.big .tfoot{flex-direction:column-reverse;gap:10px}
+.tutor .tfoot .btn{margin:0}
+.tutor.big .tfoot .btn{align-self:center;min-width:150px}
+.tsteps{display:flex;gap:4px}
+.tsteps i{width:7px;height:7px;border-radius:50%;background:#d9c39a}
+.tsteps i.on{background:var(--red)}
