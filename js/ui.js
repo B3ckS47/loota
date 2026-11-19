@@ -844,7 +844,7 @@ const SHEETS = [];
 const topSheet = () => SHEETS[SHEETS.length - 1];
 function updatePaused() { UI.paused = CUR !== 'game' || document.hidden || SHEETS.some(s => s.id !== 'sel' && s.id !== 'log'); }
 function openSheet(s) {
-  if (TUT && SCN && SCN.tut) { if (s.id === 'equip') TUT.sawMe = true; if (s.id === 'card') TUT.sawCard = true; if (s.id === 'equip' && TUT.cur === 'bogen') TUT.sawBogen = true; if (s.id === 'opp') TUT.sawOpp = true; }   // Probespiel: Profile einmal ansehen
+  if (TUT && SCN && SCN.tut) { if (s.id === 'equip') TUT.sawMe = true; if (s.id === 'card') TUT.sawCard = true; if (s.id === 'opp') TUT.sawOpp = true; }   // Probespiel: Profile einmal ansehen
   SHEETS.push(s); renderSheet(true); Snd.sfx('page');
 }
 function popSheet() { SHEETS.pop(); renderSheet(true); }
@@ -1989,10 +1989,7 @@ const tCtx = () => UI.prompt && S.cur === 0 ? UI.prompt.ctx : null;
 const tFight = () => S.combat && !S.combat.resolved && S.combat.f === 0 && tCtx() === 'fight';
 const tCard = n => `#hand .mc[aria-label="${n}"]`;
 const tOpt = pred => () => { const i = (UI.opts || []).findIndex(pred); return i >= 0 ? `#act [data-opt="${i}"]` : null; };
-const S1 = ['w0s1'], N2 = ['w0s2'], S2 = ['w0s2b'], S3 = ['w0s3'], S4 = ['w0s4'];
-const tShl = card => () => $('#sheet') && $('#sheet').textContent.includes(card) ? $$('#sheet [data-cact]').find(b => /Ausrüsten|Anlegen/.test(b.textContent)) : null;
-const tHas = n => S && (tHand(n) || me().pack.some(c => c.n === n));          // auf der Hand oder im Rucksack
-const tWhere = n => tHand(n) ? tCard(n) : '#mebar';
+const S1 = ['w0s1'], S2 = ['w0s2'], S3 = ['w0s3'], S4 = ['w0s4'];
 const tMon = n => S.combat && S.combat.mons.some(m => m.c.n === n);
 const tAsk = c => UI.prompt && UI.prompt.ctx === c;   // auch außerhalb des eigenen Zugs (Einmischen)
 const TUT_LESSONS = [
@@ -2025,34 +2022,7 @@ const TUT_LESSONS = [
     text: () => `Ein Monster! Ein Wütender Gartenzwerg. Links steht deine Stärke: ${power(me())}. Das ist deine Stufe plus alles, was du trägst. Rechts steht die Stärke des Monsters: ${S.combat.mons[0].c.lvl}.`},
   {id: 'sieg', st: S1, when: () => tFight() && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Ist deine Zahl höher, gewinnst du. Bei Gleichstand gewinnt das Monster. Deine ist höher, also tipp auf „Monster besiegen“.'},
-  /* ---- Station 2: Ausrüstung ---- */
-  {id: 'a1', st: N2, ok: 'Weiter', big: true, dim: true, step: [1, 3], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
-    text: 'Heute geht es um Ausrüstung. Gegenstände machen dich stärker. Du bekommst sie als Schätze, meistens wenn du ein Monster besiegst.'},
-  {id: 'a2', st: N2, ok: 'Weiter', big: true, dim: true, step: [2, 3], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
-    text: 'Jeder Gegenstand hat seinen Platz: Kopf, Körper, Füße und die Hände. Auf jeden Platz passt nur einer, Hände hast du zwei.'},
-  {id: 'a3', st: N2, ok: 'Los geht’s', spot: '#hand', step: [3, 3], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
-    text: 'Auf deiner Hand liegen vier Gegenstände. Oben rechts auf jeder Karte steht, wie viel stärker sie dich macht.'},
-  {id: 'schwert2', st: N2, when: () => tCtx() === 'kick' && tHas('Rostiges Schwert'), done: () => tEq('Rostiges Schwert'), only: () => false, sheet: 'card',
-    hl: () => tWhere('Rostiges Schwert'), shl: tShl('Rostiges Schwert'),
-    text: 'Fang mit dem Schwert an: Tipp es an und wähle „Ausrüsten“. Ein Schwert nimmt eine Hand.'},
-  {id: 'helm2', st: N2, when: () => tCtx() === 'kick' && tHas('Hörnerhelm') && !tEq('Topfhelm mit Delle'), done: () => tEq('Hörnerhelm') || tEq('Topfhelm mit Delle'), only: () => false, sheet: 'card',
-    hl: () => [tWhere('Hörnerhelm'), tWhere('Topfhelm mit Delle')], shl: tShl('Hörnerhelm'),
-    text: 'Zwei Helme, aber nur ein Kopf. Tipp beide an und vergleiche, welcher mehr bringt. Den setzt du auf.'},
-  {id: 'tausch', st: N2, when: () => tCtx() === 'kick' && tEq('Topfhelm mit Delle') && tHas('Hörnerhelm'), done: () => tEq('Hörnerhelm'), only: () => false, sheet: 'card',
-    hl: () => tWhere('Hörnerhelm'), shl: tShl('Hörnerhelm'),
-    text: 'Der Topfhelm bringt nur +1, der Hörnerhelm +2. Setz lieber den Hörnerhelm auf. Der alte Helm wandert dann in deinen Rucksack.'},
-  {id: 'stiefel', st: N2, when: () => tCtx() === 'kick' && tHas('Stahlkappenstiefel'), done: () => tEq('Stahlkappenstiefel'), only: () => false, sheet: 'card',
-    hl: () => tWhere('Stahlkappenstiefel'), shl: tShl('Stahlkappenstiefel'),
-    text: 'Fehlen noch die Füße: Zieh die Stahlkappenstiefel an.'},
-  {id: 'bogen', st: N2, when: () => tCtx() === 'kick' && tEq('Rostiges Schwert') && tEq('Hörnerhelm') && tEq('Stahlkappenstiefel'), done: () => TUT.sawBogen && !SHEETS.length, only: () => false, hl: () => '#mebar', sheet: 'equip',
-    text: () => `Deine Stärke ist jetzt ${power(me())}. Tipp unten auf deinen Bereich, dann siehst du, wo jedes Teil sitzt und was es bringt. Danach schließt du das Fenster wieder.`},
-  {id: 'tuer4', st: N2, when: () => tCtx() === 'kick' && tEq('Rostiges Schwert') && tEq('Hörnerhelm') && tEq('Stahlkappenstiefel'), done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
-    text: 'So gerüstet traust du dich was. Stoß die Tür auf!'},
-  {id: 'staerke4', st: N2, ok: 'Weiter', spot: '#table .hud', only: () => false, when: () => tFight(),
-    text: () => `Ein Durchgedrehter Saugroboter, Stufe ${S.combat.mons[0].c.lvl}! Ohne Ausrüstung hättest du nur ${me().lvl}, so viel wie deine Stufe. Mit deinen Sachen hast du ${power(me())}.`},
-  {id: 'sieg4b', st: N2, when: () => tFight() && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
-    text: 'Das reicht. Tipp auf „Monster besiegen“.'},
-  /* ---- Station 3 (alt): Wer bin ich? ---- */
+  /* ---- Station 2: Wer bin ich? ---- */
   {id: 'hallo2', st: S2, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Diesmal geht es um dich: Rasse, Klasse und was du mit Gegenständen machst, die du nicht brauchst. Ziel ist Stufe 4.'},
   {id: 'rasse', st: S2, when: () => tCtx() === 'kick' && tHand('Elf') && !me().race, done: () => !!me().race, only: () => false, hl: () => tCard('Elf'),
