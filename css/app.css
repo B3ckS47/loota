@@ -1535,3 +1535,7 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .endov .end-hero .pfw.fa img{border:0}
 .endov .end-hero .pfw.fa{margin:14px}
 .end-hero .pfw{filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+/* Startbildschirm: Punkte zum Wischen durch die Weltkarten */
+.t-dots{position:relative;z-index:1;display:flex;justify-content:center;gap:7px;margin-top:8px;min-height:8px}
+.t-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,241,214,.45);box-shadow:0 1px 2px rgba(0,0,0,.6);transition:background .2s,transform .2s}
+.t-dots i.on{background:#ffd98a;transform:scale(1.25)}

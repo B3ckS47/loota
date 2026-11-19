@@ -46,24 +46,37 @@ const MONSTERS_W2 = [
 ].map(m=>Object.assign({w:2},m));
 const CURSES_W2 = [
   {n:'Kellerkälte',w:2,x:2,eff:{t:'chill',n:2},txt:'Im nächsten Kampf −2.'},
-  {n:'Licht aus!',w:2,eff:{t:'slot',s:'hand'},txt:'Verliere einen Gegenstand in der Hand.'}
+  {n:'Licht aus!',w:2,x:2,eff:{t:'slot',s:'hand'},txt:'Verliere einen Gegenstand in der Hand.'}
 ];
 const ITEMS_W2 = [
-  {n:'Kellerlaterne',w:2,slot:'hand',hands:1,b:1,g:300,run:1},
-  {n:'Fassdeckel-Schild',w:2,slot:'hand',hands:1,b:2,g:400,und:4},
+  {n:'Kellerlaterne',w:2,x:2,slot:'hand',hands:1,b:1,g:300,run:1},
+  {n:'Fassdeckel-Schild',w:2,x:2,slot:'hand',hands:1,b:2,g:400,und:4},
   {n:'Kartoffelsack-Rüstung',w:2,slot:'ruestung',b:1,g:100,flv:'Riecht nach Keller.'},
   {n:'Kronkorken-Krone',w:2,slot:'kopf',b:2,g:500,flv:'Nur echt mit Zacken.'}
 ];
 const ONESHOTS_W2 = [
-  {n:'Mausefalle',w:2,b:2,g:200,pOnly:true,vs:{tag:'nager',val:6},txt:'Gegen Nager +6, sonst +2. Nur für die kämpfende Seite.'},
-  {n:'Knoblauchzopf',w:2,b:1,g:200,pOnly:true,vs:{tag:'undead',val:5},txt:'Gegen Untote +5, sonst +1. Nur für die kämpfende Seite.'}
+  {n:'Mausefalle',w:2,x:2,b:2,g:200,pOnly:true,vs:{tag:'nager',val:6},txt:'Gegen Nager +6, sonst +2. Nur für die kämpfende Seite.'},
+  {n:'Knoblauchzopf',w:2,x:2,b:1,g:200,pOnly:true,vs:{tag:'undead',val:5},txt:'Gegen Untote +5, sonst +1. Nur für die kämpfende Seite.'}
 ];
 const LEVELUPS_W2 = ['Bier aus dem Keller geholt'];
 // Was aus dem Grunddeck mit in den Keller darf (Name -> Stückzahl); Schätze kommen alle mit
 const KELLER_GRUND = {'Wütender Gartenzwerg':1,'Schleimige Socke':2,'Kellerassel XXL':1,'Steuerprüfer-Gespenst':1,'Pilzkönig':1,'Vampir-Kaninchen':1,'Riesen-Nacktschnecke':1,'Zombie-Hausmeister':1,'Bürokratie-Golem':1,'Falsche Schatztruhe':1,
-  'Pechsträhne':2,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
+  'Pechsträhne':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
+/* Grund-Schätze, die in einem Welt-Deck Platz für die Welt-Karten machen (Name -> Stückzahl dort).
+   Getauscht wird möglichst Gleiches gegen Gleiches (Platz, Bonus), damit die Decks gleich stark bleiben. */
+const TR_SWAP = {
+  2: {'Topfdeckel-Schild':0,'Gusseiserne Bratpfanne':0,'Gummihuhn mit Quietsch':0,'Lederschürze':0,'Hörnerhelm':0,
+      'Stinkbombe':0,'Trank der Tapferkeit':1,'Regelheft gelesen':0},
+  3: {'Gummihuhn mit Quietsch':0,'Gusseiserne Bratpfanne':0,'Topfhelm mit Delle':0,'Rutschige Schleimrüstung':0,
+      'Trank der Tapferkeit':1,'Flasche Drachenschnaps':1,'Stinkbombe':0,'Würfel angehaucht':0},
+  4: {'Topfhelm mit Delle':0,'Topfdeckel-Schild':0,'Gummihuhn mit Quietsch':0,'Schnelle Latschen':0,'Glücksumhang':0,
+      'Trank der Tapferkeit':1,'Stinkbombe':0,'Snacks mitgebracht':0},
+  5: {'Topfhelm mit Delle':0,'Hörnerhelm':0,'Rostiges Schwert':0,'Gummihuhn mit Quietsch':0,'Stahlkappenstiefel':0,'Lederschürze':0,
+      'Trank der Tapferkeit':1,'Stinkbombe':0,'Nebelpulver':1,'Pizza für alle bestellt':0,'Snacks mitgebracht':0}
+};
+const trCount = (p, w) => TR_SWAP[w][p.tpl.n] != null ? TR_SWAP[w][p.tpl.n] : p.def;
 // Stückzahl einer Pool-Karte im Keller-Deck
-function kellerCount(p){ if(p.tpl.w===2) return p.wdef; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return KELLER_GRUND[p.tpl.n]||0; return p.def; }
+function kellerCount(p){ if(p.tpl.w===2) return p.wdef; if(p.deck==='tr') return trCount(p,2); if(p.tpl.k==='monster'||p.tpl.k==='curse') return KELLER_GRUND[p.tpl.n]||0; return p.def; }
 /* Welt 3 (Pilzwald): nur im Pilzwald-Deck. pilz = Monster-Merkmal, spore = Fluch bis zum nächsten Sieg */
 const MONSTERS_W3 = [
   {n:'Wandernder Bovist',lvl:1,tr:1,x:2,pilz:true,bad:{t:'spore',n:1},txt:'Pilz. Platzt bei jeder Berührung.',badTxt:'Du bekommst eine Sporenwolke ab: −1 in jedem Kampf, bis du einen gewinnst.'},
@@ -78,10 +91,10 @@ const MONSTERS_W3 = [
 ].map(m=>Object.assign({w:3},m));
 const CURSES_W3 = [
   {n:'Sporenwolke',w:3,x:2,eff:{t:'spore',n:1},txt:'Bleibt, bis du einen Kampf gewinnst: So lange −1 in jedem Kampf.'},
-  {n:'Ameisen in der Hose',w:3,eff:{t:'slot',s:'ruestung'},txt:'Verliere deine Rüstung.'}
+  {n:'Ameisen in der Hose',w:3,x:2,eff:{t:'slot',s:'ruestung'},txt:'Verliere deine Rüstung.'}
 ];
 const ITEMS_W3 = [
-  {n:'Pilzmesser',w:3,slot:'hand',hands:1,b:1,g:300,pilzb:3},
+  {n:'Pilzmesser',w:3,x:2,slot:'hand',hands:1,b:1,g:300,pilzb:3},
   {n:'Sammelkorb',w:3,slot:'hand',hands:1,b:1,g:200,korb:true,flv:'Für die Pilzpfanne reichen zwei verschiedene Speisepilze.'},
   {n:'Fliegenpilzhut',w:3,slot:'kopf',b:2,g:400,flv:'Steht dir erstaunlich gut.'},
   {n:'Moosmantel',w:3,slot:'ruestung',b:2,g:400,run:1,flv:'Im Wald sieht man dich kaum.'}
@@ -89,13 +102,13 @@ const ITEMS_W3 = [
 const SPEISE = ['Steinpilz','Pfifferling','Champignon'];
 const ONESHOTS_W3 = [
   ...SPEISE.map(n=>({n,w:3,x:2,b:2,g:100,pOnly:true,speise:true,txt:'+2. Speisepilz: Steinpilz, Pfifferling und Champignon zusammen ergeben eine Pilzpfanne (+1 Stufe). Nur für die kämpfende Seite.'})),
-  {n:'Fußpilzsalbe',w:3,b:1,g:200,pOnly:true,vs:{tag:'pilz',val:6},txt:'Gegen Pilze +6, sonst +1. Nur für die kämpfende Seite.'}
+  {n:'Fußpilzsalbe',w:3,x:2,b:1,g:200,pOnly:true,vs:{tag:'pilz',val:6},txt:'Gegen Pilze +6, sonst +1. Nur für die kämpfende Seite.'}
 ];
 const LEVELUPS_W3 = ['Aus dem Wald zurückgefunden'];
 // Was aus dem Grunddeck mit in den Wald darf (Name -> Stückzahl); Schätze kommen alle mit
 const WALD_GRUND = {'Wütender Gartenzwerg':1,'Schleimige Socke':1,'Schwarm Stechmücken':1,'Kellerassel XXL':1,'Rentner-Ritter':1,'Pilzkönig':1,'Vampir-Kaninchen':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,
-  'Pechsträhne':2,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
-function waldCount(p){ if(p.tpl.w===3) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return WALD_GRUND[p.tpl.n]||0; return p.def; }
+  'Pechsträhne':1,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Ahnenforschung':1,'Taschendieb-Gnom':1};
+function waldCount(p){ if(p.tpl.w===3) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return trCount(p,3); if(p.tpl.k==='monster'||p.tpl.k==='curse') return WALD_GRUND[p.tpl.n]||0; return p.def; }
 /* Welt 4 (Sommerpause, Strand): nur im Strand-Deck. meer = Monster-Merkmal (bei Flut +3), sun = Sonnenbrand,
    sand = Sand in der Badehose. Ebbe und Flut wechseln mit jeder Runde, solange Strandkarten im Spiel sind. */
 const MONSTERS_W4 = [
@@ -112,23 +125,23 @@ const MONSTERS_W4 = [
 ].map(m=>Object.assign({w:4},m));
 const CURSES_W4 = [
   {n:'Sonnenbrand',w:4,x:2,eff:{t:'sun'},txt:'Bleibt, bis du einen Kampf gewinnst: So lange −1 in jedem Kampf, und niemand hilft dir.'},
-  {n:'Sand in der Badehose',w:4,eff:{t:'sand'},txt:'Weglaufen −2, bis du eine Stufe aufsteigst.'}
+  {n:'Sand in der Badehose',w:4,x:2,eff:{t:'sand'},txt:'Weglaufen −2, bis du eine Stufe aufsteigst.'}
 ];
 const ITEMS_W4 = [
   {n:'Schnorchel',w:4,slot:'kopf',b:1,g:300,meerb:3,flv:'Unter Wasser sieht man die Quallen kommen.'},
-  {n:'Sonnenschirm',w:4,slot:'hand',hands:1,b:2,g:300,shade:true,flv:'Schützt vor Sonnenbrand.'},
-  {n:'Flip-Flops',w:4,slot:'schuhe',b:1,run:1,g:200},
+  {n:'Sonnenschirm',w:4,x:2,slot:'hand',hands:1,b:2,g:300,shade:true,flv:'Schützt vor Sonnenbrand.'},
+  {n:'Flip-Flops',w:4,x:2,slot:'schuhe',b:1,run:1,g:200},
   {n:'Schwimmflügel',w:4,slot:'none',b:0,g:300,flutRun:2,flv:'Bei Flut +2 beim Weglaufen.'}
 ];
 const ONESHOTS_W4 = [
-  {n:'Sonnencreme LSF 50',w:4,b:2,g:200,pOnly:true,cream:true,txt:'+2 für die kämpfende Seite. Wer Sonnenbrand hat, ist ihn damit sofort los, auch außerhalb von Kämpfen.'},
+  {n:'Sonnencreme LSF 50',w:4,x:2,b:2,g:200,pOnly:true,cream:true,txt:'+2 für die kämpfende Seite. Wer Sonnenbrand hat, ist ihn damit sofort los, auch außerhalb von Kämpfen.'},
   {n:'Kokosnuss',w:4,x:2,b:3,g:200,vs:{tag:'moewe',val:5},txt:'+3, gegen die Möwen-Bande sogar +5. Für jede Seite spielbar.'}
 ];
 const LEVELUPS_W4 = ['Den Strandkorb erobert'];
 // Was aus dem Grunddeck mit an den Strand darf (Name -> Stückzahl); Schätze kommen alle mit
 const STRAND_GRUND = {'Übellaunige Möwe':1,'Schleimige Socke':1,'Schwarm Stechmücken':2,'Rentner-Ritter':1,'Steuerprüfer-Gespenst':1,'Durchgedrehter Saugroboter':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,'Troll unter der Autobahnbrücke':1,
-  'Pechsträhne':2,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Taschendieb-Gnom':1};
-function strandCount(p){ if(p.tpl.w===4) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return STRAND_GRUND[p.tpl.n]||0; return p.def; }
+  'Pechsträhne':1,'Windböe':1,'Rost':1,'Löcher in den Sohlen':1,'Identitätskrise':1,'Taschendieb-Gnom':1};
+function strandCount(p){ if(p.tpl.w===4) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return trCount(p,4); if(p.tpl.k==='monster'||p.tpl.k==='curse') return STRAND_GRUND[p.tpl.n]||0; return p.def; }
 // Gezeiten: null ohne Strandkarten, sonst 'ebbe' in ungeraden und 'flut' in geraden Runden (Springflut: immer Flut)
 function tideNow(){ if(!S || !S.tides) return null; return S.spring || S.turn%2===0 ? 'flut' : 'ebbe'; }
 const isFlut = () => tideNow()==='flut';
@@ -153,20 +166,20 @@ const MONSTERS_W5 = [
 ].map(m=>Object.assign({w:5},m));
 const CURSES_W5 = [
   {n:'Seegang',w:5,x:2,eff:{t:'seegang'},txt:'Das Schiff schaukelt: Alle geben 1 zufällige Handkarte an den Nachbarn weiter, in ungerader Runde nach links, in gerader nach rechts. Von der Hand jederzeit spielbar.'},
-  {n:'Seekrank',w:5,eff:{t:'chill',n:2},txt:'Im nächsten Kampf −2.'},
+  {n:'Seekrank',w:5,x:2,eff:{t:'chill',n:2},txt:'Im nächsten Kampf −2.'},
   {n:'Über die Planke',w:5,eff:{t:'lvl',n:1},txt:'Verliere 1 Stufe.'}
 ];
 const ITEMS_W5 = [
   {n:'Augenklappe',w:5,slot:'kopf',b:1,g:200,piratb:3,flv:'Piraten halten dich für einen von ihnen.'},
   {n:'Taucherhelm',w:5,slot:'kopf',b:1,g:400,tiefb:3,diver:true,flv:'In der Tiefsee kein Weglauf-Malus.'},
-  {n:'Enterhaken',w:5,slot:'hand',hands:1,b:2,g:300,piratb:4},
+  {n:'Enterhaken',w:5,x:2,slot:'hand',hands:1,b:2,g:300,piratb:4},
   {n:'Piratensäbel',w:5,slot:'hand',hands:1,b:3,g:500},
   {n:'Holzbein',w:5,slot:'schuhe',b:2,g:200,run:-1,flv:'Stabil, aber nicht schnell.'},
   {n:'Rettungsweste',w:5,slot:'ruestung',b:2,g:300,run:1}
 ];
 const ONESHOTS_W5 = [
   {n:'Rumfass',w:5,x:2,b:3,g:200,txt:'+3, für jede Seite.'},
-  {n:'Kanonenkugel',w:5,b:2,g:300,pOnly:true,vs:{tag:'pirat',val:5},txt:'Gegen Piraten +5, sonst +2. Nur für die kämpfende Seite.'},
+  {n:'Kanonenkugel',w:5,x:2,b:2,g:300,pOnly:true,vs:{tag:'pirat',val:5},txt:'Gegen Piraten +5, sonst +2. Nur für die kämpfende Seite.'},
   {n:'Fischbrötchen',w:5,b:2,g:100,txt:'+2, für jede Seite.'},
   {n:'Kompass',w:5,escape:true,g:200,txt:'Beim Weglaufen statt zu würfeln: Du entkommst automatisch, vor allen Monstern des Kampfes.'},
   {n:'Schatzkarte (linke Hälfte)',w:5,b:0,g:100,map:'l',txt:'Zusammen mit der rechten Hälfte: in deinem Zug den Schatz ausgraben und 3 Schätze ziehen.'},
@@ -174,8 +187,8 @@ const ONESHOTS_W5 = [
 ];
 const LEVELUPS_W5 = ['Seebeine bekommen','Land in Sicht!'];
 const MEER_GRUND = {'Übellaunige Möwe':1,'Schleimige Socke':1,'Steuerprüfer-Gespenst':1,'Durchgedrehter Saugroboter':1,'Riesen-Nacktschnecke':1,'Falsche Schatztruhe':1,'Hydra mit Migräne':1,
-  'Pechsträhne':2,'Windböe':1,'Rost':1,'Identitätskrise':1,'Taschendieb-Gnom':1};
-function meerCount(p){ if(p.tpl.w===5) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return p.def; if(p.tpl.k==='monster'||p.tpl.k==='curse') return MEER_GRUND[p.tpl.n]||0; return p.def; }
+  'Pechsträhne':1,'Windböe':1,'Rost':1,'Identitätskrise':1,'Taschendieb-Gnom':1};
+function meerCount(p){ if(p.tpl.w===5) return p.wdef; if(p.tpl.w) return 0; if(p.deck==='tr') return trCount(p,5); if(p.tpl.k==='monster'||p.tpl.k==='curse') return MEER_GRUND[p.tpl.n]||0; return p.def; }
 // Schatzkarte: beide Hälften auf der Hand
 const mapSet = p => { const l=p.hand.find(c=>c.map==='l'), r=p.hand.find(c=>c.map==='r'); return l && r ? [l,r] : null; };
 function canDig(p){ if(!mapSet(p)) return {ok:false, why:'Dafür brauchst du beide Hälften der Schatzkarte.'}; return {ok:true}; }
@@ -565,23 +578,23 @@ function cardPool(){
   const addW=(tpl,deck,n)=>P.push({tpl,deck,def:0,wdef:n});
   MONSTERS_W2.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   CURSES_W2.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
-  ITEMS_W2.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ITEMS_W2.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W2.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W2.forEach(n=>addW({k:'levelup',n,w:2,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   MONSTERS_W3.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   CURSES_W3.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
-  ITEMS_W3.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ITEMS_W3.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W3.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W3.forEach(n=>addW({k:'levelup',n,w:3,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   MONSTERS_W4.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   CURSES_W4.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
-  ITEMS_W4.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ITEMS_W4.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W4.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W4.forEach(n=>addW({k:'levelup',n,w:4,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   MONSTERS_W5.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   addW({k:'class',c:'pirat',w:5,n:CLASSES.pirat.n,txt:CLASSES.pirat.txt},'door',2);
   CURSES_W5.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
-  ITEMS_W5.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
+  ITEMS_W5.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W5.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
   LEVELUPS_W5.forEach(n=>addW({k:'levelup',n,w:5,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
   return P;

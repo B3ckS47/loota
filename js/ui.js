@@ -346,11 +346,31 @@ window.addEventListener('popstate', () => { back(); history.pushState({app: 1}, 
 const HERO_Y = {w1: '68%', w2: '6%', w3: '88%', w4: '52%', w5: '30%'};
 const nextStation = w => w.stations.find(st => st.type !== 'shop' && !STORY.done[st.id] && stationUnlocked(st));
 const freeGame = () => { const act = GAME_ON && S && S.winner == null && !S.scn; const sv = !act && load(K_SAVE); return act ? {turn: S.turn, lvl: S.players[0].lvl, live: true} : sv ? {turn: sv.S.turn, lvl: sv.S.players[0].lvl} : null; };
+// Karte oben: rein zur Optik. Wischen blättert durch alle Welten, die man schon erreicht hat; die Wahl bleibt gespeichert.
+const heroWorlds = () => { const cw = currentWorld(); return WORLDS.filter(w => w.map && (w === cw || STORY.worlds[w.id] || w.stations.some(st => STORY.done[st.id]))); };
+const heroWorld = () => { const l = heroWorlds(); return l.find(w => w.id === PROFILE.heroMap) || currentWorld(); };
+function renderHero() {
+  const hw = heroWorld(), list = heroWorlds(), map = $('#t-map');
+  if (map.getAttribute('src') !== hw.map) map.setAttribute('src', hw.map);
+  map.style.objectPosition = `50% ${HERO_Y[hw.id] || '60%'}`;
+  patch($('#t-dots'), list.length > 1 ? list.map(w => `<i class="${w === hw ? 'on' : ''}"></i>`).join('') : '');
+}
+function swipeHero(dir) {
+  const list = heroWorlds(); if (list.length < 2) return;
+  const i = list.indexOf(heroWorld()), nw = list[(i + dir + list.length) % list.length], map = $('#t-map');
+  PROFILE.heroMap = nw.id; saveProfile(); buzz(6);
+  map.style.opacity = '0'; setTimeout(() => { renderHero(); map.style.opacity = ''; }, 220);
+}
+(() => {
+  let x0 = null, y0 = 0;
+  const scr = $('#scr-title');
+  scr.addEventListener('touchstart', e => { const t = e.touches[0], r = scr.getBoundingClientRect(); x0 = t.clientY - r.top < r.height * 0.5 ? t.clientX : null; y0 = t.clientY; }, {passive: true});
+  scr.addEventListener('touchend', e => { if (x0 == null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) swipeHero(dx < 0 ? 1 : -1); }, {passive: true});
+})();
 function renderTitle() {
   const cw = currentWorld(), ss = storySave(), sst = ss && stationById(ss.st), nx = nextStation(cw);
-  const map = $('#t-map');
-  if (map.getAttribute('src') !== cw.map) map.setAttribute('src', cw.map);
-  map.style.objectPosition = `50% ${HERO_Y[cw.id] || '60%'}`;
+  renderHero();
   $('#t-world').textContent = `Welt ${cw.n}`;
   $('#t-stars').textContent = `${worldStars(cw)} / ${worldMaxStars(cw)}`;
   $('#t-wname').textContent = cw.name;
