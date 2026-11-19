@@ -132,6 +132,7 @@ const WORLDS = [{
         botStyles: {Berta: {help: 0, curse: 0, intf: 0, l: 'schaut heute nur zu'}},
         deck: {door: ['Wütender Gartenzwerg', 'Halbling', 'Zauberer'],
           tr: ['Lederschürze', 'Glücksumhang']}},
+      reward: 'title:neuling',
       winText: '„Dein erstes Monster!“, ruft Hilde. „Stufe 2, und schon hast du gewonnen. Beim nächsten Mal kümmern wir uns um deine Ausrüstung.“'},
     {id: 'w0s2', req: ['w0s1'], face: 'icons/portrait-hilde.png', no: '2', x: 22, y: 190, ax: 85, ay: 41, type: 'tutorial', name: 'Wer bin ich?', place: 'Ecktisch',
       text: '„Mensch ohne Klasse? Das geht besser“, lacht Hilde. „Heute wirst du Elf und Krieger, und ich zeige dir, wie man alten Kram zu Gold macht.“',
@@ -169,7 +170,8 @@ const WORLDS = [{
       goal: 'Gegen Berta und Kalle: Erreiche als Erster Stufe 5.',
       scn: {target: 5, bots: ['Berta', 'Kalle'], diff: 'gemuetlich', tips: true, start: {lvl: 2, eq: ['Rostiges Schwert']}, perks: {freeHelp: 'Berta', why: 'Einmal helf ich dir noch!'}, botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'hilft dir gern'}, Kalle: {help: 0, curse: 1, intf: 1, l: 'will unbedingt gewinnen'}}},
       extras: [{t: 'Keine Stufe verlieren', ok: st => !st.lvlLost}],
-      reward: 'title:neuling'}
+      winText: '„Geschafft!“ Hilde schiebt dir einen Bierdeckel über den Tresen. „Den kriegt hier nur, wer die Probepartie gewinnt. Häng ihn dir um dein Bild, im Charakter.“',
+      reward: 'frame:bierdeckel'}
   ],
   finalTitle: 'Einführung geschafft!'
 }, {
@@ -517,6 +519,9 @@ const STORY = (() => {
 })();
 function saveStory() { try { localStorage.setItem(K_STORY, JSON.stringify(STORY)); } catch (e) {} }
 if (STORY.done.w1s0 && !STORY.worlds.w0) { STORY.worlds.w0 = true; STORY.intro.w0 = true; }
+// Belohnungen der Einführung (Titel nach Station 1, Rahmen nach der Probepartie) auch für alle, die sie schon hinter sich haben
+if (STORY.done.w0s1 || STORY.worlds.w0) { if (!STORY.owned.includes('title:neuling')) STORY.owned.push('title:neuling'); }
+if (STORY.done.w0s5 || STORY.worlds.w0) { if (!STORY.owned.includes('frame:bierdeckel')) STORY.owned.push('frame:bierdeckel'); }
 
 /* ================= Käufe =================
    Kaufwelten (paid) sind sichtbar, sobald die Welt davor geschafft ist, spielbar aber erst nach dem Kauf.
@@ -667,7 +672,7 @@ const SHOP_POOL = [
   {id: 'portrait:berta', price: 60}, {id: 'portrait:kalle', price: 60}, {id: 'portrait:uschi', price: 60}, {id: 'portrait:hilde', price: 100},
   {id: 'portrait:fridolin', price: 80}, {id: 'portrait:gustav', price: 80}, {id: 'portrait:trudi', price: 80}, {id: 'portrait:walter', price: 80},
   {id: 'portrait:bruno', price: 80}, {id: 'portrait:gesine', price: 80}, {id: 'portrait:pepe', price: 80}, {id: 'portrait:sardella', price: 80},
-  {id: 'frame:bierdeckel', price: 40}, {id: 'frame:abendrot', price: 40}, {id: 'frame:mitternacht', price: 50}, {id: 'frame:eichenholz', price: 40},
+{id: 'frame:abendrot', price: 40}, {id: 'frame:mitternacht', price: 50}, {id: 'frame:eichenholz', price: 40},
   {id: 'frame:lavendel', price: 40}, {id: 'frame:perlmutt', price: 50},
   {id: 'title:gluckspilz', price: 30}, {id: 'title:wuerfelkoenig', price: 30}, {id: 'title:kartenhai', price: 30},
   {id: 'title:fruehaufsteher', price: 30}, {id: 'title:nachteule', price: 30}, {id: 'title:schatzsucher', price: 30},
