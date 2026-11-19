@@ -1001,8 +1001,8 @@ const SHEET_VIEWS = {
   },
   pause() {
     if (S && S.scn) { const st = stationById(S.scn);
-      return {head: h3(st ? `${st.no} · ${esc(st.name)}` : 'Pause'), body: `${st ? `<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>` : ''}<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="storymap">Zur Storykarte</button></div><p class="hint">${SCN && !SCN.fight && !SCN.tut ? 'Die Station wird zu Beginn jedes deiner Züge gespeichert. Auf der Storykarte kannst du sie später fortsetzen.' : 'Rätsel und Probespiel werden nicht gespeichert. Verlässt du sie, startest du später neu.'}</p>`}; }
-    return {head: h3('Pause'), body: `<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="cards">Alle Karten</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div><p class="hint">Dein Spiel wird zu Beginn jedes deiner Züge gespeichert.</p>`};
+      return {head: h3(st ? `${st.no} · ${esc(st.name)}` : 'Pause'), body: `${st ? `<div class="st-goal"><b>Ziel</b><p>${esc(st.goal)}</p></div>` : ''}<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="restart">Von vorne beginnen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="storymap">Zur Storykarte</button></div><p class="hint">${SCN && !SCN.fight && !SCN.tut ? 'Die Station wird zu Beginn jedes deiner Züge gespeichert. Auf der Storykarte kannst du sie später fortsetzen.' : 'Rätsel und Probespiel werden nicht gespeichert. Verlässt du sie, startest du später neu.'}</p>`}; }
+    return {head: h3('Pause'), body: `<div class="acts"><button type="button" class="btn primary" data-go="resume">Weiterspielen</button><button type="button" class="btn" data-go="restart">Von vorne beginnen</button><button type="button" class="btn" data-go="settings">Optionen</button><button type="button" class="btn" data-go="rules">Spielregeln</button><button type="button" class="btn" data-go="cards">Alle Karten</button><button type="button" class="btn" data-go="menu">Hauptmenü</button></div><p class="hint">Dein Spiel wird zu Beginn jedes deiner Züge gespeichert.</p>`};
   },
   sel() {
     const s = UI.sel; if (!s) return null;
@@ -1652,6 +1652,13 @@ function go(a) {
     case 'pause': openSheet({id: 'pause'}); break;
     case 'resume': closeAllSheets(); break;
     case 'menu': $$('.endov').forEach(x => x.remove()); closeAllSheets(); STACK.length = 0; setScreen('title'); break;
+    case 'restart': (async () => {
+      const ok = await confirmDialog('Von vorne beginnen?', S && S.scn ? 'Diese Station startet noch einmal ganz von vorne. Die laufende Partie geht dabei verloren.' : 'Es geht mit denselben Einstellungen neu los. Die laufende Partie geht dabei verloren.', 'Neu starten', 'Abbrechen');
+      if (!ok) return;
+      closeAllSheets(); $$('.endov').forEach(x => x.remove());
+      if (STORY_RUN && S && S.scn) startStation(STORY_RUN.st);
+      else { GAME_ON = false; clearSave(); if (UI.roster) ROSTER = UI.roster; startNewGame(); }   // gleiche Gegner, gleiche Einstellungen
+    })(); break;
     case 'again': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (STORY_RUN && S && S.scn) { startStation(STORY_RUN.st); break; } GAME_ON = false; startNewGame(); break;
     case 'log': $$('.endov').forEach(x => x.remove()); openSheet({id: 'log'}); break;
     case 'equip': openSheet({id: 'equip'}); break;
@@ -2027,8 +2034,8 @@ const TUT_LESSONS = [
     text: 'Diesmal geht es um dich: Rasse, Klasse und was du mit Gegenständen machst, die du nicht brauchst. Ziel ist Stufe 4.'},
   {id: 'rasse', st: S2, when: () => tCtx() === 'kick' && tHand('Elf') && !me().race, done: () => !!me().race, only: () => false, hl: () => tCard('Elf'),
     text: 'Rassen geben dir besondere Fähigkeiten. Tipp die Elfe an, lies, was sie kann, und spiel sie dann aus.'},
-  {id: 'klasse', st: S2, when: () => tCtx() === 'kick' && me().race && !me().cls && tHand('Krieger'), done: () => !!me().cls, only: () => false, hl: () => tCard('Krieger'),
-    text: 'Jetzt die Klasse. Krieger können im Kampf Karten abwerfen und werden dafür stärker. Spiel den Krieger genauso aus.'},
+  {id: 'klasse', st: S2, when: () => tCtx() === 'kick' && me().race && !me().cls && tHand('Krieger'), done: () => !!me().cls, only: () => false, hl: () => [tCard('Krieger'), '#table'],
+    text: 'Jetzt die Klasse. Krieger können im Kampf Karten abwerfen und werden dafür stärker. Probier diesmal den schnellen Weg: Halt den Krieger fest und zieh ihn nach oben aufs Spielfeld. So spielst du jede Karte aus, ohne sie erst anzutippen.'},
   {id: 'breitschwert', st: S2, when: () => tCtx() === 'kick' && me().cls && tHand('Breitschwert der Angeberei'), done: () => tEq('Breitschwert der Angeberei'), only: () => false, hl: () => tCard('Breitschwert der Angeberei'),
     text: 'Manche Gegenstände darf nur eine bestimmte Klasse oder Rasse benutzen. Das Breitschwert der Angeberei ist nur für Krieger, braucht beide Hände und gibt +4. Rüste es aus.'},
   {id: 'verkaufen', st: S2, when: () => tCtx() === 'kick' && tEq('Breitschwert der Angeberei') && tHand('Protzige Goldkette') && me().lvl < 3, done: () => me().lvl >= 3, only: () => false, hl: () => [tCard('Protzige Goldkette'), tCard('Hörnerhelm')],
