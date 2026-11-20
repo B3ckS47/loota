@@ -688,6 +688,8 @@ function paintHud(hud, C) {
 function renderTable() {
   const el = $('#table');
   const C = S.combat, R = S.reveal;
+  const L = UI.prompt && UI.prompt.ctx === 'loot' ? UI.prompt.data : null;
+  if (L) { if (W.tableKey !== 'loot') { W.tableKey = 'loot'; W.fightRef = null; el.__h = null; el.innerHTML = ''; } patch(el, lootHTML(L)); return; }
   const key = C ? 'fight' : R ? 'reveal:' + R.uid : 'idle';
   if (key !== W.tableKey || (C && C !== W.fightRef)) {
     const prevReveal = W.tableKey && W.tableKey.startsWith('reveal:') ? +W.tableKey.slice(7) : null;
@@ -721,6 +723,15 @@ function renderTable() {
   }
 }
 const stripTags = h => String(h).replace(/<[^>]+>/g, '');
+const sellBtnHTML = p => { const b = sellBlock(p); return `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell"${b ? ' disabled' : ''}>Gegenstände verkaufen${b ? ` <small>(ab Stufe ${WINLVL() - 1} nicht mehr)</small>` : ''}</button>${b ? `<p>${esc(b)}</p>` : ''}</div>`; };
+// Beute mit Helfer: Die offenen Schätze liegen auf dem Tisch und werden dort angetippt
+function lootHTML(L) {
+  const rec = UI.adv && UI.adv.opt !== undefined ? UI.adv.opt : -1;
+  const got = (p, a) => `<span class="lg-row"><img src="${portrait(p)}" alt=""><b>${p.human ? 'Du' : esc(p.name)}</b>${a.length ? a.map(c => `<span class="lg-c">${esc(c.n)}</span>`).join('') : '<span class="lg-none">noch nichts</span>'}</span>`;
+  return `<div class="arena lootar"><div class="loot-h">Beute wählen</div>` +
+    `<div class="loot-cards" data-n="${L.pool.length}">${L.pool.map((c, i) => cardMini(c, {where: 'loot', extra: 'lootc' + (i === rec ? ' rec' : '')})).join('')}</div>` +
+    `<div class="loot-got">${got(L.h, L.hGot)}${got(L.f, L.fGot)}</div></div>`;
+}
 function adviceBox() {
   const a = UI.adv; if (!a) return '';
   const can = a.opt !== undefined || a.uid || a.sell || (UI.sel && a.picks);
@@ -742,6 +753,7 @@ function promptCaption(q, ctx, data) {
   switch (ctx) {
     case 'kick': return q.text || q.title;
     case 'trouble': return 'Kein Monster hinter der Tür';
+    case 'loot': return 'Tipp auf dem Tisch auf einen Schatz';
     case 'charity': { const over = p.hand.length - handLimit(p); return over > 0 ? `Abgabe: ${over} ${pl(over, 'Karte', 'Karten')} zu viel` : 'Fertig? Dann Zug beenden'; }
     case 'helpWho': return 'Wen bittest du um Hilfe?';
     case 'helpOffer': return data && data.b ? `Wie viele Schätze bekommt ${data.b.name}?` : q.title;
@@ -755,6 +767,7 @@ function promptCaption(q, ctx, data) {
   }
 }
 function dockButtons(q, ctx) {
+  if (ctx === 'loot') return [];   // gewählt wird auf dem Tisch
   const items = [];
   const mons = ctx === 'trouble' ? q.opts.map((o, i) => [o, i]).filter(([o]) => /^m\d+$/.test(String(o.v))) : [];
   q.opts.forEach((o, i) => { if (!mons.some(([, j]) => j === i)) items.push({type: 'opt', i, o}); });
@@ -993,7 +1006,7 @@ const SHEET_VIEWS = {
     const p = me(), free = isFree();
     return {hero: true, head: heroHead(p), body: `<div class="hbody">${heroStats(p)}${heroAbil(p)}${heroDoll(p, true)}${heroPack(p, true)}` +
       `<p class="hint hb-hint">Karte antippen für Aktionen. Im Kampf zählen Stufe, Volk, Klasse und die Ausrüstung, der Rucksack nicht.</p>` +
-      (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') + `</div>`};
+      (free ? sellBtnHTML(p) : '') + `</div>`};
   },
   log(s) {
     if (!S) return null;
@@ -1710,6 +1723,11 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-cname]'))) { openSheet({id: 'card', cname: el.dataset.cname}); return; }
   if ((el = t.closest('[data-ptip]'))) { UI.ptip = UI.ptip === el.dataset.ptip ? null : el.dataset.ptip; renderSheet(false); buzz(6); return; }
   if ((el = t.closest('[data-human]'))) { openSheet({id: 'card', human: true}); return; }
+  if ((el = t.closest('[data-where="loot"]'))) {
+    const L = UI.prompt && UI.prompt.ctx === 'loot' ? UI.prompt.data : null, i = L ? L.pool.findIndex(c => c.uid === +el.dataset.uid) : -1;
+    if (i >= 0 && UI.resolve) { Snd.sfx('deal'); W.hoverUid = null; UI.resolve(i); }
+    return;
+  }
   if ((el = t.closest('[data-uid]'))) {
     const uid = +el.dataset.uid, where = el.dataset.where;
     if (UI.sel && topSheet() && topSheet().id === 'sel' && ['hand', 'eq', 'pack'].includes(where)) {
@@ -2105,8 +2123,8 @@ const TUT_LESSONS = [
     text: 'Tipp auf Berta.'},
   {id: 'angebot', st: S3, noCancel: true, when: () => tCtx() === 'helpOffer', done: () => tCtx() !== 'helpOffer',
     text: 'Wie viele Schätze bietest du ihr an? Je mehr, desto eher sagt jemand ja. Berta hilft dir heute aber sowieso.'},
-  {id: 'beute3', st: S3, when: () => tCtx() === 'loot', done: () => tCtx() !== 'loot', only: () => true,
-    text: 'Mit Helfer werden die Schätze offen gezogen. Dann wählt ihr abwechselnd, du zuerst, bis Berta so viele hat, wie du ihr angeboten hast. Tipp auf den Schatz, den du willst.'},
+  {id: 'beute3', st: S3, when: () => tCtx() === 'loot', done: () => tCtx() !== 'loot', only: () => true, hl: () => '#table .loot-cards',
+    text: 'Mit Helfer werden die Schätze offen gezogen. Berta hat geholfen, darum wählt sie zuerst, dann ihr abwechselnd. Tipp auf dem Tisch auf den Schatz, den du willst.'},
   {id: 'zusammen', st: S3, when: () => tFight() && S.combat.h != null && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Zusammen seid ihr stärker als der Troll. Tipp auf „Monster besiegen“ und hol dir Stufe 4!'},
   {id: 'almosen3', st: S3, cards: true, act: /Rucksack/, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()) && tHand('Nebelpulver'), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
@@ -2321,7 +2339,7 @@ function renderWide() {
   patch($('#wfight'), fightWideHTML());
   const free = isFree();
   patch($('#wme'), `<div class="wpanel wme-in">${heroHead(p)}<div class="hbody">${heroStats(p)}${heroAbil(p)}${heroDoll(p, true)}${heroPack(p, true)}` +
-    (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') + `</div></div>`);
+    (free ? sellBtnHTML(p) : '') + `</div></div>`);
   const pv = W.hoverUid != null && pc && mq().hover.matches ? findCard(W.hoverUid) : null;
   patch($('#wprev'), pv ? `<div class="wprev-in">${cardBig(pv)}</div>` : '');
   const dD = S.doorDisc[S.doorDisc.length - 1], dT = S.trDisc[S.trDisc.length - 1];

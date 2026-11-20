@@ -796,22 +796,24 @@ function applyCounter(C,t){
   else { t.m.enh.splice(t.m.enh.indexOf(t.e),1); discard(t.e); }
   C.counter=true; markIntf();
 }
-// Beute mit Helfer: abwechselnd wählen, Kämpfer zuerst, bis der Helfer seine Zahl hat
+// Beute mit Helfer: abwechselnd wählen, der Helfer zuerst, bis er seine Zahl hat. Der Rest gehört dem Kämpfer.
+// Wer keine echte Wahl hat (nur noch eine Karte, oder der Helfer bekommt ohnehin alle übrigen), wählt nicht.
 async function draftLoot(f,h,cards,deal){
-  const pool=cards.slice(), fGot=[], hGot=[]; let fTurn=true;
+  const pool=cards.slice(), fGot=[], hGot=[]; let hTurn=true;
   while(pool.length){
     const needH=deal-hGot.length;
     if(needH<=0){ fGot.push(...pool.splice(0)); break; }
-    const who=(fTurn && pool.length>needH) ? f : h;
+    if(needH>=pool.length){ hGot.push(...pool.splice(0)); break; }
+    const who=hTurn ? h : f;
     let pick;
     if(who.human){
-      const v=await ask(()=>({title:'Beute wählen', text: who===f ? `Du wählst zuerst. ${h.name} bekommt noch ${needH} ${pl(needH,'Schatz','Schätze')}.` : `Du hilfst und darfst wählen. Noch ${needH} ${pl(needH,'Schatz','Schätze')} für dich.`,
-        hint:['Abwechselnd wählen, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat.'], opts:pool.map((c,i)=>({l:c.n,v:i,kind:'primary'}))}), 'loot', {pool});
+      const v=await ask(()=>({title:'Beute wählen', text: who===h ? `Du hast geholfen und wählst zuerst. Noch ${needH} ${pl(needH,'Schatz','Schätze')} für dich.` : `Du bist dran. ${h.name} bekommt noch ${needH} ${pl(needH,'Schatz','Schätze')}, der Rest gehört dir.`,
+        hint:['Der Helfer wählt zuerst, dann abwechselnd, bis er die abgemachte Zahl hat. Der Rest gehört dem Kämpfer.'], opts:pool.map((c,i)=>({l:c.n,v:i,kind:'primary'}))}), 'loot', {pool, f, h, fGot, hGot, needH});
       pick=pool[v];
     } else pick=pool.slice().sort((a,b)=>keepValue(who,b)-keepValue(who,a))[0];
     pool.splice(pool.indexOf(pick),1); (who===f?fGot:hGot).push(pick);
     if(!who.human) log(`${who.name} wählt ${pick.n}.`);
-    fTurn = who===h;
+    hTurn = who===f;
   }
   return {fGot,hGot};
 }
@@ -1442,7 +1444,7 @@ async function winCombat(C){
   for(let i=0;i<n;i++){ const t=(f.human || (h && h.human)) ? luckyTr() : drawTr(); if(t) drawn.push(t); }
   if(h){
     log(`Die ${n} ${pl(n,'Schatz','Schätze')} werden offen gezogen: ${drawn.map(c=>`<b>${c.n}</b>`).join(', ')||'keine'}.`);
-    ruleOnce('opentr','Mit Helfer werden die Schätze offen gezogen. Dann wird abwechselnd gewählt, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat.');
+    ruleOnce('opentr','Mit Helfer werden die Schätze offen gezogen. Der Helfer wählt zuerst, dann wird abwechselnd gewählt, bis er die abgemachte Zahl hat. Der Rest gehört dem Kämpfer.');
     const {fGot,hGot}=await draftLoot(f,h,drawn,C.deal);
     h.hand.push(...hGot); f.hand.push(...fGot);
     log(`${nm(h)} ${V(h,'bekommst','bekommt')} ${hGot.length ? hGot.map(c=>c.n).join(', ') : 'nichts'}, ${nm(f)} ${V(f,'bekommst','bekommt')} ${fGot.length ? fGot.map(c=>c.n).join(', ') : 'nichts'}.`);
@@ -1575,6 +1577,7 @@ function findCard(uid){
   if(p.race && p.race.uid===uid) return p.race;
   if(p.cls && p.cls.uid===uid) return p.cls;
   if(S.reveal && S.reveal.uid===uid) return S.reveal;
+  if(UI.prompt && UI.prompt.ctx==='loot'){ const c=UI.prompt.data.pool.find(x=>x.uid===uid); if(c) return c; }
   const o=ownerOf(uid); if(o) return o.c;
   if(S.combat){ for(const m of S.combat.mons){ if(m.c.uid===uid) return m.c; const e=m.enh.find(x=>x.uid===uid); if(e) return e; } }
   return null;
@@ -1593,7 +1596,7 @@ function cardActions(c, where){
   const myTurn=S.cur===0, free=isFree();
   const live=C && !C.resolved;
   const inMine=live && (C.f===0 || C.h===0);
-  const sellAct = () => { if(free && sellable(p,c)) A.push({l:`Verkaufen (${fmt(goldOf(p,c))} Gold)`, fn:()=>startSell(c.uid)}); };
+  const sellAct = () => { if(free && sellable(p,c)) A.push(sellBlock(p) ? {l:'Verkaufen', fn:()=>{}, dis:sellBlock(p)} : {l:`Verkaufen (${fmt(goldOf(p,c))} Gold)`, fn:()=>startSell(c.uid)}); };
   if(where==='hand'){
     switch(c.k){
       case 'item': {
@@ -1700,9 +1703,11 @@ function useLevelUp(c){
   log(`Du spielst „${c.n}“: Stufe ${p.lvl}.`,'good');
   ruleOnce('levelup',`Stufenkarten spielt man im eigenen Zug außerhalb von Kämpfen, aber nie für die Siegstufe ${WINLVL()}.`);
 }
+// Auf der vorletzten Stufe bringt Verkaufen nichts mehr: Die Siegstufe gibt es nur für einen Monstersieg
+const sellBlock = p => p.lvl>=WINLVL()-1 ? `Auf Stufe ${WINLVL()-1} bringt Verkaufen nichts mehr. Stufe ${WINLVL()} gibt es nur für einen Sieg über ein Monster.` : '';
 async function startSell(pre){
   const p=me(); if(!isFree()) return;
-  if(p.lvl>=WINLVL()-1){ log(`Auf Stufe ${WINLVL()-1} bringt Verkaufen nichts mehr: Stufe ${WINLVL()} gibt es nur für einen Monstersieg.`,'sys'); return; }
+  if(sellBlock(p)){ if(typeof toast==='function') toast(sellBlock(p)); return; }
   try{
     const sel=await selectCards({ctx:'sell', title:'Gegenstände verkaufen', text:'Wähle, was du verkaufen willst. Je 1.000 Gold gibt es 1 Stufe, der Rest kommt in deinen Goldbeutel.', min:1, max:99, pre: Array.isArray(pre)?pre:(pre?[pre]:[]), cancel:true,
       filter:(c,w)=> sellable(p,c) && ['hand','eq','pack'].includes(w) && (typeof tutSellOk!=='function' || tutSellOk(c)),
@@ -1912,7 +1917,7 @@ function advise(){
     case 'fight': return adviseFight(p,C);
     case 'helpWho': { const b=bestHelper(C); return b ? {opt:b.id, text:`Frag ${b.name}.`, why:`Mit ${b.name} gewinnt ihr.`} : {opt:'x', text:'Abbrechen.', why:'Keiner der übrigen Mitspieler würde den Kampf drehen.'}; }
     case 'helpOffer': { const total=treasuresOf(C), n=Math.min(total,Math.max(1,Math.ceil(total/2)));
-      return {opt:n, text:`Biete ${n} ${pl(n,'Schatz','Schätze')} an.`, why:'Etwa die Hälfte ist ein faires Angebot. Bei zu wenig sagen viele Nein. Gewählt wird dann abwechselnd, du zuerst.'}; }
+      return {opt:n, text:`Biete ${n} ${pl(n,'Schatz','Schätze')} an.`, why:'Etwa die Hälfte ist ein faires Angebot. Bei zu wenig sagen viele Nein. Dein Helfer wählt zuerst, dann abwechselnd.'}; }
     case 'counter': return {opt:0, text:`Heb ${(counterTargets(C)[0]||{}).l||'die stärkste Karte'} auf.`, why:'Das ist die Karte, die dich am meisten kostet.'};
     case 'elfpick': return keepValue(p,d.b)>keepValue(p,d.a) ? {opt:'b', text:`Behalte ${d.b.n}.`, why:'Die ist für dich mehr wert.'} : {opt:'a', text:`Behalte ${d.a.n}.`, why:'Die ist für dich mehr wert.'};
     case 'loot': { const best=d.pool.map((c,i)=>({c,i})).sort((a,b)=>keepValue(p,b.c)-keepValue(p,a.c))[0]; return {opt:best.i, text:`Nimm ${best.c.n}.`, why:'Die Karte ist für dich am meisten wert.'}; }
@@ -2034,7 +2039,7 @@ const QUIZ=[
   {q:'Ab welchem Würfelergebnis gelingt das Weglaufen ohne Boni?', o:['Ab 4','Ab 5','Nur bei 6','Ab 3'], a:1, e:'5 oder 6. Manche Gegenstände, Monster und Welten ändern den Wurf.'},
   {q:'Du bist auf Stufe 9 und hast Gegenstände für 1.200 Gold. Kannst du dir Stufe 10 kaufen?', o:['Ja, 1.000 Gold sind eine Stufe.','Nein, Stufe 10 gibt es nur für einen Monstersieg.','Ja, aber nur als Kobold.','Ja, mit dem Goldbeutel.'], a:1, e:'Die Siegstufe gibt es nur, indem du ein Monster besiegst. Verkaufen, Goldbeutel und Stufenkarten bringen dich höchstens auf 9.'},
   {q:'Ende deines Zuges: 7 Handkarten, Berta hat als Einzige die niedrigste Stufe. Was passiert?', o:['Nichts, es gibt kein Limit.','Du legst 2 Karten ab.','Du gibst 2 Karten als Abgabe an Berta.','Du gibst alle Karten an Berta.'], a:2, e:'Abgabe: Alles über 5 Karten geht an den Spieler mit der niedrigsten Stufe. Bist du selbst (mit) am niedrigsten, legst du ab. Vorher kannst du Gegenstände in den Rucksack legen.'},
-  {q:'Kalle hilft dir für 1 von 3 Schätzen. Wie werden die Schätze verteilt?', o:['Kalle bekommt einen zufälligen.','Ihr wählt abwechselnd, du zuerst.','Kalle wählt zuerst.','Du bestimmst allein.'], a:1, e:'Mit Helfer werden die Schätze offen gezogen. Dann wählt ihr abwechselnd, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat. Helfen darf immer nur 1 Mitspieler.'},
+  {q:'Kalle hilft dir für 1 von 3 Schätzen. Wie werden die Schätze verteilt?', o:['Kalle bekommt einen zufälligen.','Du suchst dir zuerst einen aus.','Kalle sucht sich einen aus, der Rest gehört dir.','Du bestimmst allein.'], a:2, e:'Mit Helfer werden die Schätze offen gezogen. Der Helfer wählt zuerst, dann wählt ihr abwechselnd, bis er die abgemachte Zahl hat. Der Rest gehört dir. Helfen darf immer nur 1 Mitspieler.'},
   {q:'Beim Durchsuchen des Raums ziehst du verdeckt einen Fluch. Was jetzt?', o:['Er trifft dich sofort.','Er kommt auf deine Hand. Du kannst ihn später auf jemanden spielen.','Du musst ihn sofort auf den Spieler links spielen.','Er wird abgelegt.'], a:1, e:'Verdeckt gezogene Flüche sind Handkarten. Spielen darfst du sie jederzeit, auf jeden.'},
   {q:'Du stirbst. Was behältst du?', o:['Gar nichts, du fängst auf Stufe 1 an.','Stufe, Volk und Klasse.','Deine Handkarten.','Deine ausgerüsteten Gegenstände.'], a:1, e:'Stufe, Volk und Klasse bleiben. Handkarten werden abgelegt, von deinen Gegenständen nimmt sich jeder andere einen. Im nächsten Zug ziehst du 4 Tür- und 4 Schatzkarten.'},
   {q:'Wer darf eine Laune wie „Stinksauer“ (+5) spielen?', o:['Nur der Kämpfer.','Nur wer gerade nicht kämpft.','Jeder Spieler, in jedem Kampf.','Niemand, die Karte liegt einfach im Spiel.'], a:2, e:'Jeder darf sie in jeden Kampf spielen, auch auf das eigene Monster. Launen verändern meist auch die Zahl der Schätze.'},

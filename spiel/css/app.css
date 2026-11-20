@@ -1606,6 +1606,24 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .rc-table td:first-child{font-weight:800;white-space:nowrap;padding-right:10px}
 details.rule[hidden]{display:none}
 
+/* Beute mit Helfer: Auswahl auf dem Tisch */
+.lootar{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px;perspective:none}
+.loot-h{font:700 24px/1 var(--display);color:var(--on-wood);text-shadow:0 2px 0 var(--wood-dark)}
+.loot-cards{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;max-width:100%}
+.loot-cards .mc{width:clamp(78px,22vw,104px);animation:lootIn .35s cubic-bezier(.2,.9,.3,1.2) both;box-shadow:0 8px 18px -6px rgba(0,0,0,.7);transition:transform .12s,box-shadow .12s}
+.loot-cards .mc:nth-child(2){animation-delay:.06s}.loot-cards .mc:nth-child(3){animation-delay:.12s}.loot-cards .mc:nth-child(4){animation-delay:.18s}.loot-cards .mc:nth-child(5){animation-delay:.24s}
+.loot-cards .mc:hover{transform:translateY(-6px);box-shadow:0 0 0 3px #f3c873,0 14px 24px -8px rgba(0,0,0,.8)}
+.loot-cards .mc.rec{box-shadow:0 0 0 3px #7fd36a,0 8px 18px -6px rgba(0,0,0,.7)}
+@keyframes lootIn{from{opacity:0;transform:translateY(16px) scale(.9)}}
+.loot-got{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;font-size:13px;color:var(--on-wood)}
+.lg-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lg-row img{width:24px;height:24px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:1.5px solid rgba(255,220,160,.5)}
+.lg-c{padding:1px 8px;border-radius:999px;background:rgba(255,220,160,.16);border:1px solid rgba(255,220,160,.3);font-weight:700}
+.lg-none{opacity:.6;font-style:italic}
+#app.lay-pc .loot-cards .mc,#app.lay-tab .loot-cards .mc{width:150px}
+#app.lay-pc .loot-h,#app.lay-tab .loot-h{font-size:32px}
+#app.lay-pc .loot-got,#app.lay-tab .loot-got{font-size:15px}
+
 /* ================= Breite Ansicht ================= */
 .wopps,.wlog,.wside,.wpile,.wprev{display:none}
 #app.lay-pc,#app.lay-tab{max-width:none}
