@@ -2051,8 +2051,8 @@ const TUT_LESSONS = [
     text: 'Stufe 3, und das ganz ohne Kampf! Jetzt stößt du die Tür auf.'},
   {id: 'raum', st: S2, when: () => tCtx() === 'trouble' && S.turn === 1, done: () => tCtx() !== 'trouble', only: o => o.v === 'loot', hl: tOpt(o => o.v === 'loot'),
     text: 'Kein Monster hinter der Tür. Dann durchsuchst du den Raum: Du ziehst eine Türkarte verdeckt auf die Hand.'},
-  {id: 'almosen', st: S2, cards: true, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
-    text: 'Am Ende deines Zuges darfst du höchstens 5 Karten behalten. Was zu viel ist, bekommt der Spieler mit der niedrigsten Stufe, also Berta. Vorher kannst du noch etwas ausspielen oder in den Rucksack legen. Sonst gib 1 Karte ab.'},
+  {id: 'almosen', st: S2, cards: true, act: /Rucksack/, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
+    text: 'Am Ende deines Zuges darfst du höchstens 5 Karten behalten. Was zu viel ist, bekommt der Spieler mit der niedrigsten Stufe, also Berta. Gegenstände kannst du vorher auch in den Rucksack legen, die zählen dann nicht mehr als Handkarten. Sonst gib 1 Karte ab.'},
   {id: 'ende2', st: S2, when: () => tCtx() === 'charity' && S.turn === 1, done: () => tCtx() !== 'charity', hl: () => '#act .btn.primary',
     text: 'Jetzt passt alles. Beende deinen Zug.'},
   {id: 'kampf3', st: S2, when: () => tFight() && S.turn === 2 && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
@@ -2078,7 +2078,7 @@ const TUT_LESSONS = [
     text: 'Wie viele Schätze bietest du ihr an? Je mehr, desto eher sagt jemand ja. Berta hilft dir heute aber sowieso.'},
   {id: 'zusammen', st: S3, when: () => tFight() && S.combat.h != null && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Zusammen seid ihr stärker als der Troll. Tipp auf „Monster besiegen“ und hol dir Stufe 4!'},
-  {id: 'almosen3', st: S3, cards: true, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()) && tHand('Nebelpulver'), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
+  {id: 'almosen3', st: S3, cards: true, act: /Rucksack/, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()) && tHand('Nebelpulver'), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
     text: 'Du hast mehr als 5 Karten. Den Rest bekommt Berta, das kennst du schon. Das Nebelpulver behältst du aber, das brauchst du gleich noch.'},
   {id: 'sieg3', st: S3, when: () => tFight() && tMon('Schleimige Socke') && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Weggelaufen ist nicht verloren: Du hast nur keine Stufe bekommen. Die Schleimige Socke schaffst du locker. Besiege sie und hol dir Stufe 5!'},
@@ -2138,7 +2138,7 @@ function tutGate(q, ctx) {
   const was = q.opts.map(o => o.dis);
   q.opts.forEach(o => { if (o.kind !== 'ghost' && !L.only(o)) o.dis = true; });
   // Sicherheitsnetz: Im Kampf darf eine Lektion nie alle Wege versperren (sonst steckt man fest)
-  if ((ctx === 'fight' || ctx === 'run') && !q.opts.some(o => o.kind !== 'ghost' && !o.dis) &&
+  if ((ctx === 'fight' || ctx === 'run') && !L.ok && !q.opts.some(o => o.kind !== 'ghost' && !o.dis) &&
       !me().hand.some(c => { try { return cardActions(c, 'hand').some(x => x.fn && !x.dis && tutActOk(c, x.l, 'hand')); } catch (e) { return false; } }))
     q.opts.forEach((o, i) => { o.dis = was[i]; });   // nur wenn auch keine erlaubte Karte mehr hilft
 }
