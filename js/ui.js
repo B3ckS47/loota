@@ -16,7 +16,7 @@ const ICON = {
     Walburga: 'icons/portrait-walburga.png', Pepe: 'icons/portrait-pepe.png', Sardella: 'icons/portrait-sardella.png'}
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
-const PHASES = ['Tür öffnen', 'Monster herausfordern', 'Raum durchsuchen', 'Trinkgeld'];
+const PHASES = ['Tür öffnen', 'Monster herausfordern', 'Raum durchsuchen', 'Abgabe'];
 const portrait = p => p.human ? myPortrait() : (p.face || ICON.portrait[p.name] || ICON.portrait.Du);
 
 /* ================= Profil: Name, Porträt, Rahmen ================= */
@@ -741,7 +741,7 @@ function promptCaption(q, ctx, data) {
   switch (ctx) {
     case 'kick': return q.text || q.title;
     case 'trouble': return 'Kein Monster hinter der Tür';
-    case 'charity': { const over = p.hand.length - handLimit(p); return over > 0 ? `Trinkgeld: ${over} ${pl(over, 'Karte', 'Karten')} zu viel` : 'Fertig? Dann Zug beenden'; }
+    case 'charity': { const over = p.hand.length - handLimit(p); return over > 0 ? `Abgabe: ${over} ${pl(over, 'Karte', 'Karten')} zu viel` : 'Fertig? Dann Zug beenden'; }
     case 'helpWho': return 'Wen bittest du um Hilfe?';
     case 'helpOffer': return data && data.b ? `Wie viele Schätze bekommt ${data.b.name}?` : q.title;
     case 'botHelp': return data && data.b ? `${data.b.name} bittet dich um Hilfe` : q.title;
@@ -1816,7 +1816,7 @@ function runTip(p){
   return `<b class="tip-h">Weglaufen: ohne Bonus ab einer 5</b>${rows.length?tipRows(rows,sign(b)):'<span class="tip-n">Keine Boni.</span>'}<b>${need<=1?'Entkommt immer.':`Entkommt ab einer ${need}: ${pc} %.`}</b><span class="tip-n">${n.join(' ')}</span>`;
 }
 function handTip(p){
-  return `<b class="tip-h">Handkarten: höchstens ${handLimit(p)}</b><span class="tip-n">Gilt am Ende des eigenen Zugs. Den Überschuss bekommt als Trinkgeld, wer die niedrigste Stufe hat. Rucksack: ${p.pack.length} von ${packLimit(p)} Gegenständen${(p.gold||0)?`, Goldbeutel: ${fmt(p.gold)} Gold`:''}.${p.human?'':' Welche Karten das sind, ist geheim.'}</span>`;
+  return `<b class="tip-h">Handkarten: höchstens ${handLimit(p)}</b><span class="tip-n">Gilt am Ende des eigenen Zugs. Den Überschuss bekommt als Abgabe, wer die niedrigste Stufe hat. Rucksack: ${p.pack.length} von ${packLimit(p)} Gegenständen${(p.gold||0)?`, Goldbeutel: ${fmt(p.gold)} Gold`:''}.${p.human?'':' Welche Karten das sind, ist geheim.'}</span>`;
 }
 const ABIL={
   elf:['Raum durchsuchen: 2 ziehen, 1 behalten'], zwerg:['Rucksack 5','beliebig viele Sperrige'], halbling:['Feilschen: +200 Gold pro Zug'],

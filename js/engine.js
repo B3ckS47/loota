@@ -988,7 +988,7 @@ async function humanTurn(p){
   S.phase=4;
   while(true){
     const v=await ask(()=>{ const over=p.hand.length-handLimit(p);
-      return {title:'Phase 4 · Trinkgeld', text: over>0 ? `Du hast ${p.hand.length} Karten, erlaubt sind ${handLimit(p)}.` : 'Dein Zug ist fast vorbei. Lege noch aus, was du brauchst.', hint:hintCharity(p),
+      return {title:'Phase 4 · Abgabe', text: over>0 ? `Du hast ${p.hand.length} Karten, erlaubt sind ${handLimit(p)}.` : 'Dein Zug ist fast vorbei. Lege noch aus, was du brauchst.', hint:hintCharity(p),
         opts: over>0 ? [...(stashable(p).length ? [{l:'In den Rucksack',v:'stash'}] : []), {l:`${over} ${pl(over,'Karte','Karten')} abgeben`,v:'give',kind:'primary'}] : [{l:'Zug beenden',v:'end',kind:'primary'}]}; }, 'charity');
     if(v==='end') break;
     if(v==='stash'){
@@ -1000,7 +1000,7 @@ async function humanTurn(p){
     }
     const over=p.hand.length-handLimit(p);
     if(over<=0) continue;
-    const sel=await selectCards({ctx:'charity', title:'Trinkgeld', text:`Wähle ${over} ${pl(over,'Karte','Karten')}, die du abgibst.`, min:over, max:over, cancel:true,
+    const sel=await selectCards({ctx:'charity', title:'Abgabe', text:`Wähle ${over} ${pl(over,'Karte','Karten')}, die du abgibst.`, min:over, max:over, cancel:true,
       filter:(c,w)=>w==='hand' && !(SCN && SCN.keep && SCN.keep.includes(c.n) && p.hand.length-over>0), confirm:()=> 'Abgeben'});   // Einführung: wichtige Karte bleibt
     if(!sel) continue;
     doCharity(p, sel.map(findCard).filter(Boolean));
@@ -1047,10 +1047,10 @@ function hintCharity(p){
 function doCharity(p,cards){
   if(!cards.length) return;
   const t=charityTargets(p);
-  if(!t){ cards.forEach(c=>{ take(p,c); discard(c); }); log(`${nm(p)} ${V(p,'legst','legt')} ${cards.length} ${pl(cards.length,'Karte','Karten')} ab.`); ruleOnce('charself','Trinkgeld: Wer selbst (mit) die niedrigste Stufe hat, legt die überzähligen Karten ab.'); }
+  if(!t){ cards.forEach(c=>{ take(p,c); discard(c); }); log(`${nm(p)} ${V(p,'legst','legt')} ${cards.length} ${pl(cards.length,'Karte','Karten')} ab.`); ruleOnce('charself','Abgabe: Wer selbst (mit) die niedrigste Stufe hat, legt die überzähligen Karten ab.'); }
   else { const toMe=[]; cards.forEach((c,i)=>{ take(p,c); const r=t[i%t.length]; r.hand.push(c); if(r.human) toMe.push(c); });
     log(`${nm(p)} ${V(p,'gibst','gibt')} ${cards.length} ${pl(cards.length,'Karte','Karten')} an ${t.map(nmA).join(' und ')} ab.${toMe.length?` Du bekommst: ${toMe.map(c=>`<b>${cardLabel(c)}</b>`).join(', ')}.`:''}`);
-    ruleOnce('charity','Trinkgeld: Überzählige Handkarten gehen an den Spieler mit der niedrigsten Stufe.'); }
+    ruleOnce('charity','Abgabe: Überzählige Handkarten gehen an den Spieler mit der niedrigsten Stufe.'); }
 }
 
 /* ================= Bot-Zug ================= */
@@ -2033,10 +2033,10 @@ const QUIZ=[
   {q:'Deine Kampfstärke ist 8, das Monster hat Stufe 8. Wie geht es aus?', o:['Du gewinnst.','Ihr würfelt neu.','Du verlierst und musst weglaufen.','Unentschieden, nichts passiert.'], a:2, e:'Gleichstand ist immer eine Niederlage. Du musst höher sein als das Monster.'},
   {q:'Ab welchem Würfelergebnis gelingt das Weglaufen ohne Boni?', o:['Ab 4','Ab 5','Nur bei 6','Ab 3'], a:1, e:'5 oder 6. Manche Gegenstände, Monster und Welten ändern den Wurf.'},
   {q:'Du bist auf Stufe 9 und hast Gegenstände für 1.200 Gold. Kannst du dir Stufe 10 kaufen?', o:['Ja, 1.000 Gold sind eine Stufe.','Nein, Stufe 10 gibt es nur für einen Monstersieg.','Ja, aber nur als Kobold.','Ja, mit dem Goldbeutel.'], a:1, e:'Die Siegstufe gibt es nur, indem du ein Monster besiegst. Verkaufen, Goldbeutel und Stufenkarten bringen dich höchstens auf 9.'},
-  {q:'Ende deines Zuges: 7 Handkarten, Berta hat als Einzige die niedrigste Stufe. Was passiert?', o:['Nichts, es gibt kein Limit.','Du legst 2 Karten ab.','Du gibst 2 Karten als Trinkgeld an Berta.','Du gibst alle Karten an Berta.'], a:2, e:'Trinkgeld: Alles über 5 Karten geht an den Spieler mit der niedrigsten Stufe. Bist du selbst (mit) am niedrigsten, legst du ab. Vorher kannst du Gegenstände in den Rucksack legen.'},
+  {q:'Ende deines Zuges: 7 Handkarten, Berta hat als Einzige die niedrigste Stufe. Was passiert?', o:['Nichts, es gibt kein Limit.','Du legst 2 Karten ab.','Du gibst 2 Karten als Abgabe an Berta.','Du gibst alle Karten an Berta.'], a:2, e:'Abgabe: Alles über 5 Karten geht an den Spieler mit der niedrigsten Stufe. Bist du selbst (mit) am niedrigsten, legst du ab. Vorher kannst du Gegenstände in den Rucksack legen.'},
   {q:'Kalle hilft dir für 1 von 3 Schätzen. Wie werden die Schätze verteilt?', o:['Kalle bekommt einen zufälligen.','Ihr wählt abwechselnd, du zuerst.','Kalle wählt zuerst.','Du bestimmst allein.'], a:1, e:'Mit Helfer werden die Schätze offen gezogen. Dann wählt ihr abwechselnd, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat. Helfen darf immer nur 1 Mitspieler.'},
   {q:'Beim Durchsuchen des Raums ziehst du verdeckt einen Fluch. Was jetzt?', o:['Er trifft dich sofort.','Er kommt auf deine Hand. Du kannst ihn später auf jemanden spielen.','Du musst ihn sofort auf den Spieler links spielen.','Er wird abgelegt.'], a:1, e:'Verdeckt gezogene Flüche sind Handkarten. Spielen darfst du sie jederzeit, auf jeden.'},
   {q:'Du stirbst. Was behältst du?', o:['Gar nichts, du fängst auf Stufe 1 an.','Stufe, Volk und Klasse.','Deine Handkarten.','Deine ausgerüsteten Gegenstände.'], a:1, e:'Stufe, Volk und Klasse bleiben. Handkarten werden abgelegt, von deinen Gegenständen nimmt sich jeder andere einen. Im nächsten Zug ziehst du 4 Tür- und 4 Schatzkarten.'},
   {q:'Wer darf eine Laune wie „Stinksauer“ (+5) spielen?', o:['Nur der Kämpfer.','Nur wer gerade nicht kämpft.','Jeder Spieler, in jedem Kampf.','Niemand, die Karte liegt einfach im Spiel.'], a:2, e:'Jeder darf sie in jeden Kampf spielen, auch auf das eigene Monster. Launen verändern meist auch die Zahl der Schätze.'},
-  {q:'Dein Rucksack ist voll. Du rüstest einen neuen Helm aus. Wo landet der alte?', o:['Im Rucksack, der wird einfach größer.','Auf deiner Hand.','Er wird abgelegt.','Er geht an den Spieler mit der niedrigsten Stufe.'], a:1, e:'Der Rucksack fasst 3 Gegenstände, beim Zwerg 5. Passt nichts mehr hinein, kommt der alte Gegenstand auf die Hand. Dort zählt er beim Trinkgeld mit.'}
+  {q:'Dein Rucksack ist voll. Du rüstest einen neuen Helm aus. Wo landet der alte?', o:['Im Rucksack, der wird einfach größer.','Auf deiner Hand.','Er wird abgelegt.','Er geht an den Spieler mit der niedrigsten Stufe.'], a:1, e:'Der Rucksack fasst 3 Gegenstände, beim Zwerg 5. Passt nichts mehr hinein, kommt der alte Gegenstand auf die Hand. Dort zählt er bei der Abgabe mit.'}
 ];

@@ -138,7 +138,7 @@ const WORLDS = [{
       winText: '„Dein erstes Monster!“, ruft Hilde. „Stufe 2, und schon hast du gewonnen. Beim nächsten Mal kümmern wir uns um deine Ausrüstung.“'},
     {id: 'w0s2', req: ['w0s1'], face: 'icons/portrait-hilde.png', no: '2', x: 22, y: 190, ax: 85, ay: 41, type: 'tutorial', name: 'Wer bin ich?', place: 'Ecktisch',
       text: '„Mensch ohne Klasse? Das geht besser“, lacht Hilde. „Heute wirst du Elf und Krieger, und ich zeige dir, wie man alten Kram zu Gold macht.“',
-      goal: 'Erreiche Stufe 4. Du lernst Volk und Klasse, Verkaufen und das Trinkgeld am Zugende.',
+      goal: 'Erreiche Stufe 4. Du lernst Volk und Klasse, Verkaufen und die Abgabe am Zugende.',
       scn: {tut: 'w0s2', target: 4, bots: ['Berta'], diff: 'gemuetlich',
         start: {lvl: 2, hand: ['Elf', 'Krieger', 'Breitschwert der Angeberei', 'Protzige Goldkette', 'Hörnerhelm', 'Trank der Tapferkeit', 'Stinkbombe', 'Gummihuhn mit Quietsch', 'Windböe'], deal: false},
         botStart: {Berta: {lvl: 1, eq: ['Topfhelm mit Delle'], deal: false}},
