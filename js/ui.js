@@ -317,6 +317,7 @@ function show(name) { if (name !== CUR) STACK.push(CUR); setScreen(name); }
 function setScreen(name) {
   SCREENS.forEach(s => { const el = $('#scr-' + s); const on = s === name; el.hidden = !on; if (on) { el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); } });
   CUR = name;
+  applyLayout();
   updatePaused();
   Snd.mood(name === 'game' && S && S.combat ? 'combat' : 'tavern');
   Snd.theme(name === 'game' ? GAME_THEME : 'taverne');
@@ -590,7 +591,8 @@ function render() {
 function doRender() {
   if (S) { try { UI.adv = UI.advice ? advise() : null; } catch (e) { console.error(e); UI.adv = null; } } else UI.adv = null;
   watch();
-  if (CUR === 'game' && S) { $('#scr-game').classList.toggle('fighting', !!S.combat); renderTop(); renderOpps(); renderTable(); renderAct(); renderMe(); renderHand(); }
+  applyLayout();
+  if (CUR === 'game' && S) { $('#scr-game').classList.toggle('fighting', !!S.combat); renderTop(); renderOpps(); renderTable(); renderAct(); renderMe(); renderHand(); if (LAYOUT) renderWide(); }
   tutUpdate();
   syncSel();
   if (SHEETS.length) renderSheet(false);
@@ -610,7 +612,7 @@ function renderTop() {
   tt.hidden = !td; tt.className = 'tb-tide ' + (td || ''); tt.title = td === 'flut' ? 'Flut: Meeresmonster +3, Weglaufen +1' : 'Ebbe: Raum durchsuchen bringt einen Schatz';
   if (td) mid.setAttribute('aria-label', mid.getAttribute('aria-label') + (td === 'flut' ? ', Flut' : ', Ebbe'));
   $('#app').classList.toggle('flut', td === 'flut' && CUR === 'game');
-  patch($('#phasedots'), ICON.phase.map((src, i) => `<img src="${src}" alt="${PHASES[i]}" title="${PHASES[i]}" class="${S.phase === i + 1 ? 'on' : S.phase > i + 1 ? 'done' : ''}">`).join(''));
+  patch($('#phasedots'), ICON.phase.map((src, i) => `<span class="pd ${S.phase === i + 1 ? 'on' : S.phase > i + 1 ? 'done' : ''}"><img src="${src}" alt="${PHASES[i]}" title="${PHASES[i]}" class="${S.phase === i + 1 ? 'on' : S.phase > i + 1 ? 'done' : ''}"><span class="pd-l">${PHASES[i]}</span></span>`).join(''));
   const unread = Math.max(0, S.log.length - W.logSeen), badge = $('#log-badge');
   badge.hidden = unread === 0 || topSheet()?.id === 'log';
   badge.textContent = unread > 99 ? '99+' : unread;
@@ -1084,7 +1086,7 @@ function eqTile(p, c, mine, where, cls = '') {
   if (c.b) badges.push(`<b class="et-b${off ? ' off' : ''}">+${c.b}</b>`);
   if (c.run) badges.push(`<b class="et-r${off ? ' off' : ''}"><img src="${ICON.run}" alt="">+${c.run}</b>`);
   return `<button type="button" class="et${off ? ' off' : ''}${cls}${mine && UI.adv && UI.adv.uid === c.uid ? ' rec' : ''}" data-uid="${c.uid}" data-where="${mine ? where : 'opp'}" aria-label="${esc(c.n)}">` +
-    `<img class="et-art" src="${ART[c.n] || ICON.slot[c.slot] || ICON.slot.none}" alt="" loading="lazy">${badges.join('')}${c.big ? '<i class="et-big">Groß</i>' : ''}` +
+    `<img class="et-art" src="${ART[c.n] || ICON.slot[c.slot] || ICON.slot.none}" alt="" loading="lazy">${badges.join('')}${c.big ? '<i class="et-big">Sperrig</i>' : ''}` +
     `<span class="et-n">${esc(c.n)}</span>${off ? `<i class="et-off">nur ${esc(reqName(c))}</i>` : ''}</button>`;
 }
 const eqEmpty = (slot, lbl, cls = '') => `<span class="et empty${cls}"><img src="${ICON.slot[slot]}" alt=""><span class="et-n">${lbl}</span></span>`;
@@ -1775,7 +1777,13 @@ document.addEventListener('click', e => {
     renderQuiz(); return;
   }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') back(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { back(); return; }
+  // Breite Ansicht mit Tastatur: Leertaste oder Enter drückt den Hauptknopf der Aktionsleiste
+  if ((e.key === ' ' || e.key === 'Enter') && LAYOUT && CUR === 'game' && !SHEETS.length && !/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target && e.target.tagName) || '')) {
+    const b = $('#act .rec:not([disabled])') || $('#act .btn.primary:not([disabled])'); if (b) { e.preventDefault(); b.click(); }
+  }
+});
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) Snd.suspend(); else Snd.resume();
   updatePaused();
@@ -2202,7 +2210,10 @@ function tutUpdate() {
 // Abdunkeln: alles außer dem erklärten Bereich (Loch mit großem Schatten); fängt Klicks ab
 function tutSpot(L) {
   const dim = $('#tutdim'), hole = dim.firstElementChild;
-  const els = L.spot ? $$(L.spot).filter(e => e.offsetParent) : [];
+  // Breite Ansicht: Gegner und eigene Leiste stehen woanders
+  let spot = L.spot;
+  if (spot && LAYOUT) spot = spot.replace('#mebar', '#wme').replace('#opps', LAYOUT === 'pc' ? '#wopps' : '#opps');
+  const els = spot ? $$(spot).filter(e => e.offsetParent) : [];
   if (!els.length) { Object.assign(hole.style, {left: '50%', top: '50%', width: '0px', height: '0px'}); dim.dataset.at = ''; return; }
   const rs = els.map(e => e.getBoundingClientRect()), pad = 6;
   const l = Math.min(...rs.map(r => r.left)) - pad, t = Math.min(...rs.map(r => r.top)) - pad, r = Math.max(...rs.map(r => r.right)) + pad, b = Math.max(...rs.map(r => r.bottom)) + pad;
@@ -2212,6 +2223,9 @@ function tutSpot(L) {
 function tutPlace() {
   const box = $('#tutor'), t = $('#table'); if (!box || box.hidden || !t || !S) return;
   const L = tutLesson(), dim = $('#tutdim');
+  // Breite Ansicht: Hildes Hinweis steht über der Spielfeld-Spalte, nicht über die ganze Breite
+  if (LAYOUT) { const r = t.getBoundingClientRect(); Object.assign(box.style, {left: Math.round(r.left + r.width / 2) + 'px', width: Math.round(Math.min(560, r.width - 20)) + 'px'}); }
+  else Object.assign(box.style, {left: '', width: ''});
   if (L && (L.dim || L.spot)) {
     if (dim && !dim.hidden) tutSpot(L);
     const bh = box.offsetHeight, at = dim && dim.dataset.at ? dim.dataset.at.split(',').map(Number) : null;
@@ -2254,3 +2268,64 @@ function rulesFilter(q) {
   const none = $('#scr-rules .rs-none'); if (none) none.hidden = any || !words.length;
 }
 document.addEventListener('input', e => { if (e.target && e.target.id === 'rules-q') rulesFilter(e.target.value); });
+
+/* ================= Breite Ansicht (Tablet quer, PC) ================= */
+// var statt let/const: applyLayout läuft schon beim Start, bevor dieser Teil der Datei ausgeführt ist
+var LAYOUT = '';
+function mq() { return window.__MQ || (window.__MQ = {pc: matchMedia('(min-width: 1400px) and (min-height: 760px)'), tab: matchMedia('(min-width: 900px) and (min-height: 560px) and (orientation: landscape)'), hover: matchMedia('(hover: hover) and (pointer: fine)')}); }
+function applyLayout() {
+  const M = mq(), MQ_PC = M.pc, MQ_TAB = M.tab;
+  const mode = CUR === 'game' ? (MQ_PC.matches ? 'pc' : MQ_TAB.matches ? 'tab' : '') : '';
+  const app = $('#app'); if (!app) return;
+  const wide = MQ_TAB.matches || MQ_PC.matches;
+  app.classList.toggle('wide', wide);
+  document.documentElement.classList.toggle('wide-game', !!mode);
+  document.documentElement.classList.toggle('wide-any', wide);
+  if (mode === LAYOUT) return;
+  LAYOUT = mode; app.classList.toggle('lay-pc', mode === 'pc'); app.classList.toggle('lay-tab', mode === 'tab');
+  if (S && CUR === 'game') render();
+}
+[mq().pc, mq().tab].forEach(m => m.addEventListener('change', () => { applyLayout(); render(); }));
+function oppWideHTML(p) {
+  const C = S.combat, role = C && (C.f === p.id ? 'kämpft' : C.h === p.id ? 'hilft' : ''), turn = S.cur === p.id && S.winner == null;
+  const tiny = c => cardMini(c, {where: 'opp', size: 'tiny', extra: !usable(p, c) ? 'inactive' : ''});
+  const by = sl => p.eq.filter(i => i.slot === sl);
+  const empty = (sl, l) => `<span class="wo-empty" title="${l}"><img src="${ICON.slot[sl]}" alt="${l}"></span>`;
+  const one = (sl, l) => { const a = by(sl); return a.length ? a.map(tiny).join('') : empty(sl, l); };
+  const hands = by('hand'); const handHTML = hands.length ? hands.map(tiny).join('') : empty('hand', 'Hände');
+  const ident = (c, kind) => c ? cardMini(c, {where: 'opp', size: 'tiny'}) : kind === 'race' ? `<span class="wo-empty txt" title="Volk">Mensch</span>` : `<span class="wo-empty txt" title="Klasse">–</span>`;
+  return `<div class="wopp${turn ? ' turn' : ''}${p.dead ? ' dead' : ''}${bgAttr(bgOf(p), true) || '" style="'};--fc:${frameOf(p)[2]}" data-oppw="${p.id}">` +
+    `<button type="button" class="wo-head" data-opp="${p.id}" aria-label="${esc(p.name)}, Stufe ${p.lvl}">` +
+    `<span class="pt"><img src="${portrait(p)}" alt=""><span class="lvb">${p.lvl}</span></span>` +
+    `<span class="wo-t"><b>${esc(p.name)}</b>${role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : ''}` +
+    `<span class="os"><span title="Kampfstärke"><img src="${ICON.kampf}" alt="">${power(p)}</span><span title="Weglaufen"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</span><span title="Handkarten"><img src="${ICON.hand}" alt="">${p.hand.length}</span><span title="Rucksack"><img src="${ICON.slot.pack}" alt="">${p.pack.length}/${packLimit(p)}</span>${p.gold ? `<span class="gold" title="Goldbeutel">${fmt(p.gold)} G</span>` : ''}${p.spore ? `<span class="neg" title="Sporenwolke">−${p.spore}</span>` : ''}</span></span></button>` +
+    `<div class="wo-eq">${ident(p.race, 'race')}${ident(p.cls, 'cls')}<i class="wo-sep"></i>${one('kopf', 'Kopf')}${one('ruestung', 'Rüstung')}${handHTML}${one('schuhe', 'Schuhe')}${by('none').map(tiny).join('')}</div></div>`;
+}
+function fightWideHTML() {
+  const C = S.combat; if (!C) return '';
+  const v = SHEET_VIEWS.parts(); if (!v) return '';
+  return `<div class="wpanel wfight-in"><h4 class="wp-h">Kampf</h4>${v.body}</div>`;
+}
+function renderWide() {
+  const pc = LAYOUT === 'pc', p = me();
+  // Gegner: auf dem PC mit voller Ausrüstung, auf dem Tablet als Liste links
+  if (pc) patch($('#wopps'), S.players.filter(x => !x.human).map(oppWideHTML).join(''));
+  const items = S.log.filter(e => UI.coach || e.kind !== 'rule').slice(0, 80);
+  patch($('#wlog'), `<div class="wpanel"><h4 class="wp-h">Spielleiter-Notizen</h4><ul class="loglist">${items.map(e => `<li class="l-${e.kind}">${e.kind === 'rule' ? '<b>Regel:</b> ' : ''}${linkify(e.t)}</li>`).join('')}</ul></div>`);
+  W.logSeen = S.log.length;
+  patch($('#wfight'), fightWideHTML());
+  const free = isFree();
+  patch($('#wme'), `<div class="wpanel wme-in">${heroHead(p)}<div class="hbody">${heroStats(p)}${heroAbil(p)}${heroDoll(p, true)}${heroPack(p, true)}` +
+    (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') + `</div></div>`);
+  const pv = W.hoverUid != null && pc && mq().hover.matches ? findCard(W.hoverUid) : null;
+  patch($('#wprev'), pv ? `<div class="wprev-in">${cardBig(pv)}</div>` : '');
+  const dD = S.doorDisc[S.doorDisc.length - 1], dT = S.trDisc[S.trDisc.length - 1];
+  patch($('#wpile'), pc && (dD || dT) ? `<span class="wp-lbl">Zuletzt abgelegt</span><span class="wp-cards">${[dD, dT].filter(Boolean).map(c => cardMini(c, {inert: true, size: 'tiny'})).join('')}</span>` : '');
+}
+// Kartenvorschau beim Überfahren mit der Maus (nur PC-Ansicht)
+document.addEventListener('pointerover', e => {
+  if (LAYOUT !== 'pc' || e.pointerType !== 'mouse') return;
+  const el = e.target.closest && e.target.closest('[data-uid]'); const uid = el ? +el.dataset.uid : null;
+  if (el && el.closest('#wprev')) return;
+  if (uid !== W.hoverUid) { W.hoverUid = uid; render(); }
+});

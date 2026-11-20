@@ -1605,3 +1605,100 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .rc-table th,.rc-table td{text-align:left;vertical-align:top;padding:6px 4px;border-bottom:1px solid rgba(0,0,0,.15)}
 .rc-table td:first-child{font-weight:800;white-space:nowrap;padding-right:10px}
 details.rule[hidden]{display:none}
+
+/* ================= Breite Ansicht ================= */
+.wopps,.wlog,.wside,.wpile,.wprev{display:none}
+#app.lay-pc,#app.lay-tab{max-width:none}
+#app.lay-pc #sheetwrap,#app.lay-tab #sheetwrap{max-width:600px}
+#app.lay-pc .mebar,#app.lay-tab .mebar{display:none}
+.wpanel{background:rgba(24,13,6,.62);border:1px solid rgba(255,220,160,.18);border-radius:16px;padding:10px 12px;color:var(--on-wood)}
+.wp-h{margin:0 0 6px;font:800 13px/1.2 var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--on-wood-muted)}
+.wlog .loglist{margin:0;padding:0;list-style:none;font-size:13.5px;line-height:1.35;display:flex;flex-direction:column;gap:6px}
+.wlog .loglist li{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.wlog .loglist li.l-good{color:#bfe6a6}.wlog .loglist li.l-bad{color:#f3b0a0}.wlog .loglist li.l-rule{color:#e9d49a}
+.wlog{overflow-y:auto;scrollbar-width:thin;margin:6px 0 6px 10px;min-height:0}
+.wside{overflow-y:auto;scrollbar-width:thin;margin:6px 10px 10px 0;min-height:0;display:none;flex-direction:column;gap:8px}
+.wme-in{padding:0;overflow:hidden;background:var(--card);color:var(--ink);border:2px solid var(--edge)}
+.wme-in .hbody{padding:8px 10px 10px}
+.wme-in .sh-hero{border-radius:0}
+.wfight-in .parts{margin:0 0 6px;padding:0;list-style:none;font-size:13.5px}
+.wfight-in .parts li{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.wfight-in .parts li.sum{border-top:1px solid rgba(255,255,255,.2);margin-top:2px;padding-top:4px;font-weight:800}
+.wfight-in .lbl{margin:6px 0 2px;font-size:12px;color:var(--on-wood-muted)}
+.wfight-in .hint{margin:4px 0 0;font-size:12.5px;color:var(--on-wood-muted)}
+
+/* PC: Gegner mit Ausrüstung oben, Notizen links, Figur rechts */
+#app.lay-pc #scr-game{grid-template-columns:300px minmax(0,1fr) 380px;grid-template-rows:auto auto minmax(0,1fr) auto auto;
+  grid-template-areas:"top top top" "wopps wopps wopps" "wlog table wside" "wlog act wside" "hand hand wside"}
+#app.lay-pc .topbar{grid-area:top}
+#app.lay-pc .opps{display:none}
+#app.lay-pc .wopps{grid-area:wopps;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;padding:4px 10px 6px}
+#app.lay-pc .wlog{grid-area:wlog;display:block}
+#app.lay-pc .table{grid-area:table;margin:6px 10px 0}
+#app.lay-pc .act{grid-area:act}
+#app.lay-pc .hand{grid-area:hand;min-height:180px}
+#app.lay-pc .hand .mc{width:120px;height:156px}
+#app.lay-pc .wside{grid-area:wside;display:flex}
+#app.lay-pc .wpile{grid-area:table;display:flex;align-self:end;justify-self:start;flex-direction:column;gap:4px;margin:0 0 12px 24px;z-index:2;pointer-events:none}
+.wp-lbl{font:800 11px/1 var(--body);color:var(--on-wood-muted);text-shadow:0 1px 2px #000}
+.wp-cards{display:flex;gap:6px}
+#app.lay-pc .wprev{grid-area:table;display:block;align-self:start;justify-self:end;margin:14px 22px 0 0;z-index:5;pointer-events:none;width:270px}
+.wprev-in{transform-origin:top right;animation:wprev .12s ease-out}
+.wprev-in .bc{box-shadow:0 14px 34px rgba(0,0,0,.6)}
+@keyframes wprev{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.wopp{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:14px;background-color:var(--card);background-size:cover;background-position:center;border:2px solid var(--fc,var(--edge));box-shadow:0 3px 0 var(--wood-dark);color:var(--ink);min-width:0}
+.wopp.turn{box-shadow:0 0 0 3px #f5b84a,0 3px 0 var(--wood-dark)}
+.wopp.dead{filter:grayscale(.8) brightness(.8)}
+.wo-head{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;text-align:left;color:inherit;cursor:pointer;min-width:0}
+.wo-head .pt{position:relative;flex:0 0 auto}
+.wo-head .pt img{width:46px;height:46px;border-radius:50%;object-fit:cover;object-position:50% 20%;border:2px solid var(--edge);background:var(--paper)}
+.wo-head .lvb{position:absolute;right:-4px;bottom:-4px;min-width:20px;height:20px;border-radius:10px;background:#7a1d12;color:#fff;font:800 12px/20px var(--body);text-align:center;border:2px solid #fbe3b0}
+.wo-t{display:flex;flex-direction:column;gap:2px;min-width:0;padding:4px 8px;border-radius:10px;background:rgba(251,243,223,.92)}
+.wo-t b{font:800 15px/1.1 var(--body)}
+.wo-t .tag{align-self:flex-start}
+.wo-t .os{display:flex;flex-wrap:wrap;gap:4px 10px;font:800 12.5px/1.2 var(--body)}
+.wo-t .os span{display:inline-flex;align-items:center;gap:3px}
+.wo-t .os img{width:15px;height:15px}
+.wo-t .os .gold{padding:0 6px;border-radius:999px;background:#e3a92b;color:#2a1700}
+.wo-t .os .neg{color:#a3271b}
+.wo-eq{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:5px;border-radius:10px;background:rgba(251,243,223,.85)}
+.wo-eq .mc.tiny{width:54px;height:70px}
+.wo-empty{display:inline-grid;place-items:center;width:54px;height:70px;border:2px dashed rgba(90,60,30,.4);border-radius:8px}
+.wo-empty img{width:24px;height:24px;opacity:.45}
+.wo-empty.txt{font:800 11px/1.1 var(--body);color:rgba(60,40,20,.6)}
+.wo-sep{width:2px;align-self:stretch;margin:0 2px;background:rgba(90,60,30,.25);border-radius:1px}
+
+/* Tablet quer: Gegner und Notizen links, Figur rechts */
+#app.lay-tab #scr-game{grid-template-columns:250px minmax(0,1fr) 300px;grid-template-rows:auto auto minmax(0,1fr) auto auto;
+  grid-template-areas:"top top top" "opps table wside" "wlog table wside" "wlog act wside" "hand hand wside"}
+#app.lay-tab .topbar{grid-area:top}
+#app.lay-tab .opps{grid-area:opps;flex-direction:column;padding:6px 0 4px 10px}
+#app.lay-tab .opps .oc{width:100%}
+#app.lay-tab .wlog{grid-area:wlog;display:block}
+#app.lay-tab .table{grid-area:table;margin:6px 10px 0}
+#app.lay-tab .act{grid-area:act}
+#app.lay-tab .hand{grid-area:hand}
+#app.lay-tab .wside{grid-area:wside;display:flex}
+#app.lay-tab #wfight{display:none}
+/* Breite Ansicht: Feinschliff */
+.pd{display:inline-flex;align-items:center;gap:6px}
+.pd-l{display:none;font:800 13px/1 var(--body);color:var(--ink);opacity:.45}
+.pd.on .pd-l{opacity:1}.pd.done .pd-l{opacity:.7}
+#app.lay-pc .pd-l,#app.lay-tab .pd-l{display:inline}
+html.wide-game #sheetwrap{max-width:none}
+html.wide-game #sheetwrap .sheet{max-width:620px;margin:0 auto;border-radius:22px 22px 0 0}
+#app.lay-pc .wlog,#app.lay-tab .wlog{display:flex;flex-direction:column;overflow:hidden}
+.wlog .wpanel{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin}
+#app.lay-pc .wprev{grid-area:wside;align-self:start;justify-self:center;margin:8px 0 0;width:300px}
+.wo-eq .mc.tiny,.wo-empty{width:46px;height:60px}
+.wo-eq .mc.tiny .mc-name{font-size:9px}
+.wo-empty img{width:20px;height:20px}
+#app.lay-pc .wopps{align-items:start}
+.wopp{background-size:cover}
+#app.lay-pc .wopps{grid-template-columns:repeat(3,minmax(0,1fr))}
+#app.lay-pc .decks,#app.lay-tab .decks{transform:scale(1.6);margin:30px 0}
+#app.lay-pc .idle-txt,#app.lay-tab .idle-txt{font-size:22px;margin-top:18px}
+/* Breite Bildschirme außerhalb des Spiels: etwas breitere Spalte, Tisch als Hintergrund statt leerer Ränder */
+html.wide-any body{background:radial-gradient(ellipse at center,rgba(10,5,2,.35),rgba(10,5,2,.82) 70%),url(../art/hintergrund-tisch.webp) center/cover no-repeat,var(--wood-dark)}
+html.wide-any:not(.wide-game) #app{max-width:620px;border-left:3px solid rgba(0,0,0,.45);border-right:3px solid rgba(0,0,0,.45);box-shadow:0 0 80px rgba(0,0,0,.85)}
+html.wide-any:not(.wide-game) #sheetwrap{max-width:620px}
