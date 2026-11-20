@@ -16,15 +16,15 @@ const ICON = {
     Walburga: 'icons/portrait-walburga.png', Pepe: 'icons/portrait-pepe.png', Sardella: 'icons/portrait-sardella.png'}
 };
 const DICE = [1, 2, 3, 4, 5, 6].map(n => `icons/wuerfel-${n}.png`);
-const PHASES = ['Tür aufstoßen', 'Monster herausfordern', 'Raum durchsuchen', 'Almosen'];
+const PHASES = ['Tür öffnen', 'Monster herausfordern', 'Raum durchsuchen', 'Trinkgeld'];
 const portrait = p => p.human ? myPortrait() : (p.face || ICON.portrait[p.name] || ICON.portrait.Du);
 
 /* ================= Profil: Name, Porträt, Rahmen ================= */
 const K_PROFILE = 'loota.profile';
 const PORTRAITS = [
   ['du', 'Abenteurer', 'icons/portrait-du.png'], ['abenteurerin', 'Abenteurerin', 'icons/portrait-abenteurerin.png'], ['elf', 'Elfe', 'icons/portrait-elfe.png'],
-  ['zwerg', 'Zwerg', 'icons/portrait-zwerg.png'], ['halbling', 'Halblingsfrau', 'icons/portrait-halblingsfrau.png'], ['krieger', 'Kriegerin', 'icons/portrait-kriegerin.png'],
-  ['zauberer', 'Zauberer', 'icons/portrait-zauberer.png'], ['dieb', 'Diebin', 'icons/portrait-diebin.png'], ['priester', 'Priester', 'icons/portrait-priester.png']
+  ['zwerg', 'Zwerg', 'icons/portrait-zwerg.png'], ['halbling', 'Koboldin', 'icons/portrait-halblingsfrau.png'], ['krieger', 'Kriegerin', 'icons/portrait-kriegerin.png'],
+  ['zauberer', 'Zauberer', 'icons/portrait-zauberer.png'], ['dieb', 'Hehlerin', 'icons/portrait-diebin.png'], ['priester', 'Exorzist', 'icons/portrait-priester.png']
 ];
 // Zufällige Gegner im freien Spiel: ein Profilbild (nicht deins), ein Name, der zum Bild passt, und eine Spielweise
 const BOT_NAMES = {
@@ -263,7 +263,7 @@ function deckStats(counts) {
   if (!okMons) errors.push(`Es braucht mindestens 12 Monster, und sie müssen 30 % der Türkarten ausmachen (jetzt ${mons}, ${Math.round(share * 100)} %).`);
   if (lvls > 6) warnings.push('Viele Stufenkarten: Partien werden sehr kurz.');
   if (curses > 16) warnings.push('Sehr viele Flüche: Es wird chaotisch.');
-  if (!rc) warnings.push('Ohne Rassen und Klassen gibt es keine Fähigkeiten.');
+  if (!rc) warnings.push('Ohne Völker und Klassen gibt es keine Fähigkeiten.');
   return {door, tr, mons, share, okDoor, okTr, okMons, errors, warnings, ok: !errors.length};
 }
 function deckLabel() { return `${deckById(DECK.deck).name} · ${variantName(DECK.variant)}`; }
@@ -524,24 +524,27 @@ function cardNum(c) {
 function cardMini(c, o = {}) {
   const t = TYPES[c.k], num = cardNum(c), art = ART[c.n];
   const tag = o.inert ? 'span' : 'button';
+  // Beim Verkaufen steht der Goldwert auf jeder verkaufbaren Karte
+  const gold = !o.inert && typeof S !== 'undefined' && S && UI.sel && UI.sel.ctx === 'sell' && o.where && ['hand', 'eq', 'pack'].includes(o.where) ? goldOf(me(), c) : 0;
   const data = o.inert ? '' : o.cname ? `data-cname="${esc(c.n)}"` : `data-uid="${c.uid}" data-where="${o.where || ''}"`;
   return `<${tag}${o.inert ? '' : ' type="button"'} class="mc k-${c.k}${o.size ? ' ' + o.size : ''}${o.extra ? ' ' + o.extra : ''}" ${data} aria-label="${esc(c.n)}">` +
     `<span class="mc-head"><span class="mc-type">${t.s || t.l}</span>${num !== '' ? `<span class="mc-num">${num}</span>` : ''}</span>` +
     (art ? `<img class="mc-art" src="${art}" alt="" loading="lazy" decoding="async" draggable="false">` : `<img class="mc-art" src="${ICON.slot.race}" alt="" draggable="false" style="object-fit:contain;padding:8px">`) +
+    (gold ? `<span class="mc-gold">${fmt(gold)} Gold</span>` : '') +
     `<span class="mc-name">${esc(c.n)}</span></${tag}>`;
 }
 function cardBig(c) {
   const t = TYPES[c.k], num = cardNum(c), human = c === HUMAN;
   let body = '', foot = '';
   switch (c.k) {
-    case 'monster': body = `<div>${c.txt}</div><div class="bc-bad"><b>Bei Niederlage:</b> ${c.badTxt}</div>`; foot = `<span>${c.tr} ${pl(c.tr, 'Schatz', 'Schätze')}</span><span>${c.up || 1} ${pl(c.up || 1, 'Stufe', 'Stufen')}</span>`; break;
+    case 'monster': body = `<div>${c.txt}</div><div class="bc-bad"><b>Pech:</b> ${c.badTxt}</div>`; foot = `<span>${c.tr} ${pl(c.tr, 'Schatz', 'Schätze')}</span><span>${c.up || 1} ${pl(c.up || 1, 'Stufe', 'Stufen')}</span>`; break;
     case 'item': body = `<div>${itemTxt(c) || 'Keine Besonderheit.'}</div>`; foot = `<span>${slotTxt(c)}</span><span>${fmt(c.g)} Gold</span>`; break;
     case 'oneshot': body = `<div>${c.txt || 'Im Kampf für eine Seite deiner Wahl. Danach ablegen.'}</div>`; foot = `<span>Einmal einsetzbar</span><span>${fmt(c.g)} Gold</span>`; break;
-    case 'enh': body = '<div>In einem beliebigen Kampf auf ein Monster spielen.</div>'; foot = `<span>${c.trm > 0 ? '+' : '−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm), 'Schatz', 'Schätze')}</span>`; break;
+    case 'enh': body = '<div>In einem beliebigen Kampf auf ein Monster spielen.</div>'; foot = `<span>${c.trm > 0 ? '+' : '−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm), 'Schatz', 'Schätze')}</span>${S && hasCls(me(), 'dieb') ? '<span>200 Gold</span>' : ''}`; break;
     default: body = `<div>${c.txt || ''}</div>`;
   }
   const art = ART[c.n] ? `<img class="bc-art" src="${ART[c.n]}" alt="">` : human ? `<img class="bc-art human" src="${ICON.slot.race}" alt="">` : '';
-  return `<div class="bc k-${c.k}"><div class="bc-head"><span class="bc-type">${human ? 'Rasse · keine Karte' : `${t.l} · ${t.d}karte`}</span>${num !== '' ? `<span class="bc-num">${num}</span>` : ''}</div>` +
+  return `<div class="bc k-${c.k}"><div class="bc-head"><span class="bc-type">${human ? 'Volk · keine Karte' : `${t.l} · ${t.d}karte`}</span>${num !== '' ? `<span class="bc-num">${num}</span>` : ''}</div>` +
     `<div class="bc-name">${esc(c.n)}</div>${art}<div class="bc-body">${body}</div>${foot ? `<div class="bc-foot">${foot}</div>` : ''}</div>`;
 }
 const coinsHTML = l => { const m = WINLVL(); let s = ''; for (let i = 1; i <= m; i++) s += `<i class="${i <= l ? 'on' : ''}${i === l ? ' cur' : ''}${i === m ? ' goal' : ''}"></i>`; return s; };
@@ -668,7 +671,7 @@ function hudHTML(C) {
   const team = f.human || (h && h.human);
   const verdict = r.win ? (f.human ? 'du gewinnst' : team ? 'ihr gewinnt' : f.name + ' gewinnt') : (f.human ? 'du verlierst' : team ? 'ihr verliert' : f.name + ' verliert');
   return `<button type="button" class="side me" data-go="parts" aria-label="Kampfstärke ${sF.s}, Aufschlüsselung"><span class="pts">${pts}</span><span class="sv">${pvF ? `<span class="was">${f0} →</span>` : ''}<b class="snum${pvF ? ' pv' : ''}" data-n="f">${sF.s}</b><span class="slbl">${esc(who)}</span></span></button>` +
-    `<div class="mid"><span class="verdict ${r.win ? 'win' : 'lose'}${pv ? ' pv' : ''}">${pv ? '→ ' : ''}${esc(verdict)}</span>${r.a === r.b ? `<span class="tie">${r.tieWin ? 'Krieger: Gleichstand gewinnt' : 'Gleichstand verliert'}</span>` : ''}</div>` +
+    `<div class="mid"><span class="verdict ${r.win ? 'win' : 'lose'}${pv ? ' pv' : ''}">${pv ? '→ ' : ''}${esc(verdict)}</span>${r.a === r.b ? `<span class="tie">${r.tieWin ? '' : 'Gleichstand verliert'}</span>` : ''}</div>` +
     `<button type="button" class="side mon" data-go="parts" aria-label="Monsterstärke ${sM.s}, Aufschlüsselung"><span class="sv">${pvM ? `<span class="was">${m0} →</span>` : ''}<b class="snum red${pvM ? ' pv' : ''}" data-n="m">${sM.s}</b><span class="slbl">${C.mons.length > 1 ? C.mons.length + ' Monster' : 'Monster'}</span></span></button>`;
 }
 function paintHud(hud, C) {
@@ -723,7 +726,7 @@ function adviceBox() {
 /* Aktionsleiste: eine Zeile Kontext, darunter wenige kompakte Buttons */
 const SHORT_OPT = [
   [/^Fertig: Monster besiegen$/, 'Monster besiegen'], [/^Aufgeben und weglaufen$/, 'Weglaufen'], [/^Um Hilfe bitten$/, 'Hilfe holen'],
-  [/^Krieger: .*/, 'Krieger +1'], [/^Priester: .*/, 'Priester +3'], [/^Dieb: .*/, 'Dieb −2'], [/^Nebelpulver einsetzen$/, 'Nebelpulver'], [/^Kompass einsetzen$/, 'Kompass'],
+  [/^Zauberer: Gegenzauber.*/, 'Gegenzauber'], [/^Nebelpulver einsetzen$/, 'Nebelpulver'], [/^Kompass einsetzen$/, 'Kompass'],
   [/^(.+) \(Kampfstärke (\d+)\)$/, '$1 ($2)'], [/^Helfen \(für (\d+) (Schatz|Schätze)\)$/, 'Helfen: $1 $2'], [/^Glücksamulett einsetzen$/, 'Amulett einsetzen']
 ];
 function shortOpt(l, ctx) {
@@ -736,7 +739,7 @@ function promptCaption(q, ctx, data) {
   switch (ctx) {
     case 'kick': return q.text || q.title;
     case 'trouble': return 'Kein Monster hinter der Tür';
-    case 'charity': { const over = p.hand.length - handLimit(p); return over > 0 ? `Almosen: ${over} ${pl(over, 'Karte', 'Karten')} zu viel` : 'Fertig? Dann Zug beenden'; }
+    case 'charity': { const over = p.hand.length - handLimit(p); return over > 0 ? `Trinkgeld: ${over} ${pl(over, 'Karte', 'Karten')} zu viel` : 'Fertig? Dann Zug beenden'; }
     case 'helpWho': return 'Wen bittest du um Hilfe?';
     case 'helpOffer': return data && data.b ? `Wie viele Schätze bekommt ${data.b.name}?` : q.title;
     case 'botHelp': return data && data.b ? `${data.b.name} bittet dich um Hilfe` : q.title;
@@ -804,11 +807,11 @@ function renderMe() {
   mb.dataset.go = 'equip'; mb.setAttribute('role', 'button'); mb.setAttribute('aria-label', `Deine Werte und Ausrüstung, Stufe ${p.lvl} von ${WINLVL()}`);
   const tag = role ? `<span class="tag red">${role}</span>` : p.dead ? '<span class="tag">tot</span>' : turn ? '<span class="tag">am Zug</span>' : '';
   patch(mb, tag + `<button type="button" class="ptbtn" data-go="equip" aria-label="Deine Werte und Ausrüstung"><img class="pt" src="${myPortrait()}" alt=""></button>` +
-    `<span class="mlv${W.coinPop ? ' pop' : ''}" title="Stufe ${p.lvl} von ${WINLVL()}"><img src="icons/muenze-voll.png" alt=""><b>${p.lvl}<small>/${WINLVL()}</small></b>${p.spore ? `<em class="neg" title="Sporenwolke">−${p.spore}</em>` : ''}</span>` +
+    `<span class="mlv${W.coinPop ? ' pop' : ''}" title="Stufe ${p.lvl} von ${WINLVL()}"><img src="icons/muenze-voll.png" alt=""><b>${p.lvl}<small>/${WINLVL()}</small></b>${p.spore ? `<em class="neg" title="Sporenwolke">−${p.spore}</em>` : ''}${p.gold ? `<em class="gold" title="Goldbeutel: ${fmt(p.gold)} Gold">${fmt(p.gold)} G</em>` : ''}</span>` +
     `<span class="mstats"><button type="button" class="mstat" data-go="equip" aria-label="Kampfstärke ${power(p)}"><img src="${ICON.kampf}" alt="">${power(p)}</button>` +
     `<button type="button" class="mstat" data-go="equip" aria-label="Weglaufen ${sign(runBonus(p))}"><img src="${ICON.run}" alt="">${sign(runBonus(p))}</button>` +
     `<button type="button" class="mstat${over ? ' warn' : ''}" data-go="equip" aria-label="Handkarten ${p.hand.length} von ${handLimit(p)}"><img src="${ICON.hand}" alt="">${p.hand.length}/${handLimit(p)}</button>` +
-    `<button type="button" class="mstat packbtn" data-go="equip" aria-label="Ausrüstung und Rucksack"><img src="${ICON.slot.pack}" alt="">${p.pack.length || ''}</button></span>`);
+    `<button type="button" class="mstat packbtn" data-go="equip" aria-label="Ausrüstung und Rucksack, ${p.pack.length} von ${packLimit(p)}"><img src="${ICON.slot.pack}" alt="">${p.pack.length}/${packLimit(p)}</button></span>`);
 }
 function renderHand() {
   const el = $('#hand'), p = me();
@@ -986,7 +989,7 @@ const SHEET_VIEWS = {
     if (!S) return null;
     const p = me(), free = isFree();
     return {hero: true, head: heroHead(p), body: `<div class="hbody">${heroStats(p)}${heroAbil(p)}${heroDoll(p, true)}${heroPack(p, true)}` +
-      `<p class="hint hb-hint">Karte antippen für Aktionen. Im Kampf zählen Stufe, Rasse, Klasse und die Ausrüstung, der Rucksack nicht.</p>` +
+      `<p class="hint hb-hint">Karte antippen für Aktionen. Im Kampf zählen Stufe, Volk, Klasse und die Ausrüstung, der Rucksack nicht.</p>` +
       (free ? `<div class="acts"><button type="button" class="btn${UI.adv && UI.adv.sell ? ' rec' : ''}" data-go="sell">Gegenstände verkaufen</button></div>` : '') + `</div>`};
   },
   log(s) {
@@ -1001,7 +1004,7 @@ const SHEET_VIEWS = {
     const li = x => `<li><span>${esc(x.l)}</span><b>${x.keep ? x.v : sign(x.v)}</b></li>`;
     return {head: h3('Wie sich der Kampf zusammensetzt'), body: `<h4 class="lbl">Kämpfende Seite</h4><ul class="parts">${sF.parts.filter(x => x.v !== 0 || x.keep).map(li).join('')}<li class="sum"><span>Summe</span><b>${sF.s}</b></li></ul>` +
       `<h4 class="lbl">Monster</h4><ul class="parts">${sM.parts.filter(x => x.v !== 0 || x.keep).map(li).join('')}<li class="sum"><span>Summe</span><b>${sM.s}</b></li></ul>` +
-      `<p class="hint">${r.win ? 'Die kämpfende Seite ist stärker und gewinnt.' : r.a === r.b ? 'Gleichstand reicht nicht, außer für Krieger.' : 'Das Monster ist stärker. Ohne weitere Hilfe heißt es weglaufen.'}</p>`};
+      `<p class="hint">${r.win ? 'Die kämpfende Seite ist stärker und gewinnt.' : r.a === r.b ? 'Gleichstand reicht nicht.' : 'Das Monster ist stärker. Ohne weitere Hilfe heißt es weglaufen.'}</p>`};
   },
   pause() {
     if (S && S.scn) { const st = stationById(S.scn);
@@ -1037,7 +1040,7 @@ function abilList(p) {
 }
 /* ===== Heldenbogen: geöffnetes Profil im Spiel =====
    Kopf mit Hintergrund, Porträt, Rahmen, Titel und Stufe. Darunter drei Werte (antippen = Rechnung),
-   Rasse und Klasse mit Fähigkeiten, die Ausrüstung als Figur (Kopf, Hände, Rüstung, Schuhe, Sonstiges in den Ecken)
+   Volk und Klasse mit Fähigkeiten, die Ausrüstung als Figur (Kopf, Hände, Rüstung, Schuhe, Sonstiges in den Ecken)
    und der Rucksack als Leiste. */
 // Lange Namen werden kleiner geschrieben statt abgeschnitten (bis zur Mindestgröße)
 function fitNames(root) {
@@ -1068,9 +1071,9 @@ function heroAbil(p) {
   const a = [...(p.race ? (ABIL[p.race.r] || []).map(x => `<span class="ab race">${x}</span>`) : []), ...(p.cls ? (ABIL[p.cls.c] || []).map(x => `<span class="ab">${x}</span>`) : [])];
   return a.length ? `<div class="abil habil">${a.join('')}</div>` : '';
 }
-// Rasse oder Klasse als Platz in der Figur
+// Volk oder Klasse als Platz in der Figur
 function identTile(p, c, kind, mine) {
-  const lbl = kind === 'race' ? 'Rasse' : 'Klasse';
+  const lbl = kind === 'race' ? 'Volk' : 'Klasse';
   if (!c && kind === 'cls') return `<span class="et empty id"><img src="${ICON.slot.cls}" alt=""><span class="et-n">Klasse</span></span>`;
   const art = c ? ART[c.n] : (ART.Mensch || ICON.slot.race), attrs = c ? `data-uid="${c.uid}" data-where="${mine ? kind : 'opp'}"` : 'data-human="1"';
   return `<button type="button" class="et id k-${kind}" ${attrs} aria-label="${lbl}: ${esc(c ? c.n : 'Mensch')}"><img class="et-art" src="${art}" alt=""><i class="et-kind">${lbl}</i><span class="et-n">${esc(c ? c.n : 'Mensch')}</span></button>`;
@@ -1114,9 +1117,9 @@ function slotRows(p, mine) {
   // Eigene Karten sind antippbar mit Aktionen, die der Gegner nur zum Ansehen (where 'opp')
   const W = w => mine ? w : 'opp';
   const item = (c, w) => cardMini(c, {where: W(w), size: 'tiny', extra: (w === 'eq' && !usable(p, c) ? 'inactive' : '') + (mine && UI.adv && UI.adv.uid === c.uid ? ' rec' : '')});
-  const human = `<button type="button" class="mc tiny k-race" data-human="1" aria-label="Mensch"><span class="mc-head"><span class="mc-type">Rasse</span></span><img class="mc-art" src="${ART.Mensch || ICON.slot.race}" alt="" draggable="false"><span class="mc-name">Mensch</span></button>`;
+  const human = `<button type="button" class="mc tiny k-race" data-human="1" aria-label="Mensch"><span class="mc-head"><span class="mc-type">Volk</span></span><img class="mc-art" src="${ART.Mensch || ICON.slot.race}" alt="" draggable="false"><span class="mc-name">Mensch</span></button>`;
   const rows = [];
-  rows.push(['race', 'Rasse', p.race ? cardMini(p.race, {where: W('race'), size: 'tiny'}) : human]);
+  rows.push(['race', 'Volk', p.race ? cardMini(p.race, {where: W('race'), size: 'tiny'}) : human]);
   rows.push(['cls', 'Klasse', p.cls ? cardMini(p.cls, {where: W('cls'), size: 'tiny'}) : '<span class="none">keine Klasse</span>']);
   const by = s => p.eq.filter(i => i.slot === s);
   [['kopf', 'Kopf'], ['ruestung', 'Rüstung'], ['schuhe', 'Schuhe'], ['hand', `Hände ${handsUsed(p)}/2`], ['none', 'Sonstiges']].forEach(([s, l]) => rows.push([s, l, by(s).map(c => item(c, 'eq')).join('') || '<span class="none">leer</span>']));
@@ -1215,8 +1218,8 @@ function confirmDialog(title, text, yes, no, cancel, opt = {}) {
 }
 
 /* ================= Karten-Übersicht und Quiz ================= */
-const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Rassen'], ['class', 'Klassen'], ['enh', 'Monster-Zusätze'], ['wander', 'Sonderkarten (Tür)'], ['item', 'Gegenstände'], ['oneshot', 'Einmal einsetzbar'], ['levelup', 'Stufenkarten'], ['amulet', 'Sonderkarten (Schatz)']];
-const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Rasse/Klasse'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
+const KGROUPS = [['monster', 'Monster'], ['curse', 'Flüche'], ['race', 'Völker'], ['class', 'Klassen'], ['enh', 'Launen'], ['wander', 'Sonderkarten (Tür)'], ['item', 'Gegenstände'], ['oneshot', 'Einmal einsetzbar'], ['levelup', 'Stufenkarten'], ['amulet', 'Sonderkarten (Schatz)']];
+const KFILTERS = [['alle', 'Alle'], ['monster', 'Monster'], ['curse', 'Flüche'], ['rc', 'Volk/Klasse'], ['item', 'Gegenstände'], ['misc', 'Sonstige']];
 const SLOT_ORDER = ['kopf', 'ruestung', 'schuhe', 'hand', 'none'];
 /* Filterleiste: dunkler Grund nur, solange sie oben festklebt */
 function updFilterStuck() {
@@ -1786,8 +1789,9 @@ function powerTip(p){
   const rows=[{l:'Stufe',v:p.lvl}];
   p.eq.forEach(i=>{ if(!i.b) return; rows.push(usable(p,i) ? {l:i.n,v:'+'+i.b} : {l:`${i.n} (nur für ${reqName(i)})`,v:'0',off:true}); });
   const n=[];
-  if(hasCls(p,'krieger')) n.push('Gewinnt bei Gleichstand und darf im Kampf bis zu 3 Karten für je +1 abwerfen.');
-  if(hasCls(p,'priester')) n.push('Gegen Untote je abgeworfener Karte +3 (höchstens 3 Karten).');
+  if(hasCls(p,'krieger')) n.push('Krieger: Ohne Helfer +3 im Kampf.');
+  if(hasCls(p,'priester')) n.push('Exorzist: Gegen Untote +3.');
+  if(hasCls(p,'zauberer')) n.push('Zauberer: Einmal pro Kampf hebt der Gegenzauber eine Karte gegen dich auf.');
   if(hasCls(p,'pirat')) n.push('Pirat: Allein gewonnen gibt es 1 Schatz mehr. Bei Seegang gibt er nichts ab.');
   if(p.spore) n.push(`Sporenwolke: im Kampf −${p.spore}, bis ein Kampf gewonnen ist.`);
   n.push('Im Kampf kommen noch Einmal-Gegenstände, ein Helfer und Monsterboni dazu.');
@@ -1795,21 +1799,20 @@ function powerTip(p){
 }
 function runTip(p){
   const rows=[];
-  if(hasRace(p,'elf')) rows.push({l:'Elf',v:'+1'});
   p.eq.forEach(i=>{ if(!i.run) return; rows.push(usable(p,i) ? {l:i.n,v:'+'+i.run} : {l:`${i.n} (inaktiv)`,v:'0',off:true}); });
   const b=runBonus(p), need=5-b, pc=Math.round(Math.max(0,Math.min(6,7-need))/6*100);
   const n=[];
-  if(hasRace(p,'halbling')) n.push('Halbling: Misslingt der Wurf, darf er 1 Karte abwerfen und neu würfeln.');
+  if(hasCls(p,'priester')) n.push('Exorzist: Untote verfolgen dich nie.');
   if(hasCls(p,'zauberer')) n.push('Zauberer: Nach einem misslungenen Wurf bis zu 3 Karten abwerfen, je +1.');
   n.push('Manche Monster ändern den Wurf noch, etwa das Vampir-Kaninchen (−1).');
   return `<b class="tip-h">Weglaufen: ohne Bonus ab einer 5</b>${rows.length?tipRows(rows,sign(b)):'<span class="tip-n">Keine Boni.</span>'}<b>${need<=1?'Entkommt immer.':`Entkommt ab einer ${need}: ${pc} %.`}</b><span class="tip-n">${n.join(' ')}</span>`;
 }
 function handTip(p){
-  return `<b class="tip-h">Handkarten: höchstens ${handLimit(p)}${hasRace(p,'zwerg')?' (Zwerg: 6 statt 5)':''}</b><span class="tip-n">Gilt am Ende des eigenen Zugs. Den Überschuss bekommt bei der Milden Gabe, wer die niedrigste Stufe hat.${p.human?'':' Welche Karten das sind, ist geheim.'}</span>`;
+  return `<b class="tip-h">Handkarten: höchstens ${handLimit(p)}</b><span class="tip-n">Gilt am Ende des eigenen Zugs. Den Überschuss bekommt als Trinkgeld, wer die niedrigste Stufe hat. Rucksack: ${p.pack.length} von ${packLimit(p)} Gegenständen${(p.gold||0)?`, Goldbeutel: ${fmt(p.gold)} Gold`:''}.${p.human?'':' Welche Karten das sind, ist geheim.'}</span>`;
 }
 const ABIL={
-  elf:['steigt beim Helfen auf'], zwerg:['6 Handkarten','beliebig viele Große'], halbling:['1× pro Zug doppelt verkaufen','Fluchtwurf wiederholen'],
-  krieger:['gewinnt bei Gleichstand','Karten abwerfen: +1'], zauberer:['Fluchtzauber: Karten abwerfen'], dieb:['in den Rücken fallen: −2'], priester:['gegen Untote: +3 je Karte'], pirat:['allein gewonnen: +1 Schatz','seefest bei Seegang']
+  elf:['Raum durchsuchen: 2 ziehen, 1 behalten'], zwerg:['Rucksack 5','beliebig viele Sperrige'], halbling:['Feilschen: +200 Gold pro Zug'],
+  krieger:['ohne Helfer: +3'], zauberer:['Gegenzauber','Fluchtzauber: Karten abwerfen'], dieb:['verkauft Flüche und Launen'], priester:['gegen Untote: +3','Untote verfolgen ihn nicht'], pirat:['allein gewonnen: +1 Schatz','seefest bei Seegang']
 };
 
 /* ================= Ziehen und Ablegen: Karten aufs Spielfeld ================= */
@@ -1839,7 +1842,7 @@ function dragIntents(c) {
       break;
     case 'monster': {
       const w = me().hand.find(x => x.k === 'wander');
-      if (w) { const wa = cardActions(w, 'hand').find(a => a.fn && a.l.startsWith(`Mit ${c.n} (`)); if (wa) I.push({zones: ['table'], label: 'Mit Ungebetenem Gast dazuschicken', run: wa.fn}); }
+      if (w) { const wa = cardActions(w, 'hand').find(a => a.fn && a.l.startsWith(`Mit ${c.n} (`)); if (wa) I.push({zones: ['table'], label: 'Als Hinterhalt dazuschicken', run: wa.fn}); }
       break;
     }
     case 'curse': {
@@ -2044,26 +2047,28 @@ const TUT_LESSONS = [
   {id: 'karte', st: S1, act: /^Ausrüsten/, sheet: 'card', when: () => tCtx() === 'kick' && S.turn === 1, done: () => TUT.sawCard && !SHEETS.length, only: () => false, hl: () => '#hand .mc', shl: () => $$('#sheet [data-cact]').find(b => /Ausrüsten/.test(b.textContent)),
     text: 'Tipp mal auf deine Karte. Dann siehst du groß, was sie kann. Mit „Ausrüsten“ setzt du den Helm auf und wirst stärker.'},
   {id: 'tuer', st: S1, when: () => tCtx() === 'kick' && S.turn === 1, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
-    text: 'Jetzt geht es los. Jeder Zug beginnt damit, dass du eine Tür aufstößt. Dahinter kann ein Monster lauern. Tipp auf „Tür aufstoßen“.'},
+    text: 'Jetzt geht es los. Jeder Zug beginnt damit, dass du eine Tür öffnest. Dahinter kann ein Monster lauern. Tipp auf „Tür öffnen“.'},
   {id: 'staerke', st: S1, ok: 'Weiter', spot: '#table .hud', only: () => false, when: () => tFight(),
     text: () => `Ein Monster! Ein Wütender Gartenzwerg. Links steht deine Stärke: ${power(me())}. Das ist deine Stufe plus alles, was du trägst. Rechts steht die Stärke des Monsters: ${S.combat.mons[0].c.lvl}.`},
   {id: 'sieg', st: S1, when: () => tFight() && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Ist deine Zahl höher, gewinnst du. Bei Gleichstand gewinnt das Monster. Deine ist höher, also tipp auf „Monster besiegen“.'},
   /* ---- Station 2: Wer bin ich? ---- */
   {id: 'hallo2', st: S2, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
-    text: 'Diesmal geht es um dich: Rasse, Klasse und was du mit Gegenständen machst, die du nicht brauchst. Ziel ist Stufe 4.'},
+    text: 'Diesmal geht es um dich: Volk, Klasse und was du mit Gegenständen machst, die du nicht brauchst. Ziel ist Stufe 4.'},
   {id: 'rasse', st: S2, act: /^Ausspielen/, when: () => tCtx() === 'kick' && tHand('Elf') && !me().race, done: () => !!me().race, only: () => false, hl: () => tCard('Elf'),
-    text: 'Rassen geben dir besondere Fähigkeiten. Tipp die Elfe an, lies, was sie kann, und spiel sie dann aus.'},
+    text: 'Völker geben dir besondere Fähigkeiten. Tipp die Elfe an, lies, was sie kann, und spiel sie dann aus.'},
   {id: 'klasse', st: S2, act: /^Ausspielen/, when: () => tCtx() === 'kick' && me().race && !me().cls && tHand('Krieger'), done: () => !!me().cls, only: () => false, hl: () => [tCard('Krieger'), '#table'],
-    text: 'Jetzt die Klasse. Krieger können im Kampf Karten abwerfen und werden dafür stärker. Probier diesmal den schnellen Weg: Halt den Krieger fest und zieh ihn nach oben aufs Spielfeld. So spielst du jede Karte aus, ohne sie erst anzutippen.'},
+    text: 'Jetzt die Klasse. Krieger sind allein stark: Kämpfen sie ohne Helfer, haben sie +3. Probier diesmal den schnellen Weg: Halt den Krieger fest und zieh ihn nach oben aufs Spielfeld. So spielst du jede Karte aus, ohne sie erst anzutippen.'},
   {id: 'breitschwert', st: S2, act: /^Ausrüsten/, when: () => tCtx() === 'kick' && me().cls && tHand('Breitschwert der Angeberei'), done: () => tEq('Breitschwert der Angeberei'), only: () => false, hl: () => tCard('Breitschwert der Angeberei'),
-    text: 'Manche Gegenstände darf nur eine bestimmte Klasse oder Rasse benutzen. Das Breitschwert der Angeberei ist nur für Krieger, braucht beide Hände und gibt +4. Rüste es aus.'},
+    text: 'Manche Gegenstände darf nur eine bestimmte Klasse oder ein bestimmtes Volk benutzen. Das Breitschwert der Angeberei ist nur für Krieger, braucht beide Hände und gibt +4. Rüste es aus.'},
   {id: 'verkaufen', st: S2, act: /^Verkaufen/, sell: ['Protzige Goldkette', 'Hörnerhelm'], when: () => tCtx() === 'kick' && tEq('Breitschwert der Angeberei') && tHand('Protzige Goldkette') && me().lvl < 3, done: () => me().lvl >= 3, only: () => false, hl: () => [tCard('Protzige Goldkette'), tCard('Hörnerhelm')],
-    text: 'Goldkette und Hörnerhelm brauchst du gerade nicht. Gegenstände kannst du verkaufen: Je 1000 Gold bringen dir eine Stufe. Tipp die Goldkette an, wähle „Verkaufen“ und markiere auch den Hörnerhelm.'},
+    text: 'Goldkette und Hörnerhelm brauchst du gerade nicht. Gegenstände kannst du verkaufen: Je 1000 Gold bringen dir eine Stufe, der Rest kommt in deinen Goldbeutel. Tipp die Goldkette an, wähle „Verkaufen“ und markiere auch den Hörnerhelm.'},
   {id: 'tuer3', st: S2, when: () => tCtx() === 'kick' && S.turn === 1 && me().lvl >= 3, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
-    text: 'Stufe 3, und das ganz ohne Kampf! Jetzt stößt du die Tür auf.'},
+    text: 'Stufe 3, und das ganz ohne Kampf! Jetzt öffnest du die Tür.'},
   {id: 'raum', st: S2, when: () => tCtx() === 'trouble' && S.turn === 1, done: () => tCtx() !== 'trouble', only: o => o.v === 'loot', hl: tOpt(o => o.v === 'loot'),
     text: 'Kein Monster hinter der Tür. Dann durchsuchst du den Raum: Du ziehst eine Türkarte verdeckt auf die Hand.'},
+  {id: 'elfwahl', st: S2, when: () => tCtx() === 'elfpick', done: () => tCtx() !== 'elfpick', only: o => o.v === 'a', hl: tOpt(o => o.v === 'a'),
+    text: 'Als Elf hast du scharfe Augen: Du ziehst beim Durchsuchen 2 Karten und behältst die bessere. Nimm den Zauberer.'},
   {id: 'almosen', st: S2, cards: true, act: /Rucksack/, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
     text: 'Am Ende deines Zuges darfst du höchstens 5 Karten behalten. Was zu viel ist, bekommt der Spieler mit der niedrigsten Stufe, also Berta. Gegenstände kannst du vorher auch in den Rucksack legen, die zählen dann nicht mehr als Handkarten. Sonst gib 1 Karte ab.'},
   {id: 'ende2', st: S2, when: () => tCtx() === 'charity' && S.turn === 1, done: () => tCtx() !== 'charity', hl: () => '#act .btn.primary',
@@ -2074,7 +2079,7 @@ const TUT_LESSONS = [
   {id: 'hallo3', st: S3, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Heute wird es ungemütlich. Ich zeige dir, was du tust, wenn ein Monster zu stark ist. Ziel ist Stufe 5.'},
   {id: 'fluch', st: S3, when: () => tCtx() === 'trouble' && S.log.some(e => /Pechsträhne/.test(e.t)), done: () => tCtx() !== 'trouble', only: o => o.v === 'loot', hl: tOpt(o => o.v === 'loot'),
-    text: 'Pech gehabt! Einen Fluch, den du beim Aufstoßen aufdeckst, bekommst du selbst ab: eine Stufe weniger. Jetzt durchsuchst du noch den Raum.'},
+    text: 'Pech gehabt! Einen Fluch, den du beim Öffnen der Tür aufdeckst, bekommst du selbst ab: eine Stufe weniger. Jetzt durchsuchst du noch den Raum.'},
   {id: 'verdeckt', st: S3, ok: true, cards: ['Windböe'], when: () => tCtx() && tHand('Windböe'), done: () => !tHand('Windböe'), hl: () => '.oc[data-opp="1"]',
     text: 'Verdeckt gezogene Flüche wirken nicht auf dich. Die Windböe kannst du jederzeit auf einen Gegner spielen: Zieh sie oben auf Berta, dann ist ihr Hörnerhelm weg. Du kannst sie dir aber auch aufheben.'},
   {id: 'trank', st: S3, act: /^Für unsere Seite/, when: () => tFight() && !evalCombat(S.combat).win && tHand('Trank der Tapferkeit'), done: () => !tHand('Trank der Tapferkeit') || !tFight(), only: () => false, hl: () => tCard('Trank der Tapferkeit'),
@@ -2089,6 +2094,8 @@ const TUT_LESSONS = [
     text: 'Tipp auf Berta.'},
   {id: 'angebot', st: S3, noCancel: true, when: () => tCtx() === 'helpOffer', done: () => tCtx() !== 'helpOffer',
     text: 'Wie viele Schätze bietest du ihr an? Je mehr, desto eher sagt jemand ja. Berta hilft dir heute aber sowieso.'},
+  {id: 'beute3', st: S3, when: () => tCtx() === 'loot', done: () => tCtx() !== 'loot', only: () => true,
+    text: 'Mit Helfer werden die Schätze offen gezogen. Dann wählt ihr abwechselnd, du zuerst, bis Berta so viele hat, wie du ihr angeboten hast. Tipp auf den Schatz, den du willst.'},
   {id: 'zusammen', st: S3, when: () => tFight() && S.combat.h != null && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Zusammen seid ihr stärker als der Troll. Tipp auf „Monster besiegen“ und hol dir Stufe 4!'},
   {id: 'almosen3', st: S3, cards: true, act: /Rucksack/, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()) && tHand('Nebelpulver'), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
@@ -2110,11 +2117,11 @@ const TUT_LESSONS = [
   {id: 'kalle', st: S4, when: () => S.cur === 1 && !S.combat, done: () => S.cur === 0 || !!S.combat,
     text: 'Jetzt ist Kalle dran. Pass gut auf, gleich darfst du mitmischen.'},
   {id: 'einmischen', st: S4, act: /^Auf /, when: () => tAsk('interfere') && tHand('Stinksauer'), done: () => !tHand('Stinksauer') || !tAsk('interfere'), only: () => false, hl: () => tCard('Stinksauer'),
-    text: 'Kalle gewinnt gerade gegen den Rentner-Ritter. Mit Monster-Zusätzen machst du fremde Monster stärker: Zieh „Stinksauer“ auf sein Monster, dann hat es +5.'},
+    text: 'Kalle gewinnt gerade gegen den Rentner-Ritter. Mit Launen machst du fremde Monster stärker: Zieh „Stinksauer“ auf sein Monster, dann hat es +5.'},
   {id: 'weiter', st: S4, when: () => tAsk('interfere') && !tHand('Stinksauer'), done: () => !tAsk('interfere'), hl: () => '#act .btn.primary',
     text: 'Jetzt verliert Kalle! Tipp auf „Fertig, weiter“ und schau zu, was passiert.'},
   {id: 'winzig', st: S4, act: /^Auf /, when: () => tFight() && !evalCombat(S.combat).win && tHand('Winzig'), done: () => !tHand('Winzig') || !tFight(), only: () => false, hl: () => tCard('Winzig'),
-    text: 'Der Bürokratie-Golem ist zu stark für dich. Monster-Zusätze darfst du auch in deinem eigenen Kampf spielen: „Winzig“ macht das Monster um 5 schwächer. Zieh die Karte aufs Spielfeld.'},
+    text: 'Der Bürokratie-Golem ist zu stark für dich. Launen darfst du auch in deinem eigenen Kampf spielen: „Winzig“ macht das Monster um 5 schwächer. Zieh die Karte aufs Spielfeld.'},
   {id: 'sieg4', st: S4, when: () => tFight() && S.turn >= 2 && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Jetzt bist du stärker. Besiege den Golem und hol dir Stufe 5!'}
 ];
@@ -2123,7 +2130,7 @@ const tutLesson = () => TUT && TUT.cur ? TUT_LESSONS.find(l => l.id === TUT.cur)
 function tutActOk(c, label, where) {
   if (!SCN || !SCN.tut || SCN.tutFree || !S || S.winner != null) return true;
   if (!tutCardOk(c)) return false;
-  if ((where || 'hand') !== 'hand') return false;   // Ausrüstung, Rucksack, Rasse, Klasse bleiben in der Einführung, wie sie sind
+  if ((where || 'hand') !== 'hand') return false;   // Ausrüstung, Rucksack, Volk, Klasse bleiben in der Einführung, wie sie sind
   const L = tutLesson(); if (!L) return false;
   if (L.act) return L.act.test(label);
   if (L.cards === true) return !/Verkaufen|Ablegen/.test(label);
@@ -2238,3 +2245,12 @@ setScreen('title');
   const first = () => { Snd.unlock(); Snd.startMusic(); if (Snd.running()) EV.forEach(e => document.removeEventListener(e, first, true)); };
   EV.forEach(e => document.addEventListener(e, first, true)); }
 
+
+/* ================= Regeln: Suche ================= */
+function rulesFilter(q) {
+  const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean), items = $$('#scr-rules details.rule');
+  let any = false;
+  items.forEach(d => { const txt = ((d.dataset.k || '') + ' ' + d.textContent).toLowerCase(), hit = words.every(w => txt.includes(w)); d.hidden = !hit; if (words.length) d.open = hit; any = any || hit; });
+  const none = $('#scr-rules .rs-none'); if (none) none.hidden = any || !words.length;
+}
+document.addEventListener('input', e => { if (e.target && e.target.id === 'rules-q') rulesFilter(e.target.value); });

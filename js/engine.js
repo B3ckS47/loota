@@ -7,7 +7,7 @@ const MONSTERS = [
   {n:'Schleimige Socke',lvl:1,tr:1,x:2,bad:{t:'slot',s:'schuhe'},txt:'Lag drei Jahre unter dem Bett.',badTxt:'Verliere dein Schuhwerk.'},
   {n:'Schwarm Stechmücken',lvl:2,tr:1,vs:{race:'elf',val:2},bad:{t:'lvl',n:1},txt:'Lieben Elfenblut: +2 gegen Elfen.',badTxt:'Verliere 1 Stufe.'},
   {n:'Übellaunige Möwe',lvl:2,tr:1,x:2,bad:{t:'slot',s:'kopf'},txt:'Klaut Pommes und Helme.',badTxt:'Verliere deine Kopfbedeckung.'},
-  {n:'Kellerassel XXL',lvl:3,tr:1,vs:{race:'halbling',val:3},bad:{t:'hand',n:2},txt:'Hält Halblinge für Snacks: +3 gegen Halblinge.',badTxt:'Wirf 2 zufällige Handkarten ab.'},
+  {n:'Kellerassel XXL',lvl:3,tr:1,vs:{race:'halbling',val:3},bad:{t:'hand',n:2},txt:'Hält Kobolde für Snacks: +3 gegen Kobolde.',badTxt:'Wirf 2 zufällige Handkarten ab.'},
   {n:'Rentner-Ritter',lvl:4,tr:2,x:2,bad:{t:'slot',s:'ruestung'},txt:'Erzählt von früher. Stundenlang.',badTxt:'Verliere deine Rüstung.'},
   {n:'Steuerprüfer-Gespenst',lvl:4,tr:2,undead:true,bad:{t:'lvl',n:1},txt:'Untot. Prüft rückwirkend zehn Jahre.',badTxt:'Verliere 1 Stufe.'},
   {n:'Pilzkönig',lvl:5,tr:2,pilz:true,bad:{t:'best'},txt:'Pilz. Hält Hof im Komposthaufen.',badTxt:'Verliere deinen besten Gegenstand.'},
@@ -29,7 +29,7 @@ const CURSES = [
   {n:'Rost',eff:{t:'slot',s:'ruestung'},txt:'Verliere deine Rüstung.'},
   {n:'Löcher in den Sohlen',eff:{t:'slot',s:'schuhe'},txt:'Verliere dein Schuhwerk.'},
   {n:'Identitätskrise',eff:{t:'class'},txt:'Verliere deine Klasse. Hast du keine: 1 Stufe.'},
-  {n:'Ahnenforschung',eff:{t:'race'},txt:'Verliere deine Rasse. Du bist wieder Mensch.'},
+  {n:'Ahnenforschung',eff:{t:'race'},txt:'Verliere dein Volk. Du bist wieder Mensch.'},
   {n:'Taschendieb-Gnom',eff:{t:'hand',n:2},txt:'Wirf 2 zufällige Handkarten ab.'}
 ];
 /* Welt 2 (Tavernenkeller): nur im Keller-Deck. w = Welt, x = Stückzahl dort */
@@ -81,7 +81,7 @@ function kellerCount(p){ if(p.tpl.w===2) return p.wdef; if(p.deck==='tr') return
 const MONSTERS_W3 = [
   {n:'Wandernder Bovist',lvl:1,tr:1,x:2,pilz:true,bad:{t:'spore',n:1},txt:'Pilz. Platzt bei jeder Berührung.',badTxt:'Du bekommst eine Sporenwolke ab: −1 in jedem Kampf, bis du einen gewinnst.'},
   {n:'Eichhörnchen-Inkasso',lvl:2,tr:1,bad:{t:'slot',s:'kopf'},txt:'Treibt alte Nussschulden ein.',badTxt:'Verliere deine Kopfbedeckung. Es baut ein Nest darin.'},
-  {n:'Pfifferling-Gang',lvl:3,tr:1,pilz:true,vs:{race:'halbling',val:2},bad:{t:'hand',n:1},txt:'Pilz. Zu fünft und sehr reizbar: +2 gegen Halblinge.',badTxt:'Wirf 1 zufällige Handkarte ab.'},
+  {n:'Pfifferling-Gang',lvl:3,tr:1,pilz:true,vs:{race:'halbling',val:2},bad:{t:'hand',n:1},txt:'Pilz. Zu fünft und sehr reizbar: +2 gegen Kobolde.',badTxt:'Wirf 1 zufällige Handkarte ab.'},
   {n:'Hexenring',lvl:4,tr:2,pilz:true,run:-2,bad:{t:'lvl',n:1},txt:'Pilz. Wer hineintritt, muss tanzen: Weglaufen −2.',badTxt:'Verliere 1 Stufe.'},
   {n:'Moos-Troll',lvl:6,tr:2,vs:{race:'elf',val:3},bad:{t:'slot',s:'ruestung'},txt:'Hält Elfen für Unkraut: +3 gegen Elfen.',badTxt:'Verliere deine Rüstung.'},
   {n:'Gestiefelter Fliegenpilz',lvl:8,tr:2,pilz:true,bad:{t:'multi',l:[{t:'lvl',n:1},{t:'spore',n:1}]},txt:'Pilz. Fesch, aber giftig.',badTxt:'Verliere 1 Stufe und bekomme eine Sporenwolke ab.'},
@@ -116,7 +116,7 @@ const MONSTERS_W4 = [
   {n:'Möwen-Bande',lvl:2,tr:1,moewe:true,bad:{t:'cheap'},txt:'Klaut alles, was nach Pommes riecht. Gegen die Kokosnuss machtlos.',badTxt:'Sie klauen deinen billigsten Gegenstand.'},
   {n:'Quallen-Gang',lvl:3,tr:1,x:2,meer:true,bad:{t:'sun'},txt:'Meer. Brennt wie Feuer.',badTxt:'Du bekommst Sonnenbrand: −1 in jedem Kampf, und niemand hilft dir, bis du einen Kampf gewinnst.'},
   {n:'Strandkorb-Mimik',lvl:4,tr:1,run:-2,bad:{t:'slot',s:'schuhe'},txt:'Klappt zu: Weglaufen −2.',badTxt:'Verliere dein Schuhwerk.'},
-  {n:'Seeigel-Igel',lvl:5,tr:1,meer:true,vs:{race:'halbling',val:3},bad:{t:'lvl',n:1},txt:'Meer. Halblinge laufen barfuß: +3 gegen Halblinge.',badTxt:'Verliere 1 Stufe.'},
+  {n:'Seeigel-Igel',lvl:5,tr:1,meer:true,vs:{race:'halbling',val:3},bad:{t:'lvl',n:1},txt:'Meer. Kobolde laufen barfuß: +3 gegen Kobolde.',badTxt:'Verliere 1 Stufe.'},
   {n:'Betrunkener Klabautermann',lvl:6,tr:2,meer:true,run:-1,bad:{t:'multi',l:[{t:'lvl',n:1},{t:'slot',s:'kopf'}]},txt:'Meer. Torkelt unberechenbar: Weglaufen −1.',badTxt:'Verliere 1 Stufe und deine Kopfbedeckung.'},
   {n:'Bademeister-Golem',lvl:8,tr:2,vs:{cls:'krieger',val:3},bad:{t:'class'},txt:'„Hier wird nicht gerauft!“ +3 gegen Krieger.',badTxt:'Verliere deine Klasse.'},
   {n:'Hai mit Schwimmflügeln',lvl:10,tr:3,meer:true,run:-2,bad:{t:'lvl',n:2},txt:'Meer. Schwimmt schneller als du: Weglaufen −2.',badTxt:'Verliere 2 Stufen.'},
@@ -235,15 +235,17 @@ function doPfanne(p){
 const osP = (c, C) => !c.b ? 0 : (c.vs && C && C.mons.some(m => m.c[c.vs.tag])) ? c.vs.val : c.b;
 const osM = c => c.pOnly ? 0 : (c.b || 0);
 const RACES = {
-  elf:{n:'Elf',txt:'+1 beim Weglaufen. Hilfst du bei einem Sieg, steigst du 1 Stufe auf.'},
-  zwerg:{n:'Zwerg',txt:'Beliebig viele Große Gegenstände. Du darfst 6 Handkarten halten.'},
-  halbling:{n:'Halbling',txt:'1 Gegenstand pro Zug doppelt verkaufen. Misslingt ein Fluchtwurf: 1 Karte abwerfen, neu würfeln.'}
+  // Interne Schlüssel bleiben (halbling = Kobold), damit alte Spielstände und Kartenlisten passen.
+  elf:{n:'Elf',txt:'Scharfe Augen: Durchsuchst du den Raum, ziehst du 2 Karten und behältst 1.'},
+  zwerg:{n:'Zwerg',txt:'Beliebig viele Sperrige Gegenstände. Dein Rucksack fasst 5 statt 3.'},
+  halbling:{n:'Kobold',txt:'Feilschen: Einmal pro Zug bringt dir ein Verkauf 200 Gold extra.'}
 };
 const CLASSES = {
-  krieger:{n:'Krieger',txt:'Du gewinnst bei Gleichstand. Im Kampf bis zu 3 Karten abwerfen: je +1.'},
-  zauberer:{n:'Zauberer',txt:'Misslingt ein Fluchtwurf: bis zu 3 Karten abwerfen, je +1 auf den Wurf.'},
-  dieb:{n:'Dieb',txt:'1 Karte abwerfen: Ein anderer Spieler bekommt im Kampf −2 (einmal pro Kampf).'},
-  priester:{n:'Priester',txt:'Gegen Untote bis zu 3 Karten abwerfen: je +3.'},
+  // Interne Schlüssel bleiben (dieb = Hehler, priester = Exorzist).
+  krieger:{n:'Krieger',txt:'Allein stark: Kämpfst du ohne Helfer, hast du +3.'},
+  zauberer:{n:'Zauberer',txt:'Gegenzauber: Einmal pro Kampf 2 Karten abwerfen und eine Laune oder einen Einmal-Gegenstand gegen dich aufheben. Misslingt ein Fluchtwurf: bis zu 3 Karten abwerfen, je +1.'},
+  dieb:{n:'Hehler',txt:'Du darfst auch Flüche und Launen verkaufen, für je 200 Gold.'},
+  priester:{n:'Exorzist',txt:'Gegen Untote +3. Untote verfolgen dich beim Weglaufen nie.'},
   pirat:{n:'Pirat',w:5,txt:'Plündern: Gewinnst du einen Kampf ohne Helfer, ziehst du 1 Schatz mehr. Seefest: Bei Seegang gibst du keine Karte ab.'}
 };
 const ENH = [
@@ -286,8 +288,8 @@ const ONESHOTS = [
 const LEVELUPS = ['Pizza für alle bestellt','Regelheft gelesen','Würfel angehaucht','Snacks mitgebracht'];
 
 const TYPES = {
-  monster:{l:'Monster',d:'Tür'}, curse:{l:'Fluch',d:'Tür'}, race:{l:'Rasse',d:'Tür'}, class:{l:'Klasse',d:'Tür'},
-  enh:{l:'Monster-Zusatz',s:'Zusatz',d:'Tür'}, wander:{l:'Sonderkarte',d:'Tür'},
+  monster:{l:'Monster',d:'Tür'}, curse:{l:'Fluch',d:'Tür'}, race:{l:'Volk',d:'Tür'}, class:{l:'Klasse',d:'Tür'},
+  enh:{l:'Laune',s:'Laune',d:'Tür'}, wander:{l:'Sonderkarte',d:'Tür'},
   item:{l:'Gegenstand',d:'Schatz'}, oneshot:{l:'Einmal einsetzbar',s:'Einmal',d:'Schatz'}, levelup:{l:'Stufenkarte',s:'Stufe',d:'Schatz'}, amulet:{l:'Sonderkarte',d:'Schatz'}
 };
 // Kartenbilder: Kartenname -> Bilddatei im Ordner art/
@@ -327,9 +329,9 @@ const ART = {
   "Topfhelm mit Delle":"art/gegenstand-topfhelm-mit-delle.webp",
   "Zauberstab der Ausreden":"art/gegenstand-zauberstab-der-ausreden.webp",
   "Zwergenaxt":"art/gegenstand-zwergenaxt.webp",
-  "Dieb":"art/klasse-dieb.webp",
+  "Dieb":"art/klasse-dieb.webp", "Hehler":"art/klasse-dieb.webp",
   "Krieger":"art/klasse-krieger.webp",
-  "Priester":"art/klasse-priester.webp",
+  "Priester":"art/klasse-priester.webp", "Exorzist":"art/klasse-priester.webp",
   "Pirat":"art/klasse-pirat.webp",
   "Zauberer":"art/klasse-zauberer.webp",
   "Bürokratie-Golem":"art/monster-buerokratie-golem.webp",
@@ -352,11 +354,11 @@ const ART = {
   "Wütender Gartenzwerg":"art/monster-wuetender-gartenzwerg.webp",
   "Zombie-Hausmeister":"art/monster-zombie-hausmeister.webp",
   "Elf":"art/rasse-elf.webp",
-  "Halbling":"art/rasse-halbling.webp",
+  "Halbling":"art/rasse-halbling.webp", "Kobold":"art/rasse-halbling.webp",
   "Zwerg":"art/rasse-zwerg.webp",
   "Mensch":"art/rasse-mensch.webp",
   "Glücksamulett":"art/sonder-gluecksamulett.webp",
-  "Ungebetener Gast":"art/sonder-ungebetener-gast.webp",
+  "Ungebetener Gast":"art/sonder-ungebetener-gast.webp", "Hinterhalt":"art/sonder-ungebetener-gast.webp",
   "Pizza für alle bestellt":"art/stufe-pizza-fuer-alle-bestellt.webp",
   "Regelheft gelesen":"art/stufe-regelheft-gelesen.webp",
   "Snacks mitgebracht":"art/stufe-snacks-mitgebracht.webp",
@@ -553,7 +555,8 @@ const nmD = p => p.human ? 'dir' : p.name;
 const V = (p, du, er) => p.human ? du : er;
 const hasRace = (p,r) => !!(p.race && p.race.r===r);
 const hasCls = (p,c) => !!(p.cls && p.cls.c===c);
-const handLimit = p => hasRace(p,'zwerg') ? 6 : 5;
+const handLimit = p => 5;
+const packLimit = p => hasRace(p,'zwerg') ? 5 : 3;
 
 function log(t, kind='ev'){ S.log.push({t,kind}); if(S.log.length>400) S.log.splice(0,50); render(); }
 function rule(t){ log(t,'rule'); }
@@ -569,10 +572,10 @@ function cardPool(){
   Object.keys(RACES).forEach(r=>add({k:'race',r,n:RACES[r].n,txt:RACES[r].txt},'door',2));
   Object.keys(CLASSES).filter(c=>!CLASSES[c].w).forEach(c=>add({k:'class',c,n:CLASSES[c].n,txt:CLASSES[c].txt},'door',2));
   ENH.forEach(e=>add(Object.assign({k:'enh'},e),'door',e.x||1));
-  add({k:'wander',n:'Ungebetener Gast',txt:'Spiele diese Karte mit einem Monster von deiner Hand in einen fremden Kampf. Das Monster kämpft mit.'},'door',2);
+  add({k:'wander',n:'Hinterhalt',txt:'Spiele diese Karte mit einem Monster von deiner Hand in einen fremden Kampf. Das Monster kämpft mit.'},'door',2);
   ITEMS.forEach(i=>add(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',1));
   ONESHOTS.forEach(o=>add(Object.assign({k:'oneshot'},o),'tr',o.x||1));
-  LEVELUPS.forEach(n=>add({k:'levelup',n,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  LEVELUPS.forEach(n=>add({k:'levelup',n,txt:'Steige 1 Stufe auf. Im eigenen Zug außerhalb von Kämpfen, nicht für Stufe 10.'},'tr',1));
   add({k:'amulet',n:'Glücksamulett',txt:'Spiele diese Karte, wenn dich ein Fluch trifft: Er wirkt nicht.'},'tr',2);
   // Weltkarten: im Grundspiel 0, ihre Stückzahl im Weltdeck steht in wdef
   const addW=(tpl,deck,n)=>P.push({tpl,deck,def:0,wdef:n});
@@ -580,23 +583,23 @@ function cardPool(){
   CURSES_W2.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
   ITEMS_W2.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W2.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
-  LEVELUPS_W2.forEach(n=>addW({k:'levelup',n,w:2,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  LEVELUPS_W2.forEach(n=>addW({k:'levelup',n,w:2,txt:'Steige 1 Stufe auf. Im eigenen Zug außerhalb von Kämpfen, nicht für Stufe 10.'},'tr',1));
   MONSTERS_W3.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   CURSES_W3.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
   ITEMS_W3.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W3.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
-  LEVELUPS_W3.forEach(n=>addW({k:'levelup',n,w:3,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  LEVELUPS_W3.forEach(n=>addW({k:'levelup',n,w:3,txt:'Steige 1 Stufe auf. Im eigenen Zug außerhalb von Kämpfen, nicht für Stufe 10.'},'tr',1));
   MONSTERS_W4.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   CURSES_W4.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
   ITEMS_W4.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W4.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
-  LEVELUPS_W4.forEach(n=>addW({k:'levelup',n,w:4,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  LEVELUPS_W4.forEach(n=>addW({k:'levelup',n,w:4,txt:'Steige 1 Stufe auf. Im eigenen Zug außerhalb von Kämpfen, nicht für Stufe 10.'},'tr',1));
   MONSTERS_W5.forEach(m=>addW(Object.assign({k:'monster'},m),'door',m.x||1));
   addW({k:'class',c:'pirat',w:5,n:CLASSES.pirat.n,txt:CLASSES.pirat.txt},'door',2);
   CURSES_W5.forEach(c=>addW(Object.assign({k:'curse'},c),'door',c.x||1));
   ITEMS_W5.forEach(i=>addW(Object.assign({k:'item',hands:i.slot==='hand'?(i.hands||1):0},i),'tr',i.x||1));
   ONESHOTS_W5.forEach(o=>addW(Object.assign({k:'oneshot'},o),'tr',o.x||1));
-  LEVELUPS_W5.forEach(n=>addW({k:'levelup',n,w:5,txt:'Steige 1 Stufe auf. Jederzeit spielbar, aber nicht für Stufe 10.'},'tr',1));
+  LEVELUPS_W5.forEach(n=>addW({k:'levelup',n,w:5,txt:'Steige 1 Stufe auf. Im eigenen Zug außerhalb von Kämpfen, nicht für Stufe 10.'},'tr',1));
   return P;
 }
 // Stückzahlen pro Kartenname; null = Empfehlung. Wird von der Oberfläche vor einem neuen Spiel gesetzt.
@@ -605,7 +608,8 @@ function buildDecks(counts){
   counts = counts || DECK_COUNTS;
   const door=[], tr=[];
   cardPool().forEach(({tpl,deck,def})=>{
-    const n = counts && counts[tpl.n]!=null ? counts[tpl.n] : def;
+    const old=Object.keys(OLD_NAMES).find(k=>OLD_NAMES[k]===tpl.n);
+    const n = counts && counts[tpl.n]!=null ? counts[tpl.n] : counts && old && counts[old]!=null ? counts[old] : def;
     for(let i=0;i<n;i++) (deck==='door'?door:tr).push(mk(Object.assign({},tpl),deck));
   });
   return {door:shuffle(door), tr:shuffle(tr)};
@@ -650,25 +654,26 @@ function usable(p,it){
 function reqName(it){ if(!it.req) return ''; return it.req.cls ? CLASSES[it.req.cls].n : RACES[it.req.race].n; }
 function itemBonus(p){ return p.eq.filter(i=>usable(p,i)).reduce((s,i)=>s+(i.b||0),0); }
 function power(p){ return p.lvl + itemBonus(p); }
-function runBonus(p){ let b=hasRace(p,'elf')?1:0; const fl=isFlut(); p.eq.forEach(i=>{ if(i.run && usable(p,i)) b+=i.run; if(fl && i.flutRun && usable(p,i)) b+=i.flutRun; }); if(fl) b+=1; if(p.sand) b-=2; return b; }
+function runBonus(p){ let b=0; const fl=isFlut(); p.eq.forEach(i=>{ if(i.run && usable(p,i)) b+=i.run; if(fl && i.flutRun && usable(p,i)) b+=i.flutRun; }); if(fl) b+=1; if(p.sand) b-=2; return b; }
 function handsUsed(p){ return p.eq.filter(i=>i.slot==='hand').reduce((s,i)=>s+(i.hands||1),0); }
 function canEquip(p,c){
   if(c.k!=='item') return {ok:false, why:'Das ist kein Gegenstand.'};
   if(!usable(p,c)) return {ok:false, why:`Nur für ${reqName(c)}. Spiele zuerst die passende Karte aus.`};
   if(c.big && !hasRace(p,'zwerg')){
     const other=[...p.eq,...p.pack].find(i=>i.big && i.uid!==c.uid);
-    if(other) return {ok:false, why:`Du trägst schon einen Großen Gegenstand (${other.n}). Nur Zwerge dürfen mehrere haben. Verkaufe ihn zuerst.`};
+    if(other) return {ok:false, why:`Du trägst schon einen Sperrigen Gegenstand (${other.n}). Nur Zwerge dürfen mehrere haben. Verkaufe ihn zuerst.`};
   }
   return {ok:true};
 }
 // Gegenstände von der Hand in den Rucksack: zählen dann nicht mehr als Handkarten, bringen aber keinen Bonus.
-// Es gilt nur die Grenze für Große Gegenstände (einer, außer Zwerge).
+// Grenzen: Sperrige Gegenstände (einer, außer Zwerge) und die Rucksack-Größe.
 function canStash(p,c){
   if(c.k!=='item') return {ok:false, why:'Nur Gegenstände kommen in den Rucksack.'};
   if(c.big && !hasRace(p,'zwerg')){
     const other=[...p.eq,...p.pack].find(i=>i.big && i.uid!==c.uid);
-    if(other) return {ok:false, why:`Du hast schon einen Großen Gegenstand (${other.n}). Nur Zwerge dürfen mehrere haben.`};
+    if(other) return {ok:false, why:`Du hast schon einen Sperrigen Gegenstand (${other.n}). Nur Zwerge dürfen mehrere haben.`};
   }
+  if(p.pack.length>=packLimit(p)) return {ok:false, why:`Dein Rucksack ist voll: höchstens ${packLimit(p)} Gegenstände.`};
   return {ok:true};
 }
 function stash(p,c){ take(p,c); p.pack.push(c); }
@@ -680,15 +685,17 @@ function stashItem(c){
 const stashable = p => p.hand.filter(c=>c.k==='item' && canStash(p,c).ok);
 function equip(p,c){
   take(p,c); const moved=[];
+  // Abgelegtes kommt in den Rucksack; ist der voll, auf die Hand.
+  const away=o=>{ if(p.pack.length<packLimit(p)) p.pack.push(o); else p.hand.push(o); moved.push(o); };
   if(['kopf','ruestung','schuhe'].includes(c.slot)){
     const old=p.eq.find(i=>i.slot===c.slot);
-    if(old){ p.eq=p.eq.filter(i=>i!==old); p.pack.push(old); moved.push(old); }
+    if(old){ p.eq=p.eq.filter(i=>i!==old); away(old); }
   }
   if(c.slot==='hand'){
     let used=handsUsed(p);
     while(used + c.hands > 2){
       const o=p.eq.filter(i=>i.slot==='hand').sort((a,b)=>a.b-b.b)[0];
-      p.eq=p.eq.filter(i=>i!==o); p.pack.push(o); moved.push(o); used-=o.hands;
+      p.eq=p.eq.filter(i=>i!==o); away(o); used-=o.hands;
     }
   }
   p.eq.push(c);
@@ -701,10 +708,22 @@ function gainOf(p,it){
   equip(q,it);
   return itemBonus(q)+runBonus(q)*0.5-before;
 }
+// Goldwert einer Karte: Gegenstände nach Aufdruck, Hehler verkaufen auch Flüche und Launen.
+function goldOf(p,c){ if(c.g>0 && (c.k==='item'||c.k==='oneshot')) return c.g; if(p && hasCls(p,'dieb') && (c.k==='curse'||c.k==='enh')) return 200; return 0; }
+const sellable = (p,c) => goldOf(p,c)>0;
+// Goldbeutel: Was nicht für eine Stufe reicht, bleibt im Beutel (p.gold).
 function sellValue(p,cards){
-  let sum=cards.reduce((s,c)=>s+(c.g||0),0), dbl=null;
-  if(hasRace(p,'halbling') && !p.soldDouble && cards.length){ dbl=cards.reduce((m,c)=>(c.g||0)>(m.g||0)?c:m); sum+=dbl.g||0; }
-  return {sum, dbl, lv:Math.floor(sum/1000)};
+  const raw=cards.reduce((s,c)=>s+goldOf(p,c),0);
+  const bonus=(hasRace(p,'halbling') && !p.soldDouble && cards.length) ? 200 : 0;
+  const purse=p.gold||0, sum=raw+bonus+purse;
+  return {raw, bonus, purse, sum, dbl:bonus>0, lv:Math.floor(sum/1000)};
+}
+// Verkauf ausführen: Stufen gutschreiben, Rest in den Beutel. Gibt die gewonnenen Stufen zurück.
+function doSell(p,cards){
+  const v=sellValue(p,cards), lv=Math.max(0,Math.min(v.lv,WINLVL()-1-p.lvl));
+  cards.forEach(c=>{ take(p,c); discard(c); });
+  p.lvl+=lv; p.gold=v.sum-lv*1000; if(v.bonus) p.soldDouble=true;
+  return {v, lv};
 }
 function keepValue(p,c){
   switch(c.k){
@@ -737,6 +756,8 @@ function sideStrength(C){
   [['und','undead','gegen Untote'],['pilzb','pilz','gegen Pilze'],['meerb','meer','gegen Meeresmonster'],['piratb','pirat','gegen Piraten'],['tiefb','tiefsee','gegen Tiefseemonster']].forEach(([k,tag,l])=>{ if(C.mons.some(m=>m.c[tag])) sides.forEach(q=>q && q.eq.forEach(i=>{ if(i[k] && usable(q,i)){ const v=i[k]-(i.b||0); s+=v; parts.push({l:`${i.n} ${l}`,v}); } })); });
   sides.forEach(q=>{ if(q && q.spore){ s-=q.spore; parts.push({l:`Sporenwolke (${q.human?'du':q.name})`,v:-q.spore}); } });
   sides.forEach(q=>{ if(q && q.sun){ s-=1; parts.push({l:`Sonnenbrand (${q.human?'du':q.name})`,v:-1}); } });
+  if(hasCls(f,'krieger') && C.h==null){ s+=3; parts.push({l:'Krieger: allein stark',v:3}); }
+  if(C.mons.some(m=>m.c.undead)) sides.forEach(q=>{ if(q && hasCls(q,'priester')){ s+=3; parts.push({l:`Exorzist gegen Untote (${q.human?'du':q.name})`,v:3}); } });
   C.pB.forEach(b=>{ s+=b.v; parts.push(b); });
   return {s, parts};
 }
@@ -745,7 +766,7 @@ function monStrength(C){
   C.mons.forEach(m=>{
     let v=m.c.lvl; parts.push({l:m.c.n,v:m.c.lvl,keep:true});
     m.enh.forEach(e=>{ v+=e.v; parts.push({l:`„${e.n}“`,v:e.v}); });
-    const vs=vsBonus(m.c,C); if(vs){ v+=vs; parts.push({l:`Bonus gegen ${m.c.vs.race ? RACES[m.c.vs.race].n+'en' : CLASSES[m.c.vs.cls].n}`,v:vs}); }
+    const vs=vsBonus(m.c,C); if(vs){ v+=vs; parts.push({l:`Bonus gegen ${m.c.vs.race ? {elf:'Elfen',zwerg:'Zwerge',halbling:'Kobolde'}[m.c.vs.race] : CLASSES[m.c.vs.cls].n}`,v:vs}); }
     if(isFlut() && m.c.meer){ v+=3; parts.push({l:'Flut (Meer)',v:3}); }
     if(m.c.puff && C.h!=null){ v+=m.c.puff; parts.push({l:'Bläst sich auf (Helfer da)',v:m.c.puff}); }
     if(isFlut() && m.c.soft){ v-=m.c.soft; parts.push({l:'Flut weicht ihn auf',v:-m.c.soft}); }
@@ -755,7 +776,7 @@ function monStrength(C){
   return {s, parts};
 }
 function evalCombat(C){
-  const a=sideStrength(C).s, b=monStrength(C).s, tieWin=hasCls(P(C.f),'krieger');
+  const a=sideStrength(C).s, b=monStrength(C).s, tieWin=false;   // Gleichstand verliert immer
   return {a, b, tieWin, win: a>b || (a===b && tieWin)};
 }
 const levelsGained = C => C.mons.reduce((s,m)=>s+(m.c.up||1),0);
@@ -763,9 +784,40 @@ const treasuresOf = C => C.mons.reduce((s,m)=>s+Math.max(0, m.c.tr + m.enh.reduc
 const monNames = C => C.mons.map(m=>m.c.n).join(' und ');
 function wouldWinWith(C,p){ const h=C.h; C.h=p.id; const r=evalCombat(C); C.h=h; return r.win; }
 function strongestMon(C){ return C.mons.slice().sort((a,b)=>b.c.lvl-a.c.lvl)[0]; }
+// Gegenzauber (Zauberer): Launen und Einmal-Gegenstände, die andere gegen die kämpfende Seite gespielt haben
+function counterTargets(C){
+  const t=[], foe=by=>by!=null && by!==C.f && by!==C.h;
+  C.mB.forEach(b=>{ if(foe(b.by) && b.v>0) t.push({l:b.l, v:b.v, kind:'mb', ref:b}); });
+  C.mons.forEach(m=>m.enh.forEach(e=>{ if(C.played && foe(C.played[e.uid]) && e.v>0) t.push({l:`„${e.n}“ auf ${m.c.n}`, v:e.v, kind:'enh', m, e}); }));
+  return t;
+}
+function applyCounter(C,t){
+  if(t.kind==='mb') C.mB.splice(C.mB.indexOf(t.ref),1);
+  else { t.m.enh.splice(t.m.enh.indexOf(t.e),1); discard(t.e); }
+  C.counter=true; markIntf();
+}
+// Beute mit Helfer: abwechselnd wählen, Kämpfer zuerst, bis der Helfer seine Zahl hat
+async function draftLoot(f,h,cards,deal){
+  const pool=cards.slice(), fGot=[], hGot=[]; let fTurn=true;
+  while(pool.length){
+    const needH=deal-hGot.length;
+    if(needH<=0){ fGot.push(...pool.splice(0)); break; }
+    const who=(fTurn && pool.length>needH) ? f : h;
+    let pick;
+    if(who.human){
+      const v=await ask(()=>({title:'Beute wählen', text: who===f ? `Du wählst zuerst. ${h.name} bekommt noch ${needH} ${pl(needH,'Schatz','Schätze')}.` : `Du hilfst und darfst wählen. Noch ${needH} ${pl(needH,'Schatz','Schätze')} für dich.`,
+        hint:['Abwechselnd wählen, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat.'], opts:pool.map((c,i)=>({l:c.n,v:i,kind:'primary'}))}), 'loot', {pool});
+      pick=pool[v];
+    } else pick=pool.slice().sort((a,b)=>keepValue(who,b)-keepValue(who,a))[0];
+    pool.splice(pool.indexOf(pick),1); (who===f?fGot:hGot).push(pick);
+    if(!who.human) log(`${who.name} wählt ${pick.n}.`);
+    fTurn = who===h;
+  }
+  return {fGot,hGot};
+}
 
 /* ================= Spielstart ================= */
-function newPlayer(id,name,human){ return {id,name,human,lvl:1,race:null,cls:null,eq:[],pack:[],hand:[],dead:false,soldDouble:false}; }
+function newPlayer(id,name,human){ return {id,name,human,lvl:1,race:null,cls:null,eq:[],pack:[],hand:[],dead:false,soldDouble:false,gold:0}; }
 function newGame(allBots){
   TOKEN++;
   if(UI.reject){ const r=UI.reject; UI.prompt=null; UI.resolve=null; UI.reject=null; try{ r(); }catch(e){} }
@@ -801,14 +853,18 @@ function newGame(allBots){
   else if(sc) log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt.${sc.boss?` Irgendwo im Türstapel lauert ${sc.boss}: Wer ihn besiegt, gewinnt sofort.`:''} Du beginnst.`,'sys');
   else log(`Neue Partie. Wer zuerst Stufe ${WINLVL()} erreicht, gewinnt. Alle starten auf Stufe 1 als Mensch ohne Klasse und mit 4 Tür- und 4 Schatzkarten. Du beginnst.`,'sys');
   if(sc && sc.stars && sc.stars.length) log(`Sterne in dieser Station: ${sc.stars.map(t=>'★ '+t).join(' · ')}`,'sys');
-  rule('Tippe deine Handkarten an, um sie auszuspielen. Rasse, Klasse und Gegenstände darfst du gleich jetzt auslegen.');
+  rule('Tippe deine Handkarten an, um sie auszuspielen. Volk, Klasse und Gegenstände darfst du gleich jetzt auslegen.');
   fx('newgame');
   const t=TOKEN;
   return (sc && sc.fight ? puzzleLoop(t) : gameLoop(t)).catch(e=>{ if(e!==STALE){ console.error(e); if(!HEADLESS) log('Hoppla, ein Programmfehler: '+e.message,'sys'); else throw e; } });
 }
 function allCards(){ const a=[...S.door,...S.tr,...S.doorDisc,...S.trDisc]; S.players.forEach(p=>a.push(...p.hand,...p.eq,...p.pack,...[p.race,p.cls].filter(Boolean))); return a; }
 // Karte für ein Szenario holen: aus den Stapeln nehmen, sonst neu anlegen
+// Alte Kartennamen (Spielstände, gespeicherte Stückzahlen, Szenarien)
+const OLD_NAMES={'Halbling':'Kobold','Dieb':'Hehler','Priester':'Exorzist','Ungebetener Gast':'Hinterhalt'};
+const canonName = n => OLD_NAMES[n]||n;
 function pullCard(name){
+  name=canonName(name);
   for(const st of [S.door,S.tr]){ const i=st.findIndex(c=>c.n===name); if(i>=0) return st.splice(i,1)[0]; }
   const t=cardPool().find(x=>x.tpl.n===name);
   if(!t) throw new Error('Unbekannte Karte im Szenario: '+name);
@@ -894,15 +950,15 @@ async function humanTurn(p){
   log(`Dein Zug · Runde ${S.turn}`,'turn');
   fx('turn',{p});
   if(CHECKPOINT_HANDLER){ try{ CHECKPOINT_HANDLER(); }catch(e){} }
-  await ask(()=>({title:'Phase 1 · Tür aufstoßen', text:'Bereite dich vor, dann stoß die Tür auf.', hint:hintStart(p), opts:[{l:'Tür aufstoßen',v:'kick',kind:'primary'}]}), 'kick');
+  await ask(()=>({title:'Phase 1 · Tür öffnen', text:'Bereite dich vor, dann öffne die Tür.', hint:hintStart(p), opts:[{l:'Tür öffnen',v:'kick',kind:'primary'}]}), 'kick');
   const c=luckyDoor(p);
   let fought=false;
   if(c){
     S.reveal=c;
-    log(`Du stößt die Tür auf: <b>${cardLabel(c)}</b>.`);
+    log(`Du öffnest die Tür: <b>${cardLabel(c)}</b>.`);
     if(c.k==='monster'){ ruleOnce('openmon','Ein offen aufgedecktes Monster musst du sofort bekämpfen.'); S.reveal=null; await combat(0,[c]); fought=true; }
-    else if(c.k==='curse'){ ruleOnce('doorcurse','Einen Fluch, den du beim Aufstoßen der Tür aufdeckst, bekommst du selbst ab.'); await sleep(1100); S.reveal=null; await applyCurse(p,c,null); }
-    else { await sleep(1000); S.reveal=null; p.hand.push(c); log(`${c.n} kommt auf deine Hand.`); if(c.k==='race'||c.k==='class') ruleOnce('rcplay','Rassen und Klassen darfst du im eigenen Zug jederzeit ausspielen. Zieh die Karte aufs Spielfeld oder tippe sie an.'); }
+    else if(c.k==='curse'){ ruleOnce('doorcurse','Einen Fluch, den du beim Öffnen der Tür aufdeckst, bekommst du selbst ab.'); await sleep(1100); S.reveal=null; await applyCurse(p,c,null); }
+    else { await sleep(1000); S.reveal=null; p.hand.push(c); log(`${c.n} kommt auf deine Hand.`); if(c.k==='race'||c.k==='class') ruleOnce('rcplay','Völker und Klassen darfst du im eigenen Zug jederzeit ausspielen. Zieh die Karte aufs Spielfeld oder tippe sie an.'); }
   }
   if(S.winner!=null) return;
   if(!fought && !p.dead){
@@ -914,11 +970,15 @@ async function humanTurn(p){
     }, 'trouble');
     if(v==='loot'){
       S.phase=3;
-      const watt=isEbbe(), d=watt ? luckyTr() : drawDoor();
+      const watt=isEbbe(); let d=watt ? luckyTr() : drawDoor();
+      if(d && hasRace(p,'elf')){ const d2=watt ? drawTr() : drawDoor();
+        if(d2){ const keep=await ask(()=>({title:'Elf: Scharfe Augen', text:'Du ziehst 2 Karten. Welche behältst du?', hint:['Die andere kommt auf den Ablagestapel.'], opts:[{l:cardLabel(d),v:'a',kind:'primary'},{l:cardLabel(d2),v:'b',kind:'primary'}]}), 'elfpick', {a:d, b:d2});
+          if(keep==='b'){ discard(d); d=d2; } else discard(d2);
+          ruleOnce('elfloot','Elfen ziehen beim Durchsuchen 2 Karten und behalten 1.'); } }
       if(d && watt){ p.hand.push(d); log(`Ebbe: Du suchst im Watt und findest <b>${cardLabel(d)}</b>.`,'good'); }
       else if(d){ p.hand.push(d); log(`Du durchsuchst den Raum und ziehst verdeckt: <b>${cardLabel(d)}</b>.`);
         if(d.k==='curse') ruleOnce('hiddencurse','Verdeckt gezogene Flüche wirken nicht auf dich. Du kannst sie später jederzeit auf jemanden spielen.');
-        if(d.k==='monster') ruleOnce('handmon','Ein Monster auf der Hand nutzt du nächsten Zug für „Monster herausfordern“ oder mit „Ungebetener Gast“ in fremden Kämpfen.'); }
+        if(d.k==='monster') ruleOnce('handmon','Ein Monster auf der Hand nutzt du nächsten Zug für „Monster herausfordern“ oder mit „Hinterhalt“ in fremden Kämpfen.'); }
     } else {
       const m=p.hand.find(x=>'m'+x.uid===v);
       if(m){ take(p,m); log(`Du forderst <b>${m.n}</b> von deiner Hand heraus.`); await combat(0,[m]); }
@@ -928,7 +988,7 @@ async function humanTurn(p){
   S.phase=4;
   while(true){
     const v=await ask(()=>{ const over=p.hand.length-handLimit(p);
-      return {title:'Phase 4 · Almosen', text: over>0 ? `Du hast ${p.hand.length} Karten, erlaubt sind ${handLimit(p)}.` : 'Dein Zug ist fast vorbei. Lege noch aus, was du brauchst.', hint:hintCharity(p),
+      return {title:'Phase 4 · Trinkgeld', text: over>0 ? `Du hast ${p.hand.length} Karten, erlaubt sind ${handLimit(p)}.` : 'Dein Zug ist fast vorbei. Lege noch aus, was du brauchst.', hint:hintCharity(p),
         opts: over>0 ? [...(stashable(p).length ? [{l:'In den Rucksack',v:'stash'}] : []), {l:`${over} ${pl(over,'Karte','Karten')} abgeben`,v:'give',kind:'primary'}] : [{l:'Zug beenden',v:'end',kind:'primary'}]}; }, 'charity');
     if(v==='end') break;
     if(v==='stash'){
@@ -940,7 +1000,7 @@ async function humanTurn(p){
     }
     const over=p.hand.length-handLimit(p);
     if(over<=0) continue;
-    const sel=await selectCards({ctx:'charity', title:'Almosen', text:`Wähle ${over} ${pl(over,'Karte','Karten')}, die du abgibst.`, min:over, max:over, cancel:true,
+    const sel=await selectCards({ctx:'charity', title:'Trinkgeld', text:`Wähle ${over} ${pl(over,'Karte','Karten')}, die du abgibst.`, min:over, max:over, cancel:true,
       filter:(c,w)=>w==='hand' && !(SCN && SCN.keep && SCN.keep.includes(c.n) && p.hand.length-over>0), confirm:()=> 'Abgeben'});   // Einführung: wichtige Karte bleibt
     if(!sel) continue;
     doCharity(p, sel.map(findCard).filter(Boolean));
@@ -949,7 +1009,7 @@ async function humanTurn(p){
 function hintStart(p){
   const h=[];
   const eqable=p.hand.filter(c=>c.k==='item' && gainOf(p,c)>0);
-  if(!p.race && p.hand.some(c=>c.k==='race')) h.push('Du hast eine Rassenkarte auf der Hand. Ausspielen gibt dir ihre Fähigkeit.');
+  if(!p.race && p.hand.some(c=>c.k==='race')) h.push('Du hast eine Volkskarte auf der Hand. Ausspielen gibt dir ihre Fähigkeit.');
   if(!p.cls && p.hand.some(c=>c.k==='class')) h.push('Du hast eine Klassenkarte auf der Hand. Spiel sie aus, manche Gegenstände brauchen sie.');
   if(eqable.length) h.push(`Anlegen lohnt sich: ${eqable.map(c=>c.n).join(', ')}. Karte antippen, dann „Ausrüsten“.`);
   const sv=sellValue(p,[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)]);
@@ -987,10 +1047,10 @@ function hintCharity(p){
 function doCharity(p,cards){
   if(!cards.length) return;
   const t=charityTargets(p);
-  if(!t){ cards.forEach(c=>{ take(p,c); discard(c); }); log(`${nm(p)} ${V(p,'legst','legt')} ${cards.length} ${pl(cards.length,'Karte','Karten')} ab.`); ruleOnce('charself','Almosen: Wer selbst (mit) die niedrigste Stufe hat, legt die überzähligen Karten ab.'); }
+  if(!t){ cards.forEach(c=>{ take(p,c); discard(c); }); log(`${nm(p)} ${V(p,'legst','legt')} ${cards.length} ${pl(cards.length,'Karte','Karten')} ab.`); ruleOnce('charself','Trinkgeld: Wer selbst (mit) die niedrigste Stufe hat, legt die überzähligen Karten ab.'); }
   else { const toMe=[]; cards.forEach((c,i)=>{ take(p,c); const r=t[i%t.length]; r.hand.push(c); if(r.human) toMe.push(c); });
     log(`${nm(p)} ${V(p,'gibst','gibt')} ${cards.length} ${pl(cards.length,'Karte','Karten')} an ${t.map(nmA).join(' und ')} ab.${toMe.length?` Du bekommst: ${toMe.map(c=>`<b>${cardLabel(c)}</b>`).join(', ')}.`:''}`);
-    ruleOnce('charity','Almosen: Überzählige Handkarten gehen an den Spieler mit der niedrigsten Stufe.'); }
+    ruleOnce('charity','Trinkgeld: Überzählige Handkarten gehen an den Spieler mit der niedrigsten Stufe.'); }
 }
 
 /* ================= Bot-Zug ================= */
@@ -1007,12 +1067,12 @@ function botSetup(p){
 async function botManage(p){
   const r0=p.race, c0=p.cls;
   botSetup(p);
-  if(p.race!==r0) log(`${p.name} spielt die Rasse ${p.race.n} aus.`);
+  if(p.race!==r0) log(`${p.name} spielt das Volk ${p.race.n} aus.`);
   if(p.cls!==c0) log(`${p.name} spielt die Klasse ${p.cls.n} aus.`);
   if(canPfanne(p).ok) doPfanne(p);
   if(p.sun){ const cr=p.hand.find(c=>c.cream); if(cr) useCream(p,cr); }
   if(mapSet(p)) doDig(p);
-  for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup',`Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe ${WINLVL()}.`); } }
+  for(const lu of p.hand.filter(c=>c.k==='levelup')){ if(p.lvl<WINLVL()-1){ take(p,lu); discard(lu); p.lvl++; log(`${p.name} spielt „${lu.n}“ und steigt auf Stufe ${p.lvl}.`); ruleOnce('levelup',`Stufenkarten spielt man im eigenen Zug außerhalb von Kämpfen, aber nie für die Siegstufe ${WINLVL()}.`); } }
   botSell(p);
   for(const cu of p.hand.filter(c=>c.k==='curse')){
     if(!p.hand.includes(cu)) continue;   // nach Seegang schon weitergewandert
@@ -1023,15 +1083,11 @@ async function botManage(p){
 }
 function botSell(p){
   if(p.lvl>=WINLVL()-1) return;
-  const cands=[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)];
-  const total=sellValue(p,cands).sum; if(total<1000) return;
-  const target=Math.min(Math.floor(total/1000),WINLVL()-1-p.lvl);
-  cands.sort((a,b)=>b.g-a.g);
-  const pick=[]; for(const c of cands){ pick.push(c); if(sellValue(p,pick).sum>=target*1000) break; }
-  const sv=sellValue(p,pick); const lv=Math.min(sv.lv,WINLVL()-1-p.lvl); if(lv<1) return;
-  pick.forEach(c=>{ take(p,c); discard(c); }); p.lvl+=lv; if(sv.dbl) p.soldDouble=true;
-  log(`${p.name} verkauft ${pick.map(c=>c.n).join(', ')} für ${fmt(sv.sum)} Gold${sv.dbl?` (als Halbling ${sv.dbl.n} doppelt)`:''} und steigt auf Stufe ${p.lvl}.`);
-  ruleOnce('sell','Verkaufen: Je 1.000 Gold gibt es 1 Stufe. Wechselgeld gibt es nicht.');
+  const cands=[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0), ...(hasCls(p,'dieb') ? p.hand.filter(c=>(c.k==='curse'||c.k==='enh') && keepValue(p,c)<5) : [])];
+  const pick=chooseSell(p,cands); if(!pick.length) return;
+  const {v,lv}=doSell(p,pick); if(lv<1) return;
+  log(`${p.name} verkauft ${pick.map(c=>c.n).join(', ')} für ${fmt(v.raw+v.bonus)} Gold${v.bonus?' (als Kobold mit 200 Gold Aufschlag)':''} und steigt auf Stufe ${p.lvl}.${p.gold?` Im Goldbeutel: ${fmt(p.gold)} Gold.`:''}`);
+  ruleOnce('sell','Verkaufen: Je 1.000 Gold gibt es 1 Stufe. Was übrig bleibt, kommt in den Goldbeutel.');
 }
 function curseHits(t,c){
   const e=c.eff;
@@ -1077,7 +1133,7 @@ async function botTurn(p){
   await sleep(spd(0.5));
   const c=luckyDoor(p); let fought=false;
   if(c){
-    S.reveal=c; log(`${p.name} stößt die Tür auf: <b>${cardLabel(c)}</b>.`); await sleep(spd());
+    S.reveal=c; log(`${p.name} öffnet die Tür: <b>${cardLabel(c)}</b>.`); await sleep(spd());
     if(c.k==='monster'){ S.reveal=null; await combat(p.id,[c]); fought=true; }
     else if(c.k==='curse'){ S.reveal=null; await applyCurse(p,c,null); }
     else { S.reveal=null; p.hand.push(c); await botManage(p); }
@@ -1087,24 +1143,26 @@ async function botTurn(p){
     S.phase=2;
     const m=botTroubleChoice(p);
     if(m){ take(p,m); log(`${p.name} fordert <b>${m.n}</b> (Stufe ${m.lvl}) von der Hand heraus.`); await sleep(spd()); await combat(p.id,[m]); }
-    else { S.phase=3; const watt=isEbbe(), d=watt ? drawTr() : drawDoor(); if(d) p.hand.push(d); log(watt ? `Ebbe: ${p.name} sucht im Watt und findet einen Schatz.` : `${p.name} durchsucht den Raum und zieht 1 Türkarte verdeckt.`); await sleep(spd(0.6)); }
+    else { S.phase=3; const watt=isEbbe(); let d=watt ? drawTr() : drawDoor();
+      if(d && hasRace(p,'elf')){ const d2=watt ? drawTr() : drawDoor(); if(d2){ if(keepValue(p,d2)>keepValue(p,d)){ discard(d); d=d2; } else discard(d2); } }
+      if(d) p.hand.push(d); log(watt ? `Ebbe: ${p.name} sucht im Watt und findet einen Schatz.` : `${p.name} durchsucht den Raum und zieht 1 Türkarte verdeckt.`); await sleep(spd(0.6)); }
   }
   if(S.winner!=null) return;
   await botManage(p);
   S.phase=4;
   let over=p.hand.length-handLimit(p);
-  for(const it of stashable(p)){ if(over<=0) break; stash(p,it); over--; log(`${p.name} legt ${it.n} in den Rucksack.`); }
+  for(const it of stashable(p)){ if(over<=0) break; if(!canStash(p,it).ok) break; stash(p,it); over--; log(`${p.name} legt ${it.n} in den Rucksack.`); }
   if(over>0){ const give=p.hand.slice().sort((a,b)=>keepValue(p,a)-keepValue(p,b)).slice(0,over); doCharity(p,give); }
   await sleep(spd(0.6));
 }
 
 /* ================= Kampf ================= */
 async function combat(fid, cards, preEnh){
-  const C=S.combat={f:fid, h:null, deal:0, mons:cards.map((c,i)=>({c,enh: i===0 && preEnh ? preEnh : []})), pB:[], mB:[], used:[], berserk:0, turning:0, stabbed:{}, intf:{}, asked:{}, resolved:false, hchg:false};
+  const C=S.combat={f:fid, h:null, deal:0, mons:cards.map((c,i)=>({c,enh: i===0 && preEnh ? preEnh : []})), pB:[], mB:[], used:[], berserk:0, turning:0, stabbed:{}, intf:{}, asked:{}, played:{}, counter:false, resolved:false, hchg:false};
   const f=P(fid);
   log(`Kampf: ${nm(f)} gegen <b>${monNames(C)}</b> (Stufe ${C.mons[0].c.lvl}).`);
   if(f.chill){ C.pB.push({l:`Kellerkälte (${nm(f)})`,v:-f.chill}); log(`Kellerkälte: ${nm(f)} ${V(f,'zitterst','zittert')} und ${V(f,'kämpfst','kämpft')} mit −${f.chill}.`,'bad'); f.chill=0; }
-  ruleOnce('power','Kampfstärke = Stufe + Boni der ausgerüsteten Gegenstände. Sie muss höher sein als die Monsterstufe. Gleichstand verliert, außer für Krieger.');
+  ruleOnce('power','Kampfstärke = Stufe + Boni der ausgerüsteten Gegenstände. Sie muss höher sein als die Monsterstufe. Gleichstand verliert.');
   render();
   if(f.human) await humanFight(C); else await botFight(C);
   C.resolved=true;
@@ -1141,8 +1199,7 @@ function combatPrompt(C){
   const opts=[];
   opts.push(r.win ? {l:'Fertig: Monster besiegen',v:'done',kind:'primary'} : {l: SCN && SCN.fight ? 'Aufgeben' : 'Aufgeben und weglaufen',v:'run',kind:'danger'});
   if(C.h==null && !noHelpMon(C) && S.players.some(x=>!x.human && !x.dead && !C.asked[x.id])) opts.push({l:'Um Hilfe bitten',v:'help'});
-  if(hasCls(p,'krieger') && C.berserk<3 && p.hand.length) opts.push({l:`Krieger: Karten abwerfen (+1 je Karte)`,v:'berserk'});
-  if(hasCls(p,'priester') && C.mons.some(m=>m.c.undead) && C.turning<3 && p.hand.length) opts.push({l:'Priester: gegen Untote (+3 je Karte)',v:'turn'});
+  if(hasCls(p,'zauberer') && C.f===0 && !C.counter && p.hand.length>=2 && counterTargets(C).length) opts.push({l:'Zauberer: Gegenzauber (2 Karten)',v:'counter'});
   return {title:`Kampf · ${r.a} gegen ${r.b}`, text: r.win ? 'Du gewinnst diesen Kampf gerade.' : (r.a===r.b ? 'Gleichstand. Das reicht nicht, du verlierst gerade.' : 'Du verlierst diesen Kampf gerade.'), hint:h, opts};
 }
 async function humanFight(C){
@@ -1150,6 +1207,18 @@ async function humanFight(C){
   while(true){
     const v=await ask(()=>combatPrompt(C), 'fight');
     if(v==='help'){ await humanAskHelp(C); continue; }
+    if(v==='counter'){
+      const ts=counterTargets(C); if(!ts.length) continue;
+      const pick=await ask(()=>({title:'Gegenzauber', text:'Was hebst du auf? Danach wirfst du 2 Karten ab.', hint:['Einmal pro Kampf. Aufheben kannst du Launen und Einmal-Gegenstände, die andere gegen dich gespielt haben.'],
+        opts:[...ts.map((t,i)=>({l:`${t.l} (${sign(t.v)})`,v:i,kind:i===0?'primary':''})),{l:'Abbrechen',v:'x',kind:'ghost'}]}), 'counter');
+      if(pick==='x') continue;
+      const sel=await selectCards({ctx:'counter', title:'Gegenzauber', text:'Wirf 2 Karten ab.', min:2, max:2, cancel:true, filter:(c,w)=>w==='hand', confirm:()=>'Abwerfen'});
+      if(!sel || sel.length<2) continue;
+      sel.map(findCard).forEach(c=>{ take(p,c); discard(c); }); stat('discarded',2);
+      const t=ts[pick]; applyCounter(C,t); log(`Gegenzauber: ${t.l} ist aufgehoben.`,'good');
+      ruleOnce('counter','Zauberer: Einmal pro Kampf hebt der Gegenzauber eine Laune oder einen Einmal-Gegenstand auf, den jemand gegen ihn gespielt hat.');
+      continue;
+    }
     if(v==='berserk' || v==='turn'){
       const used = v==='berserk' ? C.berserk : C.turning, per = v==='berserk'?1:3, max=Math.min(3-used,p.hand.length);
       const sel=await selectCards({ctx:v, title: v==='berserk'?'Krieger-Fähigkeit':'Priester gegen Untote', text:`Wirf bis zu ${max} ${pl(max,'Karte','Karten')} ab. Jede bringt +${per}.`, min:1, max, cancel:true, filter:(c,w)=>w==='hand', confirm:cs=>`${cs.length} abwerfen (+${cs.length*per})`});
@@ -1195,7 +1264,6 @@ function botAcceptHelp(b,C,offer){
   if(f.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss)) return {yes:false, why:'Damit du gewinnst? Sicher nicht!'};
   if(st.noHelp) return {yes:false, why:st.noWhy||'Helfen? Ich? Pfoten weg von meinen Schätzen!'};
   if(st.cheap && Math.random()<(offer===0?0.55:0.95)*(f.lvl>b.lvl+2?0.6:1)) return {yes:true, why: offer>0 ? 'Oh ja, oh ja! Ich helfe!' : 'Umsonst? Na klar, ich mag dich!'};
-  if(hasRace(b,'elf') && b.lvl<WINLVL()-1) return {yes:true, why:'Als Elf steige ich dabei selbst auf. Gern!'};
   if(st.greedy){ const all=Math.max(1,total);
     if(offer>=all) return {yes:true, why:'Alle Schätze? Prost, abgemacht!'};
     if(offer>=Math.ceil(all*0.75) && Math.random()<0.45) return {yes:true, why:'Na gut, fast alles ist auch was.'};
@@ -1212,8 +1280,7 @@ function botAcceptHelp(b,C,offer){
 function humanCanInterfere(C){
   const p=me(); if(!p.human || p.dead) return false;
   return p.hand.some(c=>(c.k==='enh') || (c.k==='oneshot' && osM(c)) || c.k==='curse') ||
-    (p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster')) ||
-    (hasCls(p,'dieb') && !C.stabbed[0] && p.hand.length>0);
+    (p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster'));
 }
 function interferePrompt(C){
   const f=P(C.f), p=me(), r=evalCombat(C), helper=C.h===0, h=[];
@@ -1223,13 +1290,12 @@ function interferePrompt(C){
     const opts=[];
     p.hand.filter(c=>c.k==='enh' && c.v>0).forEach(c=>opts.push(`„${c.n}“ (${sign(c.v)})`));
     p.hand.filter(c=>c.k==='oneshot' && osM(c)).forEach(c=>opts.push(`${c.n} für das Monster (+${osM(c)})`));
-    if(p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster')) opts.push('Ungebetener Gast mit einem Monster von deiner Hand');
+    if(p.hand.some(c=>c.k==='wander') && p.hand.some(c=>c.k==='monster')) opts.push('Hinterhalt mit einem Monster von deiner Hand');
     if(p.hand.some(c=>c.k==='curse')) opts.push('ein Fluch auf '+f.name);
     if(opts.length) h.push('Möglich: '+opts.join(', ')+'. Karte aufs Spielfeld ziehen oder antippen.');
     h.push('Eingreifen kostet Karten. Lohnt sich vor allem gegen den, der vorne liegt.');
   } else h.push(`${f.name} verliert gerade.`);
   const o=[{l: C.hchg ? 'Fertig, weiter' : 'Nicht eingreifen', v:'ok', kind:'primary'}];
-  if(!helper && hasCls(p,'dieb') && !C.stabbed[0] && p.hand.length) o.push({l:'Dieb: in den Rücken fallen (−2)',v:'stab'});
   return {title:`${f.name} kämpft · ${r.a} gegen ${r.b}`, text: helper ? `Du hilfst ${f.name} gegen ${monNames(C)}.` : `${f.name} ${r.win?'gewinnt':'verliert'} gerade gegen ${monNames(C)}. Willst du eingreifen?`, hint:h, opts:o};
 }
 async function humanInterfereWindow(C){
@@ -1269,6 +1335,11 @@ async function botFight(C){
 function botBoost(b,C){
   const r=evalCombat(C); if(r.win) return false;
   const need=r.b-r.a+(r.tieWin?0:1);
+  if(hasCls(b,'zauberer') && C.f===b.id && !C.counter && b.hand.length>=2){
+    const ts=counterTargets(C).sort((x,y)=>y.v-x.v);
+    if(ts.length && ts[0].v>=need){ b.hand.slice().sort((x,y)=>keepValue(b,x)-keepValue(b,y)).slice(0,2).forEach(c=>{ take(b,c); discard(c); });
+      applyCounter(C,ts[0]); log(`${b.name} wirkt als Zauberer einen Gegenzauber: ${ts[0].l} ist aufgehoben.`,'good'); return true; }
+  }
   const res=[];
   const sides=[b]; if(C.h!=null && !P(C.h).human) sides.push(P(C.h));
   const decisive=b.lvl+levelsGained(C)>=WINLVL() || C.mons.some(m=>m.c.boss);
@@ -1277,18 +1348,12 @@ function botBoost(b,C){
     if(c.k==='oneshot' && c.b){ const v=osP(c,C); res.push({v, use:()=>{ take(q,c); C.used.push(c); C.pB.push({l:`${c.n} (${q.name})`,v}); log(`${q.name} setzt ${c.n} ein (+${v}).`); if(c.cream && q.sun){ q.sun=0; log(`Der Sonnenbrand von ${q.name} ist weg.`,'good'); } }}); }
     if(c.k==='enh' && c.v<0) res.push({v:-c.v, use:()=>{ take(q,c); const m=strongestMon(C); m.enh.push(c); log(`${q.name} spielt „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`); }});
   }));
-  const spare=b.hand.filter(c=>keepValue(b,c)<5 && c.k!=='oneshot' && !(c.k==='enh' && c.v<0)).sort((x,y)=>keepValue(b,x)-keepValue(b,y));
-  if(hasCls(b,'priester') && C.mons.some(m=>m.c.undead)) for(let i=0;i<Math.min(3-C.turning,spare.length);i++) res.push({v:3, card:spare[i], ab:'turn'});
-  else if(hasCls(b,'krieger')) for(let i=0;i<Math.min(3-C.berserk,spare.length);i++) res.push({v:1, card:spare[i], ab:'berserk'});
   const total=res.reduce((s,x)=>s+x.v,0);
   if(total<need) return false;
   res.sort((x,y)=>x.v-y.v);
   let chosen=res.find(x=>x.v>=need); chosen = chosen ? [chosen] : null;
   if(!chosen){ chosen=[]; let s=0; for(const x of res.slice().sort((x,y)=>y.v-x.v)){ chosen.push(x); s+=x.v; if(s>=need) break; } }
-  let nb=0, nt=0;
-  chosen.forEach(x=>{ if(x.use) x.use(); else { take(b,x.card); discard(x.card); if(x.ab==='berserk') nb++; else nt++; } });
-  if(nb){ C.berserk+=nb; C.pB.push({l:`Krieger-Fähigkeit (${b.name})`,v:nb}); log(`${b.name} wirft als Krieger ${nb} ${pl(nb,'Karte','Karten')} ab: +${nb}.`); }
-  if(nt){ C.turning+=nt; C.pB.push({l:`Priester gegen Untote (${b.name})`,v:3*nt}); log(`${b.name} wirft als Priester ${nt} ${pl(nt,'Karte','Karten')} ab: +${3*nt} gegen Untote.`); }
+  chosen.forEach(x=>x.use());
   return true;
 }
 const noHelpMon = C => C.mons.some(m=>m.c.noHelp) || !!(P(C.f) && P(C.f).sun);
@@ -1304,7 +1369,7 @@ async function botSeekHelp(b,C){
     if(p.human){
       const r=evalCombat(C);
       const v=await ask(()=>({title:`${b.name} bittet dich um Hilfe`, text:`${b.name} kämpft gegen ${monNames(C)} und steht bei ${r.a} gegen ${r.b}. Mit dir wären es ${r.a+power(p)}. Angebot: ${offer} von ${total} ${pl(total,'Schatz','Schätzen')}.`,
-        hint:[`Hilfst du, steigt ${b.name} auf Stufe ${Math.min(10,b.lvl+levelsGained(C))}.${hasRace(p,'elf')?' Als Elf steigst du selbst 1 Stufe auf.':''}`,'Verliert ihr trotzdem (z. B. weil jemand eingreift), musst du auch weglaufen.'],
+        hint:[`Hilfst du, steigt ${b.name} auf Stufe ${Math.min(10,b.lvl+levelsGained(C))}.`,'Verliert ihr trotzdem (z. B. weil jemand eingreift), musst du auch weglaufen.'],
         opts:[{l:`Helfen (für ${offer} ${pl(offer,'Schatz','Schätze')})`,v:'yes',kind:'primary'},{l:'Ablehnen',v:'no'}]}), 'botHelp', {b, offer});
       if(v==='yes'){ C.h=0; C.deal=offer; log(`Du hilfst ${b.name} für ${offer} ${pl(offer,'Schatz','Schätze')}.`,'good'); ruleOnce('helper','Mit Helfer zählen beide Kampfstärken. Verliert ihr, müssen beide einzeln weglaufen.'); return; }
       log(`Du lehnst ab.`);
@@ -1339,7 +1404,6 @@ function botPlayAgainst(b,C,threat){
   b.hand.forEach(c=>{ if(c.k==='enh' && c.v>0) opts.push({c,v:c.v,kind:'enh'}); if(c.k==='oneshot' && osM(c)) opts.push({c,v:osM(c),kind:'os'}); });
   const w=b.hand.find(c=>c.k==='wander'), wm=b.hand.filter(c=>c.k==='monster').sort((x,y)=>y.lvl-x.lvl)[0];
   if(w && wm) opts.push({c:w,m:wm,v:wm.lvl,kind:'wander'});
-  if(hasCls(b,'dieb') && !C.stabbed[b.id] && b.hand.length) opts.push({v:2,kind:'stab'});
   if(!opts.length) return false;
   const r=evalCombat(C);
   const need=r.a-r.b+(r.tieWin?1:0);
@@ -1348,9 +1412,9 @@ function botPlayAgainst(b,C,threat){
   if(!pick){ if(!threat) return false; pick=opts[opts.length-1]; }
   const f=P(C.f);
   fx('interfere',{by:b, kind:pick.kind});
-  if(pick.kind==='enh'){ take(b,pick.c); const m=strongestMon(C); m.enh.push(pick.c); log(`${b.name} spielt „${pick.c.n}“ (${sign(pick.c.v)}) auf ${m.c.n}!`,'bad'); ruleOnce('enh','Monster-Zusätze darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.'); }
-  else if(pick.kind==='os'){ take(b,pick.c); C.used.push(pick.c); C.mB.push({l:`${pick.c.n} (von ${b.name})`,v:pick.v}); log(`${b.name} setzt ${pick.c.n} für das Monster ein (+${pick.v})!`,'bad'); ruleOnce('osmon','Einmal-Gegenstände dürfen auch für das Monster gespielt werden, direkt von der Hand.'); }
-  else if(pick.kind==='wander'){ take(b,pick.c); take(b,pick.m); discard(pick.c); C.mons.push({c:pick.m,enh:[]}); log(`${b.name} spielt „Ungebetener Gast“: <b>${pick.m.n}</b> (Stufe ${pick.m.lvl}) mischt mit!`,'bad'); ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.'); }
+  if(pick.kind==='enh'){ take(b,pick.c); const m=strongestMon(C); m.enh.push(pick.c); C.played[pick.c.uid]=b.id; log(`${b.name} spielt „${pick.c.n}“ (${sign(pick.c.v)}) auf ${m.c.n}!`,'bad'); ruleOnce('enh','Launen darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.'); }
+  else if(pick.kind==='os'){ take(b,pick.c); C.used.push(pick.c); C.mB.push({l:`${pick.c.n} (von ${b.name})`,v:pick.v,by:b.id}); log(`${b.name} setzt ${pick.c.n} für das Monster ein (+${pick.v})!`,'bad'); ruleOnce('osmon','Einmal-Gegenstände dürfen auch für das Monster gespielt werden, direkt von der Hand.'); }
+  else if(pick.kind==='wander'){ take(b,pick.c); take(b,pick.m); discard(pick.c); C.mons.push({c:pick.m,enh:[]}); log(`${b.name} spielt „Hinterhalt“: <b>${pick.m.n}</b> (Stufe ${pick.m.lvl}) mischt mit!`,'bad'); ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.'); }
   else if(pick.kind==='stab'){ const c=b.hand.slice().sort((x,y)=>keepValue(b,x)-keepValue(b,y))[0]; take(b,c); discard(c); C.stabbed[b.id]=true; C.pB.push({l:`${b.name} fällt in den Rücken (Dieb)`,v:-2}); log(`${b.name} fällt ${nmD(f)} als Dieb in den Rücken: −2!`,'bad'); }
   return true;
 }
@@ -1373,16 +1437,15 @@ async function winCombat(C){
   log(`${nm(f)} ${V(f,'besiegst','besiegt')} ${monNames(C)}${h?` mit Hilfe von ${nmD(h)}`:''} und ${V(f,'steigst','steigt')} ${lv} ${pl(lv,'Stufe','Stufen')} auf: Stufe ${Math.min(f.lvl,WINLVL())}.`,'good');
   if(!f.human && SCN && SCN.tut && !SCN.tutFree && f.lvl>=WINLVL()) f.lvl=WINLVL()-1;   // Einführung: Bots gewinnen nie
   if(f.lvl>=WINLVL()){ f.lvl=WINLVL(); S.winner=f.id; log(f.human ? `Stufe ${WINLVL()}! Du hast gewonnen!` : `${f.name} erreicht Stufe ${WINLVL()} und gewinnt das Spiel.`, f.human?'good':'bad'); render(); return; }
-  if(h && hasRace(h,'elf')){ const g=Math.min(C.mons.length,Math.max(0,WINLVL()-1-h.lvl)); if(g>0){ h.lvl+=g; log(`${nm(h)} ${V(h,'steigst','steigt')} als Elf-Helfer auf: Stufe ${h.lvl}.`,'good'); ruleOnce('elfhelp','Elfen steigen auf, wenn sie jemandem helfen, ein Monster zu besiegen.'); } }
   const loot=!h && hasCls(f,'pirat') ? 1 : 0, n=treasuresOf(C)+loot, drawn=[];
   if(loot){ log(`Plündern: ${nm(f)} ${V(f,'ziehst','zieht')} als Pirat 1 Schatz mehr.`,'good'); ruleOnce('pirat','Piraten teilen nicht gern: Wer als Pirat ohne Helfer gewinnt, zieht 1 Schatz mehr.'); }
   for(let i=0;i<n;i++){ const t=(f.human || (h && h.human)) ? luckyTr() : drawTr(); if(t) drawn.push(t); }
   if(h){
-    shuffle(drawn);
-    const give=drawn.splice(0,Math.min(C.deal,drawn.length));
-    h.hand.push(...give); f.hand.push(...drawn);
-    log(`Die ${n} ${pl(n,'Schatz','Schätze')} werden offen gezogen. ${nm(h)} ${V(h,'bekommst','bekommt')} ${give.length ? give.map(c=>c.n).join(', ') : 'nichts'}, ${nm(f)} ${V(f,'bekommst','bekommt')} ${drawn.length ? drawn.map(c=>c.n).join(', ') : 'nichts'}.`);
-    ruleOnce('opentr','Mit Helfer werden Schätze offen gezogen und wie abgesprochen verteilt.');
+    log(`Die ${n} ${pl(n,'Schatz','Schätze')} werden offen gezogen: ${drawn.map(c=>`<b>${c.n}</b>`).join(', ')||'keine'}.`);
+    ruleOnce('opentr','Mit Helfer werden die Schätze offen gezogen. Dann wird abwechselnd gewählt, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat.');
+    const {fGot,hGot}=await draftLoot(f,h,drawn,C.deal);
+    h.hand.push(...hGot); f.hand.push(...fGot);
+    log(`${nm(h)} ${V(h,'bekommst','bekommt')} ${hGot.length ? hGot.map(c=>c.n).join(', ') : 'nichts'}, ${nm(f)} ${V(f,'bekommst','bekommt')} ${fGot.length ? fGot.map(c=>c.n).join(', ') : 'nichts'}.`);
   } else {
     f.hand.push(...drawn);
     if(f.human) log(`Du ziehst ${n} ${pl(n,'Schatz','Schätze')} verdeckt: ${drawn.map(c=>`<b>${c.n}</b>`).join(', ')||'keine'}.`,'good');
@@ -1405,6 +1468,7 @@ function severe(bad){ if(bad.t==='death') return true; if(bad.t==='lvl') return 
 async function runAway(p,m,i=0,n=1){
   const left=n-i; S.lastRan=p.id;
   if(m.c.np && p.lvl<=m.c.np){ if(p.human) track('escape'); log(`${m.c.n} verfolgt niemanden bis Stufe ${m.c.np}. ${nm(p)} ${V(p,'entkommst','entkommt')} automatisch.`,'good'); ruleOnce('np','„Verfolgt niemanden bis Stufe X“: Wer diese Stufe oder niedriger hat, entkommt ohne Würfeln.'); return; }
+  if(m.c.undead && hasCls(p,'priester')){ log(`${m.c.n} ist untot und verfolgt keinen Exorzisten. ${nm(p)} ${V(p,'entkommst','entkommt')} automatisch.`,'good'); ruleOnce('exo','Exorzisten werden von Untoten nie verfolgt: Sie entkommen ohne Würfeln.'); return; }
   const deep=m.c.tiefsee && !p.eq.some(i=>i.diver && usable(p,i)) ? -1 : 0;
   const mod=runBonus(p)+(m.c.run||0)+deep;
   const need=5-mod;
@@ -1418,12 +1482,6 @@ async function runAway(p,m,i=0,n=1){
   } else if(nebel && (severe(m.c.bad) || left>1)){ take(p,nebel); discard(nebel); log(nebel.n==='Kompass' ? `${p.name} folgt dem Kompass und entkommt${left>1?' allen übrigen Monstern':''}.` : `${p.name} verschwindet im Nebelpulver und entkommt${left>1?' allen übrigen Monstern':''}.`,'good'); return 'all'; }
   let roll=await rollDie(p), total=roll+mod;
   log(`${nm(p)} ${V(p,'würfelst','würfelt')} eine ${roll}${mod?` (${sign(mod)} = ${total})`:''}.`);
-  if(total<5 && hasRace(p,'halbling') && p.hand.length){
-    if(p.human){
-      const sel=await selectCards({ctx:'halbling', title:'Halbling: neu würfeln', text:'Wirf 1 Karte ab, um noch einmal zu würfeln.', min:1, max:1, optional:true, filter:(c,w)=>w==='hand', confirm:()=>'Abwerfen und neu würfeln'});
-      if(sel && sel.length){ const c=findCard(sel[0]); take(p,c); discard(c); roll=await rollDie(p); total=roll+mod; log(`Neuer Wurf: ${roll}${mod?` (${sign(mod)} = ${total})`:''}.`); }
-    } else { const c=p.hand.slice().sort((x,y)=>keepValue(p,x)-keepValue(p,y))[0]; take(p,c); discard(c); roll=await rollDie(p); total=roll+mod; log(`${p.name} wirft als Halbling eine Karte ab und würfelt neu: ${roll}${mod?` (${sign(mod)} = ${total})`:''}.`); }
-  }
   if(total<5 && hasCls(p,'zauberer') && p.hand.length>=5-total && 5-total<=3){
     const k=5-total;
     if(p.human){
@@ -1477,7 +1535,7 @@ function applyBad(p,eff){
       if(n) ruleOnce('discardpublic','Abgeworfene Karten liegen offen in der Ablage. Jeder darf sehen, was weg ist.');
       break; }
     case 'class': { if(p.cls){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Klasse ${p.cls.n}.`,'bad'); discard(p.cls); p.cls=null; } else { if(p.human && p.lvl>1) stat('lvlLost'); p.lvl=Math.max(1,p.lvl-1); log(`Keine Klasse da: ${nm(p)} ${V(p,'verlierst','verliert')} stattdessen 1 Stufe.`,'bad'); } break; }
-    case 'race': { if(p.race){ log(`${nm(p)} ${V(p,'verlierst','verliert')} die Rasse ${p.race.n} und ${V(p,'bist','ist')} wieder Mensch.`,'bad'); discard(p.race); p.race=null; } else log(`${nm(p)} ${V(p,'bist','ist')} sowieso Mensch. Nichts passiert.`); break; }
+    case 'race': { if(p.race){ log(`${nm(p)} ${V(p,'verlierst','verliert')} das Volk ${p.race.n} und ${V(p,'bist','ist')} wieder Mensch.`,'bad'); discard(p.race); p.race=null; } else log(`${nm(p)} ${V(p,'bist','ist')} sowieso Mensch. Nichts passiert.`); break; }
     case 'spore': { p.spore=Math.min(3,(p.spore||0)+eff.n);
       log(`${nm(p)} ${V(p,'hustest','hustet')} in einer Sporenwolke: −${p.spore} in jedem Kampf bis zum nächsten gewonnenen.`,'bad');
       ruleOnce('spore','Sporenwolke: Sie bleibt, bis man einen Kampf gewinnt. So lange gibt es in jedem Kampf −1 je Wolke, auch als Helfer.');
@@ -1498,7 +1556,7 @@ function applyBad(p,eff){
 function kill(p){
   log(`${nm(p)} ${V(p,'bist','ist')} tot!`,'bad');
   fx('death',{p});
-  ruleOnce('death','Tod: Stufe, Rasse und Klasse bleiben. Gegenstände und Handkarten sind weg, die anderen teilen sich deine Ausrüstung. Im nächsten Zug gibt es neue 4 + 4 Karten.');
+  ruleOnce('death','Tod: Stufe, Volk und Klasse bleiben. Handkarten sind weg, von deinen Gegenständen nimmt sich jeder andere einen, der Rest wird abgelegt. Im nächsten Zug gibt es neue 4 + 4 Karten.');
   const loot=shuffle([...p.eq,...p.pack]); p.eq=[]; p.pack=[];
   if(p.human && p.hand.length) log(`Deine Handkarten kommen in die Ablage: ${p.hand.map(c=>`<b>${cardLabel(c)}</b>`).join(', ')}.`,'bad');
   p.hand.forEach(discard); p.hand=[];
@@ -1535,7 +1593,7 @@ function cardActions(c, where){
   const myTurn=S.cur===0, free=isFree();
   const live=C && !C.resolved;
   const inMine=live && (C.f===0 || C.h===0);
-  const sellAct = () => { if(free && c.g>0 && (c.k==='item'||c.k==='oneshot')) A.push({l:`Verkaufen (${fmt(c.g)} Gold)`, fn:()=>startSell(c.uid)}); };
+  const sellAct = () => { if(free && sellable(p,c)) A.push({l:`Verkaufen (${fmt(goldOf(p,c))} Gold)`, fn:()=>startSell(c.uid)}); };
   if(where==='hand'){
     switch(c.k){
       case 'item': {
@@ -1546,7 +1604,7 @@ function cardActions(c, where){
       }
       case 'race': case 'class': {
         if(myTurn) A.push({l:`Ausspielen${(c.k==='race'?p.race:p.cls)?' (ersetzt '+(c.k==='race'?p.race.n:p.cls.n)+')':''}`, fn:()=>playRC(c)});
-        else A.push({info:'Rassen und Klassen spielst du im eigenen Zug aus.'}); break;
+        else A.push({info:'Völker und Klassen spielst du im eigenen Zug aus.'}); break;
       }
       case 'oneshot': {
         if(c.cream && p.sun && !C) A.push({l:'Eincremen: Sonnenbrand weg', fn:()=>useCream(p,c), kind:'primary'});
@@ -1563,8 +1621,8 @@ function cardActions(c, where){
       }
       case 'enh': {
         if(live) C.mons.forEach(m=>A.push({l:`Auf ${m.c.n} spielen (${sign(c.v)})`, fn:()=>playEnh(c,m), kind:'primary'}));
-        else A.push({info:'Monster-Zusätze spielst du während eines Kampfes auf ein Monster, in jedem Kampf.'});
-        break;
+        else A.push({info:'Launen spielst du während eines Kampfes auf ein Monster, in jedem Kampf.'});
+        sellAct(); break;
       }
       case 'wander': {
         const ms=p.hand.filter(x=>x.k==='monster');
@@ -1572,38 +1630,39 @@ function cardActions(c, where){
         else A.push({info:'Spiele diese Karte im Kampf eines Mitspielers, zusammen mit einem Monster von deiner Hand.'});
         break;
       }
-      case 'monster': A.push({info: myTurn && S.phase===2 && !C ? 'Zieh das Monster aufs Spielfeld oder tippe unten auf „Monster herausfordern“.' : 'Monster von der Hand spielst du bei „Monster herausfordern“ oder mit „Ungebetener Gast“ in fremde Kämpfe.'}); break;
+      case 'monster': A.push({info: myTurn && S.phase===2 && !C ? 'Zieh das Monster aufs Spielfeld oder tippe unten auf „Monster herausfordern“.' : 'Monster von der Hand spielst du bei „Monster herausfordern“ oder mit „Hinterhalt“ in fremde Kämpfe.'}); break;
       case 'curse': {
         if(c.eff.t==='seegang'){ A.push({l:'Seegang auslösen: alle geben 1 Karte weiter', fn:()=>playSeegang(c), kind:'primary'}); break; }
         S.players.filter(x=>!x.human).forEach(t=>A.push({l:`Auf ${t.name} spielen`, fn:()=>playCurseOn(c,t)}));
-        A.push({info:'Flüche von der Hand gehen jederzeit, auf jeden.'}); break;
+        A.push({info:'Flüche von der Hand gehen jederzeit, auf jeden.'}); sellAct(); break;
       }
-      case 'levelup': A.push({l:'Benutzen: +1 Stufe', fn:()=>useLevelUp(c), kind:'primary', dis: p.lvl>=WINLVL()-1 ? `Stufe ${WINLVL()} gibt es nur für einen Monstersieg.` : false}); break;
+      case 'levelup': A.push({l:'Benutzen: +1 Stufe', fn:()=>useLevelUp(c), kind:'primary', dis: !free ? 'Stufenkarten spielst du im eigenen Zug außerhalb von Kämpfen.' : p.lvl>=WINLVL()-1 ? `Stufe ${WINLVL()} gibt es nur für einen Monstersieg.` : false}); break;
       case 'amulet': A.push({info:'Das Spiel fragt dich automatisch, wenn dich ein Fluch trifft.'}); break;
     }
   } else if(where==='eq'){
-    if(free){ A.push({l:'In den Rucksack legen', fn:()=>{ take(p,c); p.pack.push(c); log(`${c.n} kommt in den Rucksack.`); }}); sellAct(); }
+    if(free){ const full=p.pack.length>=packLimit(p); A.push({l:'In den Rucksack legen', fn:()=>{ take(p,c); p.pack.push(c); log(`${c.n} kommt in den Rucksack.`); }, dis: full ? `Dein Rucksack ist voll: höchstens ${packLimit(p)} Gegenstände.` : false}); sellAct(); }
     else A.push({info:'Ausrüstung änderst du nur im eigenen Zug außerhalb von Kämpfen.'});
   } else if(where==='pack'){
     if(free){ const ce=canEquip(p,c); A.push({l:'Anlegen', fn:()=>doEquip(c), dis: ce.ok?false:ce.why, kind:'primary'}); sellAct(); }
     else A.push({info:'Aus dem Rucksack holst du Dinge nur im eigenen Zug außerhalb von Kämpfen.'});
   } else if(where==='race' || where==='cls'){
-    A.push({l:'Ablegen', fn:()=>{ if(where==='race'){ discard(p.race); p.race=null; } else { discard(p.cls); p.cls=null; } log(`Du legst ${c.n} ab.`); ruleOnce('droprc','Rassen und Klassen kannst du jederzeit ablegen. Gegenstände, die sie voraussetzen, werden dann inaktiv.'); }});
+    A.push({l:'Ablegen', fn:()=>{ if(where==='race'){ discard(p.race); p.race=null; } else { discard(p.cls); p.cls=null; } log(`Du legst ${c.n} ab.`); ruleOnce('droprc','Völker und Klassen kannst du jederzeit ablegen. Gegenstände, die sie voraussetzen, werden dann inaktiv.'); }});
   }
   return A;
 }
 function doEquip(c){
   const p=me(); const ce=canEquip(p,c); if(!ce.ok){ log(ce.why,'sys'); return; }
   const moved=equip(p,c);
-  log(`Du rüstest ${c.n} aus.${moved.length?` ${moved.map(m=>m.n).join(', ')} ${pl(moved.length,'kommt','kommen')} in den Rucksack.`:''}`);
-  if(moved.length) ruleOnce('pack','Was du nicht gleichzeitig nutzen kannst, kommt in den Rucksack. Es zählt nicht zu den Handkarten, bringt aber auch keinen Bonus.');
-  if(c.big) ruleOnce('big','Große Gegenstände: Davon darfst du nur einen haben, außer du bist Zwerg.');
+  const inPack=moved.filter(m=>p.pack.includes(m)), toHand=moved.filter(m=>p.hand.includes(m));
+  log(`Du rüstest ${c.n} aus.${inPack.length?` ${names(inPack)} ${pl(inPack.length,'kommt','kommen')} in den Rucksack.`:''}${toHand.length?` Der Rucksack ist voll: ${names(toHand)} ${pl(toHand.length,'kommt','kommen')} auf die Hand.`:''}`);
+  if(moved.length) ruleOnce('pack',`Was du nicht gleichzeitig nutzen kannst, kommt in den Rucksack (höchstens ${packLimit(p)} Gegenstände). Dort zählt es nicht zu den Handkarten, bringt aber auch keinen Bonus.`);
+  if(c.big) ruleOnce('big','Sperrige Gegenstände: Davon darfst du nur einen haben, außer du bist Zwerg.');
 }
 function playRC(c){
   const p=me(); take(p,c); if(S.combat) stat('played');
   if(c.k==='race'){ if(p.race){ discard(p.race); } p.race=c; } else { if(p.cls){ discard(p.cls); } p.cls=c; }
   log(`Du bist jetzt ${c.n}: ${c.txt}`,'good');
-  ruleOnce('onerc','Du hast höchstens 1 Rasse und 1 Klasse. Eine neue Karte ersetzt die alte.');
+  ruleOnce('onerc','Du hast höchstens 1 Volk und 1 Klasse. Eine neue Karte ersetzt die alte.');
 }
 function markIntf(){ const C=S.combat; if(C && C.f!==0){ C.hchg=true; } fx('play',{}); }
 // Sonnencreme außerhalb von Kämpfen: nur den Sonnenbrand loswerden
@@ -1612,19 +1671,19 @@ function playOneShot(c,side){
   const p=me(), C=S.combat; take(p,c); C.used.push(c); stat('played'); stat('os'); track('oneshot'); if(C.f!==0 && C.h!==0) track('intf');
   if(c.cream && side==='p' && p.sun && (C.f===0 || C.h===0)){ p.sun=0; log('Die Sonnencreme kühlt: Dein Sonnenbrand ist weg.','good'); }
   if(side==='p'){ const v=osP(c,C); C.pB.push({l:`${c.n} (von dir)`,v}); log(`Du setzt ${c.n} für ${C.f===0||C.h===0?'eure Seite':P(C.f).name} ein (+${v}).`,'good'); }
-  else { C.mB.push({l:`${c.n} (von dir)`,v:c.b}); log(`Du setzt ${c.n} für das Monster ein (+${c.b}).`); if(C.f!==0 && C.h!==0) C.asked[0]=true; }
+  else { C.mB.push({l:`${c.n} (von dir)`,v:c.b,by:0}); log(`Du setzt ${c.n} für das Monster ein (+${c.b}).`); if(C.f!==0 && C.h!==0) C.asked[0]=true; }
   markIntf();
 }
 function playEnh(c,m){
-  const p=me(), C=S.combat; take(p,c); m.enh.push(c); stat('played'); if(C.f!==0 && C.h!==0) track('intf');
+  const p=me(), C=S.combat; take(p,c); m.enh.push(c); if(C.played) C.played[c.uid]=0; stat('played'); if(C.f!==0 && C.h!==0) track('intf');
   log(`Du spielst „${c.n}“ (${sign(c.v)}) auf ${m.c.n}.`);
-  ruleOnce('enh','Monster-Zusätze darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.');
+  ruleOnce('enh','Launen darf jeder in jeden Kampf spielen. Sie verändern auch die Zahl der Schätze.');
   if(C.f!==0 && C.h!==0 && c.v>0) C.asked[0]=true;
   markIntf();
 }
 function playWander(w,m){
   const p=me(), C=S.combat; take(p,w); take(p,m); discard(w); C.mons.push({c:m,enh:[]}); stat('played'); track('intf');
-  log(`Du spielst „Ungebetener Gast“: <b>${m.n}</b> (Stufe ${m.lvl}) mischt mit!`);
+  log(`Du spielst „Hinterhalt“: <b>${m.n}</b> (Stufe ${m.lvl}) mischt mit!`);
   ruleOnce('wander','Bei mehreren Monstern zählen alle zusammen. Bei einer Niederlage wird vor jedem einzeln weggelaufen.');
   C.asked[0]=true; markIntf();
 }
@@ -1637,26 +1696,25 @@ function playCurseOn(c,t){
   applyCurse(t,c,p).catch(e=>{ if(e!==STALE) console.error(e); });
 }
 function useLevelUp(c){
-  const p=me(); if(p.lvl>=WINLVL()-1) return; take(p,c); discard(c); p.lvl++;
+  const p=me(); if(p.lvl>=WINLVL()-1 || !isFree()) return; take(p,c); discard(c); p.lvl++;
   log(`Du spielst „${c.n}“: Stufe ${p.lvl}.`,'good');
-  ruleOnce('levelup',`Stufenkarten darf man jederzeit spielen, aber nie für die Siegstufe ${WINLVL()}.`);
+  ruleOnce('levelup',`Stufenkarten spielt man im eigenen Zug außerhalb von Kämpfen, aber nie für die Siegstufe ${WINLVL()}.`);
 }
 async function startSell(pre){
   const p=me(); if(!isFree()) return;
   if(p.lvl>=WINLVL()-1){ log(`Auf Stufe ${WINLVL()-1} bringt Verkaufen nichts mehr: Stufe ${WINLVL()} gibt es nur für einen Monstersieg.`,'sys'); return; }
   try{
-    const sel=await selectCards({ctx:'sell', title:'Gegenstände verkaufen', text:'Wähle Gegenstände aus Hand, Ausrüstung oder Rucksack. Je 1.000 Gold gibt es 1 Stufe.', min:1, max:99, pre: Array.isArray(pre)?pre:(pre?[pre]:[]), cancel:true,
-      filter:(c,w)=> (c.k==='item'||c.k==='oneshot') && c.g>0 && ['hand','eq','pack'].includes(w) && (typeof tutSellOk!=='function' || tutSellOk(c)),
-      extra:cs=>{ const v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl), rest=v.sum-lv*1000; return `Summe: <b>${fmt(v.sum)} Gold</b>${v.dbl?` (Halbling: ${v.dbl.n} zählt doppelt)`:''} · ergibt <b>${lv} ${pl(lv,'Stufe','Stufen')}</b>${rest>0&&cs.length?` · ${fmt(rest)} Gold verfallen`:''}`; },
-      validate:cs=>{ if(!cs.length) return null; return sellValue(p,cs).lv<1 ? 'Noch keine 1.000 Gold zusammen.' : null; },
+    const sel=await selectCards({ctx:'sell', title:'Gegenstände verkaufen', text:'Wähle, was du verkaufen willst. Je 1.000 Gold gibt es 1 Stufe, der Rest kommt in deinen Goldbeutel.', min:1, max:99, pre: Array.isArray(pre)?pre:(pre?[pre]:[]), cancel:true,
+      filter:(c,w)=> sellable(p,c) && ['hand','eq','pack'].includes(w) && (typeof tutSellOk!=='function' || tutSellOk(c)),
+      extra:cs=>{ const v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl), rest=v.sum-lv*1000; return `Summe: <b>${fmt(v.sum)} Gold</b>${v.purse?` (davon ${fmt(v.purse)} aus dem Goldbeutel)`:''}${v.bonus?' · Kobold: +200 Gold':''} · ergibt <b>${lv} ${pl(lv,'Stufe','Stufen')}</b>${rest>0&&cs.length?` · ${fmt(rest)} Gold bleiben im Beutel`:''}`; },
+      validate:cs=>null,
       confirm:()=>'Verkaufen'});
     if(!sel || !sel.length) return;
-    const cs=sel.map(findCard).filter(Boolean), v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl);
-    if(lv<1) return;
-    cs.forEach(c=>{ take(p,c); discard(c); }); p.lvl+=lv; if(v.dbl) p.soldDouble=true; track('gold', v.sum);
-    log(`Du verkaufst ${cs.map(c=>c.n).join(', ')} für ${fmt(v.sum)} Gold${v.dbl?` (als Halbling ${v.dbl.n} doppelt)`:''}: Stufe ${p.lvl}.`,'good');
-    if(v.dbl) ruleOnce('halbsell','Halbling: Einmal pro Zug darf ein Gegenstand zum doppelten Preis verkauft werden.');
-    ruleOnce('sell','Verkaufen: Je 1.000 Gold gibt es 1 Stufe. Wechselgeld gibt es nicht.');
+    const cs=sel.map(findCard).filter(Boolean); if(!cs.length) return;
+    const {v,lv}=doSell(p,cs); track('gold', v.raw+v.bonus);
+    log(`Du verkaufst ${cs.map(c=>c.n).join(', ')} für ${fmt(v.raw+v.bonus)} Gold${v.bonus?' (als Kobold mit 200 Gold Aufschlag)':''}${lv?`: Stufe ${p.lvl}`:''}.${p.gold?` Im Goldbeutel: ${fmt(p.gold)} Gold.`:''}`,'good');
+    if(v.bonus) ruleOnce('halbsell','Kobold: Einmal pro Zug bringt ein Verkauf 200 Gold extra.');
+    ruleOnce('sell','Verkaufen: Je 1.000 Gold gibt es 1 Stufe. Was übrig bleibt, kommt in den Goldbeutel und zählt beim nächsten Verkauf mit.');
   }catch(e){ if(e!==STALE) throw e; }
 }
 
@@ -1665,12 +1723,12 @@ async function startSell(pre){
 function zoneOf(uid){ const p=me(); if(p.hand.some(c=>c.uid===uid)) return 'hand'; if(p.pack.some(c=>c.uid===uid)) return 'pack'; if(p.eq.some(c=>c.uid===uid)) return 'eq'; return null; }
 function cheapest(p,n){ return p.hand.slice().sort((a,b)=>keepValue(p,a)-keepValue(p,b)).slice(0,n); }
 const names = cs => cs.map(c=>c.n).join(', ');
-function dblWhy(v){ return v.dbl ? ` Als Halbling darfst du einmal pro Zug einen Gegenstand doppelt verkaufen: ${v.dbl.n} bringt ${fmt(v.dbl.g*2)} statt ${fmt(v.dbl.g)} Gold.` : ''; }
+function dblWhy(v){ return (v.bonus ? ' Als Kobold feilschst du einmal pro Zug 200 Gold heraus.' : '') + (v.purse ? ` Aus dem Goldbeutel kommen ${fmt(v.purse)} Gold dazu.` : ''); }
 function chooseSell(p,cands){
   const maxLv=WINLVL()-1-p.lvl, target=Math.min(Math.floor(sellValue(p,cands).sum/1000),maxLv);
   if(target<1) return [];
-  const pick=[]; for(const c of cands.slice().sort((a,b)=>b.g-a.g)){ pick.push(c); if(sellValue(p,pick).sum>=target*1000) break; }
-  for(const c of pick.slice().sort((a,b)=>a.g-b.g)){ const rest=pick.filter(x=>x!==c); if(rest.length && sellValue(p,rest).sum>=target*1000) pick.splice(pick.indexOf(c),1); }
+  const pick=[]; for(const c of cands.slice().sort((a,b)=>goldOf(p,b)-goldOf(p,a))){ pick.push(c); if(sellValue(p,pick).sum>=target*1000) break; }
+  for(const c of pick.slice().sort((a,b)=>goldOf(p,a)-goldOf(p,b))){ const rest=pick.filter(x=>x!==c); if(rest.length && sellValue(p,rest).sum>=target*1000) pick.splice(pick.indexOf(c),1); }
   return pick;
 }
 function bestRC(p,kind){
@@ -1710,7 +1768,7 @@ function curseLoss(f,c){
 function adviseFree(p,charity){
   if(canPfanne(p).ok){ const c=pfanneSet(p)[0]; return {uid:c.uid, act:'Pilzpfanne kochen', text:'Koch eine Pilzpfanne.', why:'Deine Speisepilze zusammen bringen dir sofort 1 Stufe. Einzeln im Kampf wären sie je nur +2 wert.'}; }
   const r=bestRC(p,'race');
-  if(r && !p.race) return {uid:r.uid, act:'Ausspielen', text:`Spiel die Rasse ${r.n} aus.`, why:`Ohne Rasse bist du Mensch ohne Fähigkeit. ${r.n}: ${r.txt}`};
+  if(r && !p.race) return {uid:r.uid, act:'Ausspielen', text:`Spiel das Volk ${r.n} aus.`, why:`Ohne Volk bist du Mensch ohne Fähigkeit. ${r.n}: ${r.txt}`};
   const k=bestRC(p,'class');
   if(k && !p.cls) return {uid:k.uid, act:'Ausspielen', text:`Spiel die Klasse ${k.n} aus.`, why:`${k.n}: ${k.txt}`};
   for(const kind of ['race','class']){
@@ -1749,10 +1807,9 @@ function adviseTrouble(p){
 }
 function bestHelper(C){
   const f=P(C.f); if(f.lvl+levelsGained(C)>=WINLVL()) return null;
-  const elf=x=>hasRace(x,'elf') && x.lvl<WINLVL()-1 ? 1 : 0;
   if(noHelpMon(C)) return null;
   return S.players.filter(x=>!x.human && !x.dead && x.id!==C.f && !C.asked[x.id] && wouldWinWith(C,x))
-    .sort((a,b)=>elf(b)-elf(a) || a.lvl-b.lvl || power(b)-power(a))[0] || null;
+    .sort((a,b)=>a.lvl-b.lvl || power(b)-power(a))[0] || null;
 }
 function adviseFight(p,C){
   const r=evalCombat(C);
@@ -1764,12 +1821,10 @@ function adviseFight(p,C){
     if(c.k==='enh' && c.v<0) res.push({c,v:-c.v,act:'Auf ',lbl:`„${c.n}“ (${sign(c.v)}) auf das Monster`});
   });
   const spare=p.hand.length-res.length;
-  let ab=null;
-  if(hasCls(p,'priester') && C.mons.some(m=>m.c.undead) && C.turning<3) ab={opt:'turn',per:3,n:Math.min(3-C.turning,spare),name:'Priester'};
-  else if(hasCls(p,'krieger') && C.berserk<3) ab={opt:'berserk',per:1,n:Math.min(3-C.berserk,spare),name:'Krieger'};
-  const resSum=res.reduce((s,x)=>s+x.v,0), abSum=ab?ab.per*ab.n:0;
-  if(resSum+abSum>=need){
-    if(ab && abSum>=need){ const k=Math.ceil(need/ab.per); return {opt:ab.opt, text:`Nutze deine ${ab.name}-Fähigkeit: ${k} ${pl(k,'Karte','Karten')} abwerfen.`, why:`Dir ${pl(need,'fehlt','fehlen')} ${need}. Dafür reichen ${k} wertlose ${pl(k,'Karte','Karten')}, deine Einmal-Gegenstände behältst du.`}; }
+  if(hasCls(p,'zauberer') && C.f===0 && !C.counter && spare>=2){ const ts=counterTargets(C).sort((a,b)=>b.v-a.v);
+    if(ts.length && ts[0].v>=need) return {opt:'counter', text:'Wirk deinen Gegenzauber.', why:`${ts[0].l} kostet dich ${ts[0].v}. Der Gegenzauber hebt es auf, dafür gehen nur 2 unwichtige Karten weg.`}; }
+  const resSum=res.reduce((s,x)=>s+x.v,0);
+  if(resSum>=need){
     res.sort((a,b)=>a.v-b.v);
     const one=res.find(x=>x.v>=need);
     if(one) return {uid:one.c.uid, act:one.act, text:`Spiel ${one.lbl}.`, why:`Dir ${pl(need,'fehlt','fehlen')} ${need}. Das ist die kleinste Karte, die reicht.`};
@@ -1778,7 +1833,7 @@ function adviseFight(p,C){
   }
   if(C.h==null){
     const b=bestHelper(C);
-    if(b) return {opt:'help', text:`Bitte ${b.name} um Hilfe.`, why:`Mit ${b.name} (Kampfstärke ${power(b)}) stündet ihr bei ${r.a+power(b)} gegen ${r.b}.${hasRace(b,'elf')?' Als Elf steigt '+b.name+' beim Helfen selbst auf und sagt eher Ja.':''}`};
+    if(b) return {opt:'help', text:`Bitte ${b.name} um Hilfe.`, why:`Mit ${b.name} (Kampfstärke ${power(b)}) stündet ihr bei ${r.a+power(b)} gegen ${r.b}.${hasCls(p,'krieger')?' Dein Krieger-Bonus von +3 fällt mit Helfer weg, ist schon eingerechnet.':''}`};
   }
   const won=p.lvl+levelsGained(C)>=WINLVL() && C.h==null;
   return {opt:'run', text:'Gib auf und lauf weg.', why:`Dir ${pl(need,'fehlt','fehlen')} ${need}, und mit deinen Karten ist das nicht zu schaffen.${won?' Hilfe bekommst du nicht, weil du damit gewinnen würdest.':''} Heb deine Karten für später auf.`};
@@ -1787,9 +1842,9 @@ function adviseBotHelp(p,C,d){
   const b=d.b, after=Math.min(10,b.lvl+levelsGained(C));
   if(after>=WINLVL()-1 && after>p.lvl) return {opt:'no', text:'Lehne ab.', why:`${b.name} käme auf Stufe ${after}. So nah am Sieg hilft man niemandem.`};
   if(b.lvl>=p.lvl+2) return {opt:'no', text:'Lehne ab.', why:`${b.name} liegt schon ${b.lvl-p.lvl} Stufen vor dir. Hilf lieber nicht beim Davonziehen.`};
-  if(d.offer===0 && !hasRace(p,'elf')) return {opt:'no', text:'Lehne ab.', why:'Ohne Belohnung hast du nichts davon.'};
+  if(d.offer===0) return {opt:'no', text:'Lehne ab.', why:'Ohne Belohnung hast du nichts davon.'};
   const risky=C.mons.some(m=>severe(m.c.bad));
-  return {opt:'yes', text:'Hilf mit.', why:`Du bekommst ${d.offer} ${pl(d.offer,'Schatz','Schätze')}${hasRace(p,'elf')?' und steigst als Elf selbst auf':''}, und ${b.name} zieht nicht davon.${risky?' Kleines Risiko: Greift jemand ein und ihr verliert, musst du auch weglaufen.':''}`};
+  return {opt:'yes', text:'Hilf mit.', why:`Du bekommst ${d.offer} ${pl(d.offer,'Schatz','Schätze')}, und ${b.name} zieht nicht davon.${risky?' Kleines Risiko: Greift jemand ein und ihr verliert, musst du auch weglaufen.':''}`};
 }
 function adviseInterfere(p,C){
   const f=P(C.f), r=evalCombat(C);
@@ -1810,8 +1865,7 @@ function adviseInterfere(p,C){
     if(c.k==='curse'){ const l=curseLoss(f,c); if(l>0) opts.push({c,v:l,act:`Auf ${f.name}`,lbl:`den Fluch „${c.n}“ auf ${f.name} (−${l})`}); }
   });
   const w=p.hand.find(c=>c.k==='wander'), wm=p.hand.filter(c=>c.k==='monster').sort((a,b)=>b.lvl-a.lvl)[0];
-  if(w && wm) opts.push({c:w,v:wm.lvl,act:'Mit '+wm.n,lbl:`„Ungebetener Gast“ mit ${wm.n} (+${wm.lvl})`});
-  if(hasCls(p,'dieb') && !C.stabbed[0] && p.hand.length) opts.push({stab:true,v:2,lbl:'als Dieb in den Rücken fallen (−2)'});
+  if(w && wm) opts.push({c:w,v:wm.lvl,act:'Mit '+wm.n,lbl:`„Hinterhalt“ mit ${wm.n} (+${wm.lvl})`});
   const why0 = threat ? `Gewinnt ${f.name} diesen Kampf, ist das Spiel vorbei!` : `${f.name} liegt mit Stufe ${f.lvl} vorn.`;
   if(!opts.length) return {opt:'ok', text:'Nicht eingreifen.', why:`${why0} Du hast aber nichts Passendes auf der Hand.`};
   opts.sort((a,b)=>a.v-b.v);
@@ -1819,7 +1873,7 @@ function adviseInterfere(p,C){
   if(pick) why=`${why0} ${f.name} liegt ${need} vorn, damit dreht sich der Kampf.`;
   else { if(!threat) return {opt:'ok', text:'Nicht eingreifen.', why:`${why0} Allein dreht keine deiner Karten den Kampf (${f.name} liegt ${need} vorn). Spar sie dir.`};
     pick=opts[opts.length-1]; why=`${why0} Allein reicht es nicht, aber vielleicht ziehen die anderen mit.`; }
-  return pick.stab ? {opt:'stab', text:'Fall als Dieb in den Rücken.', why} : {uid:pick.c.uid, act:pick.act, text:`Spiel ${pick.lbl}.`, why};
+  return {uid:pick.c.uid, act:pick.act, text:`Spiel ${pick.lbl}.`, why};
 }
 function adviseRun(p,d){
   const m=d.m, need=5-(runBonus(p)+(m.c.run||0)), ch=Math.max(0,Math.min(6,7-need))/6, pc=Math.round(ch*100);
@@ -1832,14 +1886,11 @@ function adviseSel(p){
   const s=UI.sel;
   switch(s.ctx){
     case 'charity': { const cs=cheapest(p,s.min); return {picks:cs.map(c=>c.uid), text:`Gib ${names(cs)} ab.`, why:'Diese Karten sind für dich am wenigsten wert.'}; }
-    case 'berserk': case 'turn': {
-      const r=evalCombat(S.combat), per=s.ctx==='turn'?3:1, need=Math.max(1,r.b-r.a+(r.tieWin?0:1)), n=Math.min(s.max,Math.ceil(need/per)), cs=cheapest(p,n);
-      return {picks:cs.map(c=>c.uid), text:`Wirf ${names(cs)} ab.`, why:`Dir ${pl(need,'fehlt','fehlen')} ${need}. Das sind deine unwichtigsten Karten.`}; }
     case 'sell': {
       const pick=chooseSell(p,[...p.pack,...p.hand.filter(c=>c.k==='item' && gainOf(p,c)<=0)]);
-      if(!pick.length) return {text:'Lieber nichts verkaufen.', why:'Deine ungenutzten Gegenstände bringen keine 1.000 Gold. Ausgerüstetes zu verkaufen schwächt dich meist mehr, als die Stufe bringt.'};
+      if(!pick.length) return {text:'Lieber nichts verkaufen.', why:'Deine ungenutzten Gegenstände bringen zusammen mit dem Goldbeutel keine 1.000 Gold. Ausgerüstetes zu verkaufen schwächt dich meist mehr, als die Stufe bringt.'};
       return {picks:pick.map(c=>c.uid), text:`Verkaufe ${names(pick)}.`, why:`Die trägst du nicht oder sie bringen dir nichts.${dblWhy(sellValue(p,pick))}`}; }
-    case 'stab': case 'halbling': case 'zauberer': { const cs=cheapest(p,s.min); return {picks:cs.map(c=>c.uid), text:`Wirf ${names(cs)} ab.`, why:`${pl(cs.length,'Diese Karte ist','Diese Karten sind')} für dich am wenigsten wert.`}; }
+    case 'counter': case 'zauberer': { const cs=cheapest(p,s.min); return {picks:cs.map(c=>c.uid), text:`Wirf ${names(cs)} ab.`, why:`${pl(cs.length,'Diese Karte ist','Diese Karten sind')} für dich am wenigsten wert.`}; }
   }
   return null;
 }
@@ -1850,7 +1901,7 @@ function advise(){
   if(!UI.prompt) return null;
   const pr=UI.prompt, C=S.combat, d=pr.data||{};
   switch(pr.ctx){
-    case 'kick': return adviseFree(p,false) || {opt:'kick', text:'Stoß die Tür auf.', why:`Alles Sinnvolle ist ausgelegt. Deine Kampfstärke: ${power(p)}.`};
+    case 'kick': return adviseFree(p,false) || {opt:'kick', text:'Öffne die Tür.', why:`Alles Sinnvolle ist ausgelegt. Deine Kampfstärke: ${power(p)}.`};
     case 'trouble': return adviseFree(p,false) || adviseTrouble(p);
     case 'charity': {
       const over=p.hand.length-handLimit(p), f=adviseFree(p,over>0); if(f) return f;
@@ -1859,9 +1910,12 @@ function advise(){
       return {opt:'end', text:'Beende deinen Zug.', why:'Es gibt nichts mehr, was sich lohnt.'};
     }
     case 'fight': return adviseFight(p,C);
-    case 'helpWho': { const b=bestHelper(C); return b ? {opt:b.id, text:`Frag ${b.name}.`, why:`Mit ${b.name} gewinnt ihr.${hasRace(b,'elf')?' Als Elf steigt '+b.name+' beim Helfen selbst auf.':''}`} : {opt:'x', text:'Abbrechen.', why:'Keiner der übrigen Mitspieler würde den Kampf drehen.'}; }
-    case 'helpOffer': { const total=treasuresOf(C), elf=hasRace(d.b,'elf') && d.b.lvl<WINLVL()-1, n=elf?0:Math.min(total,Math.max(1,Math.ceil(total/2)));
-      return {opt:n, text:`Biete ${n} ${pl(n,'Schatz','Schätze')} an.`, why: elf ? `${d.b.name} ist Elf und steigt beim Helfen selbst auf. Das reicht meist als Anreiz.` : 'Etwa die Hälfte ist ein faires Angebot. Bei zu wenig sagen viele Nein.'}; }
+    case 'helpWho': { const b=bestHelper(C); return b ? {opt:b.id, text:`Frag ${b.name}.`, why:`Mit ${b.name} gewinnt ihr.`} : {opt:'x', text:'Abbrechen.', why:'Keiner der übrigen Mitspieler würde den Kampf drehen.'}; }
+    case 'helpOffer': { const total=treasuresOf(C), n=Math.min(total,Math.max(1,Math.ceil(total/2)));
+      return {opt:n, text:`Biete ${n} ${pl(n,'Schatz','Schätze')} an.`, why:'Etwa die Hälfte ist ein faires Angebot. Bei zu wenig sagen viele Nein. Gewählt wird dann abwechselnd, du zuerst.'}; }
+    case 'counter': return {opt:0, text:`Heb ${(counterTargets(C)[0]||{}).l||'die stärkste Karte'} auf.`, why:'Das ist die Karte, die dich am meisten kostet.'};
+    case 'elfpick': return keepValue(p,d.b)>keepValue(p,d.a) ? {opt:'b', text:`Behalte ${d.b.n}.`, why:'Die ist für dich mehr wert.'} : {opt:'a', text:`Behalte ${d.a.n}.`, why:'Die ist für dich mehr wert.'};
+    case 'loot': { const best=d.pool.map((c,i)=>({c,i})).sort((a,b)=>keepValue(p,b.c)-keepValue(p,a.c))[0]; return {opt:best.i, text:`Nimm ${best.c.n}.`, why:'Die Karte ist für dich am meisten wert.'}; }
     case 'botHelp': return adviseBotHelp(p,C,d);
     case 'interfere': return adviseInterfere(p,C);
     case 'run': return adviseRun(p,d);
@@ -1922,18 +1976,18 @@ function cardMeaning(c){
       if(c.shade) t += ', schützt vor Sonnenbrand';
       t += `. Belegt ${slot}.`;
       if(c.req) t += ` Wirkt nur für ${reqName(c)}.`;
-      if(c.big) t += ' Großer Gegenstand: davon darf man nur einen haben, Zwerge beliebig viele.';
+      if(c.big) t += ' Sperriger Gegenstand: davon darf man nur einen haben, Zwerge beliebig viele.';
       return t + ` Verkaufswert ${fmt(c.g)} Gold.`;
     }
     case 'oneshot': if(c.map) return `Schatzkarte: ${c.txt} Gräbst du den Schatz aus, kommen beide Hälften in die Ablage. Verkaufswert ${fmt(c.g)} Gold.`;
       if(c.pOnly) return `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, aber nur für die kämpfende Seite, nicht für das Monster. ${c.txt} Danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
       return c.escape ? 'Einmal einsetzbar: Beim Weglaufen entkommt man damit ohne Würfeln, auch bei mehreren Monstern vor allen auf einmal. Danach wird die Karte abgelegt.' : `Einmal einsetzbar: Im Kampf direkt von der Hand spielbar, für jede Seite, auch für das Monster. +${c.b}, danach abgelegt. Verkaufswert ${fmt(c.g)} Gold.`;
     case 'monster': return `Stufe ${c.lvl}${c.undead?', untot':''}${c.nager?', Nager':''}${c.pilz?', Pilz':''}${c.meer?', Meer (bei Flut +3)':''}${c.pirat?', Pirat':''}${c.tiefsee?', Tiefsee (Weglaufen −1)':''}.${c.soft?` Bei Flut −${c.soft}.`:''}${c.noHelp?' Niemand darf helfen.':''} Wer es besiegt, steigt ${c.up||1} ${pl(c.up||1,'Stufe','Stufen')} auf und zieht ${c.tr} ${pl(c.tr,'Schatz','Schätze')}. Wer verliert und nicht entkommt: ${c.badTxt}`;
-    case 'curse': return 'Fluch. Beim Aufstoßen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen.';
-    case 'race': return 'Rasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
+    case 'curse': return 'Fluch. Beim Öffnen der Tür aufgedeckt trifft er sofort den, der ihn aufdeckt. Von der Hand darf man ihn jederzeit auf jeden spielen. Hehler können ihn für 200 Gold verkaufen.';
+    case 'race': return 'Volk: Man hat höchstens eins. Ein neues ersetzt das alte, ablegen geht jederzeit.';
     case 'class': return 'Klasse: Man hat höchstens eine. Eine neue ersetzt die alte, ablegen geht jederzeit.';
-    case 'levelup': return 'Stufenkarte: Jederzeit spielbar, auch im Zug der anderen. Bringt 1 Stufe, aber nie die Siegstufe.';
-    case 'enh': return `Monster-Zusatz: Jeder darf ihn in jedem Kampf auf ein Monster spielen. ${sign(c.v)} Stufen, ${c.trm>0?'+':'−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm),'Schatz','Schätze')}.`;
+    case 'levelup': return 'Stufenkarte: Im eigenen Zug außerhalb von Kämpfen spielbar. Bringt 1 Stufe, aber nie die Siegstufe.';
+    case 'enh': return `Laune: Jeder darf sie in jedem Kampf auf ein Monster spielen. ${sign(c.v)} Stufen, ${c.trm>0?'+':'−'}${Math.abs(c.trm)} ${pl(Math.abs(c.trm),'Schatz','Schätze')}.`;
     default: return '';
   }
 }
@@ -1943,7 +1997,7 @@ function whereNow(c){
   S.players.forEach(p=>{
     p.eq.filter(x=>x.n===n).forEach(()=>out.push(p.human?'Ausgerüstet bei dir.':`Ausgerüstet bei ${p.name}.`));
     p.pack.filter(x=>x.n===n).forEach(()=>out.push(p.human?'In deinem Rucksack.':`Im Rucksack von ${p.name}.`));
-    if(p.race && p.race.n===n) out.push(p.human?'Das ist deine Rasse.':`Rasse von ${p.name}.`);
+    if(p.race && p.race.n===n) out.push(p.human?'Das ist dein Volk.':`Volk von ${p.name}.`);
     if(p.cls && p.cls.n===n) out.push(p.human?'Das ist deine Klasse.':`Klasse von ${p.name}.`);
     if(p.human || UI.open) p.hand.filter(x=>x.n===n).forEach(()=>out.push(p.human?'Auf deiner Hand.':`Auf der Hand von ${p.name}.`));
   });
@@ -1962,7 +2016,7 @@ function itemTxt(c){
   const t=[];
   if(c.req) t.push(`Nur für ${reqName(c)}.`);
   if(c.run) t.push(`+${c.run} beim Weglaufen.`);
-  if(c.big) t.push('Großer Gegenstand.');
+  if(c.big) t.push('Sperriger Gegenstand.');
   if(c.und) t.push(`Gegen Untote +${c.und} statt +${c.b}.`);
   if(c.pilzb) t.push(`Gegen Pilze +${c.pilzb} statt +${c.b}.`);
   if(c.meerb) t.push(`Gegen Meeresmonster +${c.meerb} statt +${c.b}.`);
@@ -1973,17 +2027,16 @@ function itemTxt(c){
   return t.join(' ');
 }
 function slotTxt(c){ if(c.slot==='hand') return c.hands===2?'2 Hände':'1 Hand'; return SLOTN[c.slot]; }
-const HUMAN = {k:'race', n:'Mensch', txt:'Keine Besonderheit. Wer keine Rassenkarte ausliegen hat, ist Mensch. Das ist keine eigene Karte.'};
+const HUMAN = {k:'race', n:'Mensch', txt:'Keine Besonderheit. Wer keine Volkskarte ausliegen hat, ist Mensch. Das ist keine eigene Karte.'};
 const QUIZ=[
-  {q:'Du stößt die Tür auf und deckst einen Fluch auf. Was passiert?', o:['Er kommt auf deine Hand.','Er trifft sofort dich.','Du darfst ihn auf einen Mitspieler spielen.','Er wird abgelegt.'], a:1, e:'Offen beim Aufstoßen der Tür aufgedeckt: Der Fluch wirkt sofort auf dich. Nur verdeckt gezogene Flüche darfst du anderen geben.'},
-  {q:'Kampfstärke 8 gegen ein Monster der Stufe 8. Du bist Zauberer. Wie geht es aus?', o:['Du gewinnst.','Ihr würfelt neu.','Du verlierst und musst weglaufen.','Unentschieden, nichts passiert.'], a:2, e:'Gleichstand ist eine Niederlage. Nur Krieger gewinnen bei Gleichstand.'},
-  {q:'Ab welchem Würfelergebnis gelingt das Weglaufen ohne Boni?', o:['Ab 4','Ab 5','Nur bei 6','Ab 3'], a:1, e:'5 oder 6. Elfen bekommen +1, manche Gegenstände und Monster ändern den Wurf.'},
-  {q:'Du bist auf Stufe 9 und hast Gegenstände für 1.200 Gold. Kannst du dir Stufe 10 kaufen?', o:['Ja, 1.000 Gold sind eine Stufe.','Nein, Stufe 10 gibt es nur für einen Monstersieg.','Ja, aber nur als Halbling.','Nur wenn niemand widerspricht.'], a:1, e:'Die Siegstufe gibt es nur, indem du ein Monster besiegst. Verkaufen und Stufenkarten bringen dich höchstens auf 9.'},
-  {q:'Ende deines Zuges: 7 Handkarten, du bist kein Zwerg, Berta hat als Einzige die niedrigste Stufe. Was tust du?', o:['Nichts, das Limit gilt nur für Zwerge.','2 Karten ablegen.','2 Karten an Berta geben.','Alle Karten an Berta geben.'], a:2, e:'Almosen: Alles über 5 Karten geht an den Spieler mit der niedrigsten Stufe. Bist du selbst (mit) am niedrigsten, legst du ab.'},
-  {q:'Wie viele Mitspieler dürfen dir in einem Kampf helfen?', o:['Keiner','Genau einer','Zwei','Beliebig viele'], a:1, e:'Nur 1 Helfer. Meist hilft der gegen ein Versprechen von Schätzen.'},
+  {q:'Du öffnest die Tür und deckst einen Fluch auf. Was passiert?', o:['Er kommt auf deine Hand.','Er trifft sofort dich.','Du darfst ihn auf einen Mitspieler spielen.','Er wird abgelegt.'], a:1, e:'Offen beim Öffnen der Tür aufgedeckt: Der Fluch wirkt sofort auf dich. Nur verdeckt gezogene Flüche darfst du anderen geben.'},
+  {q:'Deine Kampfstärke ist 8, das Monster hat Stufe 8. Wie geht es aus?', o:['Du gewinnst.','Ihr würfelt neu.','Du verlierst und musst weglaufen.','Unentschieden, nichts passiert.'], a:2, e:'Gleichstand ist immer eine Niederlage. Du musst höher sein als das Monster.'},
+  {q:'Ab welchem Würfelergebnis gelingt das Weglaufen ohne Boni?', o:['Ab 4','Ab 5','Nur bei 6','Ab 3'], a:1, e:'5 oder 6. Manche Gegenstände, Monster und Welten ändern den Wurf.'},
+  {q:'Du bist auf Stufe 9 und hast Gegenstände für 1.200 Gold. Kannst du dir Stufe 10 kaufen?', o:['Ja, 1.000 Gold sind eine Stufe.','Nein, Stufe 10 gibt es nur für einen Monstersieg.','Ja, aber nur als Kobold.','Ja, mit dem Goldbeutel.'], a:1, e:'Die Siegstufe gibt es nur, indem du ein Monster besiegst. Verkaufen, Goldbeutel und Stufenkarten bringen dich höchstens auf 9.'},
+  {q:'Ende deines Zuges: 7 Handkarten, Berta hat als Einzige die niedrigste Stufe. Was passiert?', o:['Nichts, es gibt kein Limit.','Du legst 2 Karten ab.','Du gibst 2 Karten als Trinkgeld an Berta.','Du gibst alle Karten an Berta.'], a:2, e:'Trinkgeld: Alles über 5 Karten geht an den Spieler mit der niedrigsten Stufe. Bist du selbst (mit) am niedrigsten, legst du ab. Vorher kannst du Gegenstände in den Rucksack legen.'},
+  {q:'Kalle hilft dir für 1 von 3 Schätzen. Wie werden die Schätze verteilt?', o:['Kalle bekommt einen zufälligen.','Ihr wählt abwechselnd, du zuerst.','Kalle wählt zuerst.','Du bestimmst allein.'], a:1, e:'Mit Helfer werden die Schätze offen gezogen. Dann wählt ihr abwechselnd, der Kämpfer zuerst, bis der Helfer die abgemachte Zahl hat. Helfen darf immer nur 1 Mitspieler.'},
   {q:'Beim Durchsuchen des Raums ziehst du verdeckt einen Fluch. Was jetzt?', o:['Er trifft dich sofort.','Er kommt auf deine Hand. Du kannst ihn später auf jemanden spielen.','Du musst ihn sofort auf den Spieler links spielen.','Er wird abgelegt.'], a:1, e:'Verdeckt gezogene Flüche sind Handkarten. Spielen darfst du sie jederzeit, auf jeden.'},
-  {q:'Du stirbst. Was behältst du?', o:['Gar nichts, du fängst auf Stufe 1 an.','Stufe, Rasse und Klasse.','Deine Handkarten.','Deine ausgerüsteten Gegenstände.'], a:1, e:'Stufe, Rasse und Klasse bleiben. Deine Gegenstände teilen sich die anderen, Handkarten werden abgelegt. Im nächsten Zug ziehst du 4 Tür- und 4 Schatzkarten.'},
-  {q:'Mitten im Kampf ziehst du einen besseren Helm. Darfst du ihn anlegen?', o:['Ja, jederzeit.','Nein, Gegenstände nur im eigenen Zug außerhalb von Kämpfen.','Ja, wenn du verlierst.','Nur mit Erlaubnis des Helfers.'], a:1, e:'Ausrüstung änderst du nur außerhalb von Kämpfen. Ausnahme: Einmal einsetzbare Gegenstände spielst du direkt von der Hand.'},
-  {q:'Wer darf einen Monster-Zusatz wie „+5“ spielen?', o:['Nur der Kämpfer.','Nur wer gerade nicht kämpft.','Jeder Spieler, in jedem Kampf.','Niemand, die Karte liegt einfach im Spiel.'], a:2, e:'Jeder darf ihn in jeden Kampf spielen, auch auf das eigene Monster. Zusätze verändern meist auch die Zahl der Schätze.'},
-  {q:'Du hilfst Kalle als Elf, und ihr besiegt das Monster. Was bekommst du?', o:['Nur die versprochene Beute.','Die versprochene Beute und 1 Stufe.','Alle Schätze.','2 Stufen.'], a:1, e:'Aufsteigen tut normalerweise nur, wer kämpft. Elfen steigen aber auch als Helfer 1 Stufe auf. Dazu kommt, was ihr als Belohnung vereinbart habt.'}
+  {q:'Du stirbst. Was behältst du?', o:['Gar nichts, du fängst auf Stufe 1 an.','Stufe, Volk und Klasse.','Deine Handkarten.','Deine ausgerüsteten Gegenstände.'], a:1, e:'Stufe, Volk und Klasse bleiben. Handkarten werden abgelegt, von deinen Gegenständen nimmt sich jeder andere einen. Im nächsten Zug ziehst du 4 Tür- und 4 Schatzkarten.'},
+  {q:'Wer darf eine Laune wie „Stinksauer“ (+5) spielen?', o:['Nur der Kämpfer.','Nur wer gerade nicht kämpft.','Jeder Spieler, in jedem Kampf.','Niemand, die Karte liegt einfach im Spiel.'], a:2, e:'Jeder darf sie in jeden Kampf spielen, auch auf das eigene Monster. Launen verändern meist auch die Zahl der Schätze.'},
+  {q:'Dein Rucksack ist voll. Du rüstest einen neuen Helm aus. Wo landet der alte?', o:['Im Rucksack, der wird einfach größer.','Auf deiner Hand.','Er wird abgelegt.','Er geht an den Spieler mit der niedrigsten Stufe.'], a:1, e:'Der Rucksack fasst 3 Gegenstände, beim Zwerg 5. Passt nichts mehr hinein, kommt der alte Gegenstand auf die Hand. Dort zählt er beim Trinkgeld mit.'}
 ];

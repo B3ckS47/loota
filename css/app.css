@@ -1590,3 +1590,18 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .endov.egg .egg-pic{width:132px;height:132px;margin:0 auto 6px;border-radius:50%;overflow:hidden;border:4px solid #e7c27a;box-shadow:0 4px 0 rgba(0,0,0,.25);animation:hop 1.1s ease-in-out infinite}
 .endov.egg .egg-pic img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
 @keyframes hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-14px)}55%{transform:translateY(0)}70%{transform:translateY(-5px)}}
+
+/* Goldwert beim Verkaufen und Goldbeutel */
+.mc{position:relative}
+.mc-gold{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);padding:3px 8px;border-radius:999px;background:linear-gradient(#ffe48a,#e3a92b);border:1.5px solid #7a4d0a;color:#3a2203;font:800 12px/1.1 var(--body);white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.5);pointer-events:none;z-index:2}
+.mc.tiny .mc-gold{font-size:10px;padding:2px 6px}
+.mlv em.gold{font-style:normal;margin-left:4px;padding:1px 6px;border-radius:999px;background:#e3a92b;color:#2a1700;font:800 11px/1.4 var(--body)}
+/* Regeln: Suche und Völker-Tabelle */
+.rules-search{display:flex;flex-direction:column;gap:6px}
+.rs-label{font:800 13px/1.2 var(--body)}
+.rs-input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:2px solid var(--edge);background:#fffaf0;color:#2a1a0e;font:600 15px/1.2 var(--body)}
+.rs-none{margin:0}
+.rc-table{width:100%;border-collapse:collapse;font-size:13px}
+.rc-table th,.rc-table td{text-align:left;vertical-align:top;padding:6px 4px;border-bottom:1px solid rgba(0,0,0,.15)}
+.rc-table td:first-child{font-weight:800;white-space:nowrap;padding-right:10px}
+details.rule[hidden]{display:none}
