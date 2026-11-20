@@ -354,7 +354,7 @@ const ART = {
   "Wütender Gartenzwerg":"art/monster-wuetender-gartenzwerg.webp",
   "Zombie-Hausmeister":"art/monster-zombie-hausmeister.webp",
   "Elf":"art/rasse-elf.webp",
-  "Halbling":"art/rasse-halbling.webp", "Kobold":"art/rasse-halbling.webp",
+  "Halbling":"art/rasse-halbling.webp", "Kobold":"art/rasse-kobold.webp",
   "Zwerg":"art/rasse-zwerg.webp",
   "Mensch":"art/rasse-mensch.webp",
   "Glücksamulett":"art/sonder-gluecksamulett.webp",

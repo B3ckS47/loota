@@ -23,7 +23,7 @@ const portrait = p => p.human ? myPortrait() : (p.face || ICON.portrait[p.name] 
 const K_PROFILE = 'loota.profile';
 const PORTRAITS = [
   ['du', 'Abenteurer', 'icons/portrait-du.png'], ['abenteurerin', 'Abenteurerin', 'icons/portrait-abenteurerin.png'], ['elf', 'Elfe', 'icons/portrait-elfe.png'],
-  ['zwerg', 'Zwerg', 'icons/portrait-zwerg.png'], ['halbling', 'Koboldin', 'icons/portrait-halblingsfrau.png'], ['krieger', 'Kriegerin', 'icons/portrait-kriegerin.png'],
+  ['zwerg', 'Zwerg', 'icons/portrait-zwerg.png'], ['halbling', 'Koboldin', 'icons/portrait-koboldin.png'], ['krieger', 'Kriegerin', 'icons/portrait-kriegerin.png'],
   ['zauberer', 'Zauberer', 'icons/portrait-zauberer.png'], ['dieb', 'Hehlerin', 'icons/portrait-diebin.png'], ['priester', 'Exorzist', 'icons/portrait-priester.png']
 ];
 // Zufällige Gegner im freien Spiel: ein Profilbild (nicht deins), ein Name, der zum Bild passt, und eine Spielweise
