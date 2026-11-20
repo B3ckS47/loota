@@ -158,8 +158,6 @@ const ACC_ERR = {
   'auth/popup-blocked': 'Das Anmeldefenster wurde blockiert. Erlaube Pop-ups für diese Seite und versuch es noch einmal.',
   'auth/network-request-failed': 'Keine Verbindung. Prüf dein Internet und versuch es noch einmal.',
   'auth/too-many-requests': 'Zu viele Versuche. Warte kurz und versuch es dann noch einmal.',
-  'auth/invalid-action-code': 'Der Link ist abgelaufen oder wurde schon benutzt. Fordere einen neuen an.',
-  'auth/expired-action-code': 'Der Link ist abgelaufen. Fordere einen neuen an.',
   'auth/operation-not-allowed': 'Diese Anmeldeart ist noch nicht freigeschaltet.',
   'auth/unauthorized-domain': 'Anmeldung von dieser Adresse aus ist noch nicht freigeschaltet.',
   'auth/requires-recent-login': 'Aus Sicherheitsgründen musst du dich dafür kurz neu anmelden.',
@@ -176,14 +174,6 @@ async function acctRun(fn) {
 const mailOk = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ACC.email.trim());
 const acctBack = () => location.origin + location.pathname.replace(/index\.html$/, '');
 function acctGoogle() { acctRun(({F, auth}) => F.signInWithPopup(auth, new F.GoogleAuthProvider())); }
-function acctSendLink() {
-  if (!mailOk()) { ACC.err = ACC_ERR['auth/invalid-email']; acctRefresh(); return; }
-  acctRun(async ({F, auth}) => {
-    const mail = ACC.email.trim();
-    await F.sendSignInLinkToEmail(auth, mail, {url: acctBack() + '?login=mail', handleCodeInApp: true});
-    store(K_MAIL, mail); ACC.mode = 'sent';
-  });
-}
 function acctPw(create) {
   if (!mailOk()) { ACC.err = ACC_ERR['auth/invalid-email']; acctRefresh(); return; }
   if (!ACC.pw) { ACC.err = ACC_ERR['auth/missing-password']; acctRefresh(); return; }
@@ -196,20 +186,6 @@ function acctPw(create) {
 function acctReset() {
   if (!mailOk()) { ACC.err = 'Trag oben deine E-Mail-Adresse ein, dann schicken wir dir einen Link zum Zurücksetzen.'; acctRefresh(); return; }
   acctRun(async ({F, auth}) => { await F.sendPasswordResetEmail(auth, ACC.email.trim(), {url: acctBack()}); ACC.info = `Wir haben dir einen Link zum Zurücksetzen an ${ACC.email.trim()} geschickt.`; });
-}
-// Kommt man über den Anmelde-Link aus der E-Mail zurück, hier fertig anmelden
-async function acctFinishLink() {
-  const {F, auth} = await fbLoad();
-  if (!F.isSignInWithEmailLink(auth, location.href)) return;
-  const href = location.href, mail = load(K_MAIL);
-  history.replaceState(null, '', acctBack());
-  if (!mail) { ACC.mode = 'linkmail'; ACC.link = href; show('profile'); openSheet({id: 'acct'}); return; }
-  await acctRun(async () => { await F.signInWithEmailLink(auth, mail, href); });
-  if (ACC.err) { show('profile'); openSheet({id: 'acct'}); }
-}
-function acctLinkWithMail() {
-  if (!mailOk()) { ACC.err = ACC_ERR['auth/invalid-email']; acctRefresh(); return; }
-  acctRun(async ({F, auth}) => { const mail = ACC.email.trim(); store(K_MAIL, mail); await F.signInWithEmailLink(auth, mail, ACC.link); ACC.link = null; ACC.mode = 'start'; });
 }
 async function acctSignOut() {
   const ok = await confirmDialog('Abmelden?', 'Dein Spielstand bleibt auf diesem Gerät. Im Konto ist er gesichert, bis du dich wieder anmeldest.', 'Abmelden', 'Abbrechen');
@@ -266,30 +242,25 @@ SHEET_VIEWS.acct = () => {
   }
   if (!ACC.ready && CLOUD.uid) return {head: h3('Dein Konto'), body: `<p class="acc-state">Verbinde …</p>${msg}`};
   const intro = '<p class="acc-lead">Mit einem Konto ist dein Spielstand gesichert, auch wenn du das Handy wechselst. Spielen kannst du auch ohne.</p>';
-  if (ACC.mode === 'sent') return {head: h3('Schau in dein Postfach'), body: `<p class="acc-lead">Wir haben dir einen Anmelde-Link an <b>${esc(ACC.email.trim())}</b> geschickt. Öffne ihn auf diesem Gerät, dann bist du angemeldet.</p><p class="hint">Nichts angekommen? Schau auch im Spam-Ordner nach.</p>${msg}<div class="acts">${accBtn('link', 'Link noch einmal schicken')}${accBtn('mail', 'Andere Adresse')}</div>`};
-  if (ACC.mode === 'linkmail') return {head: h3('Fast geschafft'), body: `<p class="acc-lead">Bitte gib zur Sicherheit noch einmal die E-Mail-Adresse ein, an die der Link ging.</p>${accInput('acc-email', 'email', ACC.email, 'deine@e-mail.de', 'email')}${msg}<div class="acts">${accBtn('linkmail', 'Anmelden', 'primary')}</div>`};
-  if (ACC.mode === 'mail') return {head: h3('Mit E-Mail anmelden'), body: `${accInput('acc-email', 'email', ACC.email, 'deine@e-mail.de', 'email')}
-    <p class="hint">Wir schicken dir einen Link. Ein Tipp darauf, und du bist angemeldet, ganz ohne Passwort.</p>${msg}
-    <div class="acts">${accBtn('link', 'Anmelde-Link schicken', 'primary')}${accBtn('pwmode', 'Lieber mit Passwort')}${accBtn('start', 'Zurück')}</div>`};
-  if (ACC.mode === 'pw') return {head: h3('Mit Passwort anmelden'), body: `${accInput('acc-email', 'email', ACC.email, 'deine@e-mail.de', 'email')}${accInput('acc-pw', 'password', ACC.pw, 'Passwort (mindestens 6 Zeichen)', 'current-password')}${msg}
+  if (ACC.mode === 'pw') return {head: h3('Mit E-Mail anmelden'), body: `<p class="acc-lead">Melde dich mit E-Mail und Passwort an, oder leg ein neues Konto an.</p>${accInput('acc-email', 'email', ACC.email, 'deine@e-mail.de', 'email')}${accInput('acc-pw', 'password', ACC.pw, 'Passwort (mindestens 6 Zeichen)', 'current-password')}${msg}
     <div class="acts">${accBtn('pwin', 'Anmelden', 'primary')}${accBtn('pwnew', 'Neues Konto anlegen')}</div>
     <button type="button" class="acc-link" data-acct="reset"${ACC.busy ? ' disabled' : ''}>Passwort vergessen?</button>
-    <div class="acts">${accBtn('mail', 'Zurück')}</div>`};
-  return {head: h3('Fortschritt sichern'), body: `${intro}${msg}<div class="acts">${accBtn('google', `<span class="g-ic">${G_ICON}</span>Mit Google anmelden`, 'acc-google')}${accBtn('mail', 'Mit E-Mail anmelden')}</div>${small}`};
+    <div class="acts">${accBtn('start', 'Zurück')}</div>`};
+  return {head: h3('Fortschritt sichern'), body: `${intro}${msg}<div class="acts">${accBtn('google', `<span class="g-ic">${G_ICON}</span>Mit Google anmelden`, 'acc-google')}${accBtn('pwmode', 'Mit E-Mail anmelden')}</div>${small}`};
 };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-acct]'); if (!b || b.disabled) return;
   const a = b.dataset.acct;
-  if (a === 'open') { ACC.err = ''; ACC.info = ''; if (!ACC.user && ACC.mode !== 'sent' && ACC.mode !== 'linkmail') ACC.mode = 'start'; openSheet({id: 'acct'}); fbLoad().catch(() => {}); return; }
-  if (['start', 'mail', 'pwmode'].includes(a)) { ACC.mode = a === 'pwmode' ? 'pw' : a; ACC.err = ''; ACC.info = ''; acctRefresh(); return; }
-  ({google: acctGoogle, link: acctSendLink, pwin: () => acctPw(false), pwnew: () => acctPw(true), reset: acctReset, linkmail: acctLinkWithMail,
+  if (a === 'open') { ACC.err = ''; ACC.info = ''; if (!ACC.user) ACC.mode = 'start'; openSheet({id: 'acct'}); fbLoad().catch(() => {}); return; }
+  if (['start', 'pwmode'].includes(a)) { ACC.mode = a === 'pwmode' ? 'pw' : a; ACC.err = ''; ACC.info = ''; acctRefresh(); return; }
+  ({google: acctGoogle, pwin: () => acctPw(false), pwnew: () => acctPw(true), reset: acctReset,
     save: () => cloudUpload(), out: acctSignOut, del: acctDelete})[a]?.();
 });
 document.addEventListener('input', e => { if (e.target.id === 'acc-email') ACC.email = e.target.value; else if (e.target.id === 'acc-pw') ACC.pw = e.target.value; });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || !e.target.classList || !e.target.classList.contains('acc-in')) return;
   e.preventDefault();
-  ({mail: acctSendLink, pw: () => acctPw(false), linkmail: acctLinkWithMail})[ACC.mode]?.();
+  if (ACC.mode === 'pw') acctPw(false);
 });
 // Charakter-Bildschirm: Konto-Karte mitzeichnen
 const renderProfileBase = renderProfile;
@@ -298,11 +269,9 @@ document.addEventListener('visibilitychange', () => {
   if (!CLOUD.uid) return;
   if (document.hidden) { if (CLOUD.dirty) cloudUpload(); } else cloudPull();
 });
-// Start: angemeldet gewesen oder vom Anmelde-Link zurück? Dann Firebase gleich im Hintergrund laden
+// Start: angemeldet gewesen? Dann Firebase gleich im Hintergrund laden
 (function cloudBoot() {
   renderAcctCard();
   try { if (sessionStorage.getItem('loota.cloudmsg')) { sessionStorage.removeItem('loota.cloudmsg'); setTimeout(() => toast('Spielstand aus deinem Konto geladen.'), 900); } } catch (e) {}
-  const fromLink = /[?&](login=mail|oobCode=)/.test(location.search);
-  if (fromLink) fbLoad().then(acctFinishLink).catch(() => {});
-  else if (CLOUD.uid) setTimeout(() => fbLoad().catch(() => { ACC.state = 'err'; ACC.err = ACC_ERR['auth/network-request-failed']; acctRefresh(); }), 1200);
+  if (CLOUD.uid) setTimeout(() => fbLoad().catch(() => { ACC.state = 'err'; ACC.err = ACC_ERR['auth/network-request-failed']; acctRefresh(); }), 1200);
 })();
