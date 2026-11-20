@@ -176,7 +176,7 @@ const SET = Object.assign({music: true, sfx: true, mvol: 0.5, svol: 0.8, vibrate
 if ((SET.sv || 1) < SET_V) { SET.advice = false; SET.coach = false; SET.sv = SET_V; if (SAVED_SET) store(K_SET, SET); }
 function saveSettings() { store(K_SET, SET); applySettings(); }
 function applySettings() {
-  UI.advice = SET.advice && (!SCN || !!SCN.tips); UI.coach = SET.coach && (!SCN || !!SCN.tips); UI.open = SET.open; UI.speed = SET.speed; UI.goal = SET.goal || 10;
+  UI.advice = SCN && SCN.tips ? true : SET.advice && !SCN; UI.coach = SCN && SCN.tips ? true : SET.coach && !SCN;   // Probepartie der Einführung: Tipps immer an UI.open = SET.open; UI.speed = SET.speed; UI.goal = SET.goal || 10;
   if (!SCN) { UI.bots = SET.bots; UI.diff = SET.diff; }
   UI.reduce = SET.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.documentElement.classList.toggle('reduce', !!SET.reduce);
@@ -2079,6 +2079,13 @@ const TUT_LESSONS = [
     text: 'Du hast mehr als 5 Karten. Den Rest bekommt Berta, das kennst du schon. Das Nebelpulver behältst du aber, das brauchst du gleich noch.'},
   {id: 'sieg3', st: S3, when: () => tFight() && tMon('Schleimige Socke') && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Weggelaufen ist nicht verloren: Du hast nur keine Stufe bekommen. Die Schleimige Socke schaffst du locker. Besiege sie und hol dir Stufe 5!'},
+  /* ---- Station 5: Die Probepartie ---- */
+  {id: 'p1', st: ['w0s5'], ok: 'Weiter', big: true, dim: true, step: [1, 3], only: () => false, when: () => S.turn === 1 && S.cur === 0,
+    text: 'Deine Probepartie! Es geht bis Stufe 5, gegen Berta und Kalle. Diesmal sage ich dir nicht jeden Schritt an, du spielst ganz normal.'},
+  {id: 'p2', st: ['w0s5'], ok: 'Weiter', big: true, dim: true, step: [2, 3], only: () => false, when: () => S.turn === 1 && S.cur === 0,
+    text: 'Ein bisschen helfe ich dir aber: Du bekommst eine Zug-Empfehlung, und in den Notizen erkläre ich, welche Regel gerade greift. Das gibt es im Storymodus sonst nicht.'},
+  {id: 'p3', st: ['w0s5'], ok: 'Los geht’s', spot: '#act, #hand', step: [3, 3], only: () => false, when: () => S.turn === 1 && S.cur === 0,
+    text: 'Meine Empfehlung erkennst du am grünen „Tipp“: hier in der Leiste und oben auf Karten, die du jetzt spielen solltest. Folgen musst du nicht, aber es lohnt sich meistens. Im freien Spiel kannst du das in den Optionen einschalten.'},
   /* ---- Station 4: Alle gegen dich ---- */
   {id: 'hallo4', st: S4, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Kalle spielt mit, und der will gewinnen. Heute lernst du, wie man sich in Kämpfe einmischt. Ziel ist Stufe 5.'},
