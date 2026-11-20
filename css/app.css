@@ -1560,3 +1560,26 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 /* Hinweisrahmen im geöffneten Fenster: auf hellem Papier kräftiger */
 #sheet .tut-hl{outline:3px solid #e7a93a;outline-offset:3px;animation:tutPulseSh 1.3s ease-in-out infinite}
 @keyframes tutPulseSh{0%,100%{outline-color:#e7a93a;box-shadow:0 0 0 0 rgba(231,169,58,0)}50%{outline-color:#f5c45a;box-shadow:0 0 16px 4px rgba(231,169,58,.55)}}
+/* Konto und Cloud-Speicherstand */
+.pf-acct{display:flex;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.pf-acct>span:last-child{display:grid;gap:3px;min-width:0}
+.pf-acct b{font-size:16px}
+.pf-acct span span{font-size:14px;opacity:.85;overflow-wrap:anywhere}
+.acc-ic{width:52px;height:52px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:#efe2c4;color:#8a6a3a;border:2px solid #d9c39a}
+.acc-ic svg{width:30px;height:30px}
+.acc-ic.on{background:#e3f0d6;color:#3f7a2a;border-color:#a9cf8e}
+.acc-lead{margin:0 0 12px;line-height:1.45}
+.acc-in{width:100%;margin:0 0 10px}
+.acc-err{margin:4px 0 10px;padding:8px 10px;border-radius:10px;background:#fbe3dc;color:#8e2a16;font-size:14px;line-height:1.4}
+.acc-info{margin:4px 0 10px;padding:8px 10px;border-radius:10px;background:#e3f0d6;color:#2f5f20;font-size:14px;line-height:1.4}
+.acc-small{margin-top:12px}
+.acc-who{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.acc-who b{display:block;font-size:16px;overflow-wrap:anywhere}
+.acc-who span{font-size:14px;opacity:.8}
+.acc-state{margin:6px 0 10px;font-size:14px;opacity:.85}
+.acts .btn.acc-google,.btn.acc-google{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px}
+.g-ic{width:20px;height:20px;display:inline-grid;background:#fff;border-radius:50%;padding:2px}
+.g-ic svg{width:100%;height:100%}
+.acc-link,.acc-del{display:block;margin:10px auto 0;background:none;border:0;font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;color:#7a5a30}
+.acc-del{color:#a3301c;margin-top:16px}
+.acc-link[disabled],.acc-del[disabled]{opacity:.5}
