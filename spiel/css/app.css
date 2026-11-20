@@ -1609,7 +1609,6 @@ details.rule[hidden]{display:none}
 /* ================= Breite Ansicht ================= */
 .wopps,.wlog,.wside,.wpile,.wprev{display:none}
 #app.lay-pc,#app.lay-tab{max-width:none}
-#app.lay-pc #sheetwrap,#app.lay-tab #sheetwrap{max-width:600px}
 #app.lay-pc .mebar,#app.lay-tab .mebar{display:none}
 .wpanel{background:rgba(24,13,6,.62);border:1px solid rgba(255,220,160,.18);border-radius:16px;padding:10px 12px;color:var(--on-wood)}
 .wp-h{margin:0 0 6px;font:800 13px/1.2 var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--on-wood-muted)}
@@ -1685,8 +1684,6 @@ details.rule[hidden]{display:none}
 .pd-l{display:none;font:800 13px/1 var(--body);color:var(--ink);opacity:.45}
 .pd.on .pd-l{opacity:1}.pd.done .pd-l{opacity:.7}
 #app.lay-pc .pd-l,#app.lay-tab .pd-l{display:inline}
-html.wide-game #sheetwrap{max-width:none}
-html.wide-game #sheetwrap .sheet{max-width:620px;margin:0 auto;border-radius:22px 22px 0 0}
 #app.lay-pc .wlog,#app.lay-tab .wlog{display:flex;flex-direction:column;overflow:hidden}
 .wlog .wpanel{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin}
 #app.lay-pc .wprev{grid-area:wside;align-self:start;justify-self:center;margin:8px 0 0;width:300px}
@@ -1700,5 +1697,111 @@ html.wide-game #sheetwrap .sheet{max-width:620px;margin:0 auto;border-radius:22p
 #app.lay-pc .idle-txt,#app.lay-tab .idle-txt{font-size:22px;margin-top:18px}
 /* Breite Bildschirme außerhalb des Spiels: etwas breitere Spalte, Tisch als Hintergrund statt leerer Ränder */
 html.wide-any body{background:radial-gradient(ellipse at center,rgba(10,5,2,.35),rgba(10,5,2,.82) 70%),url(../art/hintergrund-tisch.webp) center/cover no-repeat,var(--wood-dark)}
-html.wide-any:not(.wide-game) #app{max-width:620px;border-left:3px solid rgba(0,0,0,.45);border-right:3px solid rgba(0,0,0,.45);box-shadow:0 0 80px rgba(0,0,0,.85)}
-html.wide-any:not(.wide-game) #sheetwrap{max-width:620px}
+/* ---- Fenster: auf breiten Bildschirmen mittig statt von unten ---- */
+html.wide-any #sheetwrap{max-width:none}
+html.wide-any .sheet{left:0;right:0;top:0;bottom:0;margin:auto;width:min(680px,calc(100vw - 48px));height:fit-content;max-height:min(88dvh,940px);border-radius:22px;border:3px solid var(--edge);box-shadow:0 30px 90px rgba(0,0,0,.75);padding-bottom:0;animation:popIn .22s cubic-bezier(.2,.9,.3,1.15) both}
+html.wide-any .sheet[data-sid="shop"],html.wide-any .sheet[data-sid="sel"],html.wide-any .sheet[data-sid="buyworld"],html.wide-any .sheet[data-sid="online"]{width:min(900px,calc(100vw - 48px))}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+html.wide-any .grab{display:none}
+html.wide-any .sh-head{padding:16px 18px 10px}
+html.wide-any .sh-body{padding:4px 18px 20px}
+
+/* ---- Menüs auf PC und Tablet ---- */
+#app.wide{max-width:none}
+html.wide-menu{--wpad:max(28px,calc((100% - 1240px) / 2));--sidew:min(520px,40vw)}
+html.wide-menu .bar{padding:16px var(--wpad) 12px}
+html.wide-menu .bar h2{font-size:38px}
+html.wide-menu .content{padding:6px var(--wpad) 32px}
+html.wide-menu .footbtn{display:flex;justify-content:flex-end;padding:12px var(--wpad) 22px}
+html.wide-menu .footbtn .btn{width:auto;min-width:340px}
+
+/* Startseite des Spiels: Karte über die ganze Fläche, Story links, Spielarten rechts */
+html.wide-menu #scr-title{display:grid;grid-template-columns:minmax(0,1fr) clamp(360px,34vw,560px);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;
+  grid-template-areas:"top top" "logo modes" "dots modes" ". modes" "story daily" "nav nav";column-gap:36px}
+html.wide-menu .t-hero{height:100%}
+html.wide-menu .t-hero::after{background:linear-gradient(90deg,rgba(21,16,12,.82) 0%,rgba(21,16,12,.35) 42%,rgba(21,16,12,.2) 62%,rgba(21,16,12,.6) 100%),linear-gradient(180deg,rgba(21,16,12,.55) 0%,rgba(21,16,12,0) 18%,rgba(21,16,12,0) 55%,rgba(21,16,12,.95) 100%)}
+html.wide-menu .t-top{grid-area:top;padding:18px 36px 0}
+html.wide-menu .t-me{max-width:420px}
+html.wide-menu .t-logo{grid-area:logo;margin:2vh 0 0 36px;justify-self:start}
+html.wide-menu .t-logo img{width:min(440px,30vw);max-height:22vh;margin:0}
+html.wide-menu .t-dots{grid-area:dots;justify-self:start;margin-left:60px}
+html.wide-menu .t-story{grid-area:story;align-self:end;margin:0;padding:0 0 0 36px;max-width:620px;gap:10px}
+html.wide-menu .t-wname{font-size:clamp(40px,4.2vw,60px)}
+html.wide-menu .t-next{font-size:17px}
+html.wide-menu .t-cta{align-self:flex-start;min-width:340px;min-height:58px;padding:0 28px;font-size:19px}
+html.wide-menu .t-modes{grid-area:modes;align-self:end;padding:0 36px 0 0}
+html.wide-menu .t-card{height:clamp(150px,24vh,230px)}
+html.wide-menu .tc-txt b{font-size:28px}
+html.wide-menu .tc-txt small{font-size:14px}
+html.wide-menu .t-daily{grid-area:daily;align-self:end;margin:14px 36px 0 0}
+html.wide-menu .t-nav{grid-area:nav;justify-self:center;width:min(760px,calc(100% - 72px));margin:18px 0 18px}
+
+/* Storymodus: Karte links, Station rechts */
+html.wide-menu #scr-story .bar{padding:16px 28px 12px}
+html.wide-menu .st-content{padding:6px calc(var(--sidew) + 56px) 32px 28px}
+html.wide-menu .st-content>*{max-width:760px;margin-left:auto;margin-right:auto}
+.st-side{display:none}
+html.wide-menu .st-side{display:block;position:absolute;top:calc(var(--sat) + 78px);right:28px;bottom:24px;width:var(--sidew);overflow-y:auto;scrollbar-width:thin}
+html.wide-menu .st-side.covered{visibility:hidden}
+.st-sidein{display:flex;flex-direction:column;gap:12px;padding:20px;margin:0}
+.st-sidein .st-name{font-size:34px}
+.st-sstats{display:flex;flex-wrap:wrap;gap:8px}
+.st-sstats span{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(120,80,30,.1);border:1px solid rgba(120,80,30,.22);font-size:14px;color:var(--muted)}
+.st-sstats b{color:var(--ink);font-size:15px}
+.st-sstats img{width:20px;height:20px}
+.st-nextcard{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border-radius:16px;border:2px solid var(--or-edge);background:linear-gradient(#fff6e2,#f7e3bd);box-shadow:0 3px 0 var(--wood-dark);color:var(--ink);text-align:left;cursor:pointer}
+.st-nextcard:hover{background:linear-gradient(#fffaf0,#fbe9c7)}
+.st-nextcard .sn-medal{position:relative;flex:0 0 auto}
+.st-nextcard>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.st-nextcard small{font:800 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--red)}
+.st-nextcard b{font:700 26px/1.05 var(--display)}
+.st-nextcard em{font-style:normal;font-size:14px;color:var(--muted)}
+.st-nextcard>svg{width:26px;height:26px;fill:none;stroke:var(--or-edge);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.st-alldone{display:flex;align-items:center;gap:8px;margin:0;font-weight:700}
+.st-sidein .btn.small{align-self:flex-start}
+html.wide-menu #sheetwrap.dock{position:absolute;inset:auto;top:calc(var(--sat) + 78px);right:28px;bottom:24px;left:auto;width:var(--sidew);z-index:20}
+#sheetwrap.dock .backdrop{display:none}
+html.wide-any #sheetwrap.dock .sheet{position:absolute;inset:0;margin:0;width:auto;height:auto;max-height:none;border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.6)}
+
+/* Freies Spiel: zwei Spalten */
+html.wide-menu #scr-setup .content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;align-content:start;align-items:start}
+html.wide-menu #scr-setup .content>.panel{margin:0}
+html.wide-menu #scr-setup .content>.panel:first-child{grid-row:span 3}
+
+/* Optionen: drei Spalten */
+html.wide-menu #scr-settings .content{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto 1fr;gap:18px 22px;align-items:start;align-content:start}
+html.wide-menu #scr-settings .content>.panel{margin:0}
+html.wide-menu #scr-settings .content>.panel:nth-child(1){grid-area:1/1}
+html.wide-menu #scr-settings .content>.panel:nth-child(2){grid-area:1/2/4/3}
+html.wide-menu #scr-settings .content>.panel:nth-child(3){grid-area:2/1}
+html.wide-menu #scr-settings .content>.panel:nth-child(4){grid-area:1/3/4/4}
+html.wide-menu #scr-settings .content>.panel:nth-child(5){grid-area:3/1}
+
+/* Regeln: Inhalt und Suche links, Text rechts */
+.rules-toc{display:none}
+html.wide-menu .content.rules{display:grid;grid-template-columns:340px minmax(0,1fr);gap:0 24px;align-items:start}
+html.wide-menu .rules-side{position:sticky;top:0}
+html.wide-menu .rules-toc{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:14px;background:rgba(24,13,6,.55);border:1px solid rgba(255,220,160,.18)}
+.rules-toc .lbl{margin:0 0 6px 8px;color:var(--on-wood-muted)}
+.rules-toc button{appearance:none;border:0;background:none;padding:7px 10px;border-radius:10px;text-align:left;color:var(--on-wood);font:700 15px var(--body);cursor:pointer}
+.rules-toc button:hover{background:rgba(255,220,160,.12)}
+html.wide-menu .rules-main details.rule{font-size:17px}
+
+/* Charakter: Profil links, Optik rechts */
+html.wide-menu #scr-profile .content{display:grid;grid-template-columns:400px minmax(0,1fr);gap:0 24px;align-items:start}
+html.wide-menu .pf-side{position:sticky;top:0}
+html.wide-menu .pf-main>.panel:first-child{margin-top:0}
+html.wide-menu .pf-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+html.wide-menu .pf-pt img{max-width:96px}
+
+/* Karten und Deck: Deck links, Karten rechts */
+html.wide-menu #scr-cards .content{display:grid;grid-template-columns:420px minmax(0,1fr);gap:0 24px;align-items:start}
+html.wide-menu .cd-side{position:sticky;top:0}
+html.wide-menu .cgrid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:16px 14px}
+
+html.wide-any .sheet[data-sid="shop"] .sitems{grid-template-columns:repeat(4,minmax(0,1fr))}
+html.wide-menu .cfilter{grid-template-columns:repeat(6,minmax(0,1fr));margin:0;padding:8px 0 10px}
+html.wide-menu .rules-side,html.wide-menu .pf-side,html.wide-menu .cd-side{max-height:calc(100dvh - var(--sat) - 96px);overflow-y:auto;scrollbar-width:thin;padding-bottom:4px}
+/* Quiz: eine ruhige Spalte */
+html.wide-menu #scr-quiz .content{padding-left:max(28px,calc((100% - 780px) / 2));padding-right:max(28px,calc((100% - 780px) / 2))}
+

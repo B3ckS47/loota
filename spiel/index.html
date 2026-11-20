@@ -64,6 +64,7 @@
   <section id="scr-story" class="screen" aria-label="Storymodus" hidden>
     <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Storymodus</h2><span class="st-coins" id="st-coins"></span></header>
     <div class="content st-content"><div class="panel st-head" id="st-head"></div><div class="smap" id="st-map"></div></div>
+    <aside class="st-side" id="st-side" aria-label="Station"></aside>
   </section>
 
   <!-- ============ Freies Spiel ============ -->
@@ -198,9 +199,13 @@
   <section id="scr-rules" class="screen" aria-label="Spielregeln" hidden>
     <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Spielregeln</h2></header>
     <div class="content rules">
+      <div class="rules-side">
       <div class="panel quizcta"><div><b>Probespiel mit Hilde</b><span>Eine kurze Übungspartie, in der Hilde jeden Schritt erklärt.</span></div><button class="btn" type="button" data-go="tutorial">Starten</button></div>
       <div class="panel quizcta"><div><b>Regel-Quiz</b><span>Zehn Fragen: Wie sicher sitzen die Regeln?</span></div><button class="btn primary" type="button" data-go="quiz">Starten</button></div>
-<div class="rules-search panel"><label class="rs-label" for="rules-q">Regel nachschlagen</label><input id="rules-q" class="rs-input" type="search" placeholder="z. B. Rucksack, Gleichstand, Kobold" autocomplete="off" enterkeyhint="search"><p class="rs-none hint" hidden>Dazu steht hier nichts. Versuch ein anderes Wort.</p></div>
+      <div class="rules-search panel"><label class="rs-label" for="rules-q">Regel nachschlagen</label><input id="rules-q" class="rs-input" type="search" placeholder="z. B. Rucksack, Gleichstand, Kobold" autocomplete="off" enterkeyhint="search"><p class="rs-none hint" hidden>Dazu steht hier nichts. Versuch ein anderes Wort.</p></div>
+      <nav class="rules-toc" id="rules-toc" aria-label="Inhalt"></nav>
+      </div>
+      <div class="rules-main">
 <details class="rule panel" open data-k="schnellstart überblick ziel kurz"><summary>Schnellstart</summary><div class="rule-body">
       <p>Wer zuerst <b>Stufe 10</b> erreicht, gewinnt. Die letzte Stufe gibt es nur für einen <b>Sieg über ein Monster</b>.</p>
       <p>In jedem Zug öffnest du eine Tür. Dahinter wartet oft ein Monster. Ist deine <b>Kampfstärke höher</b> als das Monster, steigst du auf und bekommst Schätze. Sonst musst du weglaufen.</p>
@@ -289,6 +294,7 @@
         <li>Wer vorne liegt, wird von allen gebremst. Biete Beute an, wenn du Hilfe brauchst.</li>
       </ul></div></details>
 
+      </div>
     </div>
   </section>
 
@@ -296,6 +302,7 @@
   <section id="scr-profile" class="screen" aria-label="Dein Charakter" hidden>
     <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Dein Charakter</h2></header>
     <div class="content">
+      <div class="pf-side">
       <div class="panel pf-hero" id="pf-hero"></div>
       <div class="pf-stats" id="pf-stats"></div>
       <button class="panel pf-acct" id="pf-acct" type="button" data-acct="open"></button>
@@ -305,6 +312,8 @@
         <input id="pf-name" class="pf-input" type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Wie sollen dich die anderen nennen?">
         <p class="hint" id="pf-name-hint">2 bis 16 Zeichen. Später kann das dein Name für Partien gegen andere sein.</p>
       </div>
+      </div>
+      <div class="pf-main">
       <div class="panel pf-pager" id="pf-filter" role="group" aria-label="Optik nach Herkunft durchblättern"></div>
       <div class="panel pf-sec">
         <h4 class="lbl">Titel</h4>
@@ -324,13 +333,14 @@
         <div class="pf-bgs" id="pf-bgs"></div>
         <p class="hint">Liegt hinter deinem Porträt im Spiel, in deinem Profil und hier oben.</p>
       </div>
+      </div>
     </div>
   </section>
 
   <!-- ============ Karten ============ -->
   <section id="scr-cards" class="screen" aria-label="Kartenübersicht" hidden>
     <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Karten &amp; Deck</h2></header>
-    <div class="content"><div class="panel quizcta"><div><b>Regeln und Probespiel</b><span>Wie eine Runde abläuft, Hildes Übungspartie und das Regel-Quiz.</span></div><button class="btn" type="button" data-go="rules">Öffnen</button></div><div class="panel deckp" id="deck-panel"></div><div class="chips cfilter" id="card-filter"></div><div class="cgrid" id="card-grid"></div></div>
+    <div class="content"><div class="cd-side"><div class="panel quizcta"><div><b>Regeln und Probespiel</b><span>Wie eine Runde abläuft, Hildes Übungspartie und das Regel-Quiz.</span></div><button class="btn" type="button" data-go="rules">Öffnen</button></div><div class="panel deckp" id="deck-panel"></div></div><div class="cd-main"><div class="chips cfilter" id="card-filter"></div><div class="cgrid" id="card-grid"></div></div></div>
   </section>
 
   <!-- ============ Quiz ============ -->

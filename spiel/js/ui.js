@@ -330,6 +330,7 @@ function setScreen(name) {
   if (name === 'quiz') renderQuiz();
   if (name === 'profile') renderProfile();
   if (name === 'story') renderStory();
+  if (name === 'rules') buildRulesToc();
   if (name === 'game') { W.renderedOnce = false; render(); }
   Motes.toggle(name === 'title');
 }
@@ -859,10 +860,10 @@ function renderSheet(fresh) {
   const wrap = $('#sheetwrap'), el = $('#sheet');
   updatePaused();
   if (SCN && SCN.tut && fresh) setTimeout(tutUpdate, 0);
-  if (!SHEETS.length) { wrap.classList.remove('open'); wrap.setAttribute('aria-hidden', 'true'); el.innerHTML = ''; el.__h = ''; return; }
+  if (!SHEETS.length) { wrap.classList.remove('open'); wrap.setAttribute('aria-hidden', 'true'); el.innerHTML = ''; el.__h = ''; dockSheet(); return; }
   const s = topSheet(), view = SHEET_VIEWS[s.id](s);
   if (!view) { SHEETS.pop(); renderSheet(true); return; }
-  wrap.classList.add('open'); wrap.setAttribute('aria-hidden', 'false');
+  wrap.classList.add('open'); wrap.setAttribute('aria-hidden', 'false'); el.dataset.sid = s.id; dockSheet();
   const canClose = s.id !== 'sel';
   const html = `<div class="grab"><i></i></div><div class="sh-head${view.hero ? ' has-hero' : ''}">${SHEETS.length > 1 && canClose ? '<button type="button" class="iconbtn" data-sheetback aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button>' : ''}${view.head || ''}${canClose ? '<button type="button" class="iconbtn" data-sheetclose aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button>' : ''}</div><div class="sh-body">${view.body}</div>`;
   const body = el.querySelector('.sh-body'), st = body && !fresh ? body.scrollTop : 0;
@@ -1295,6 +1296,7 @@ function renderStory() {
   patch($('#st-map'), maps + (f ? fogHTML(f, f.near) : ''));
   if (!worldOwned(cw)) { if (!STORY.intro['kauf-' + cw.id] && CUR === 'story' && !SHEETS.length) { STORY.intro['kauf-' + cw.id] = true; saveStory(); openSheet({id: 'buyworld', w: cw.id}); } }
   else if (!STORY.intro[cw.id]) { STORY.intro[cw.id] = true; saveStory(); openSheet({id: 'storyintro', w: cw.id}); }
+  renderStorySide();
   if (next && CUR === 'story') {
     const sc = $('#scr-story .content');
     if (sc && sc.__scrolledTo !== next.id) { sc.__scrolledTo = next.id; requestAnimationFrame(() => { const el = $(`.snode[data-station="${next.id}"]`); if (el) sc.scrollTop = Math.max(0, sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - sc.clientHeight / 2); }); }
@@ -1345,6 +1347,7 @@ function openStation(id) {
   if (!worldOwned(worldById(st.world)) && !STORY.done[st.id]) { openSheet({id: 'buyworld', w: st.world}); return; }
   if (!stationUnlocked(st) && !SET.test) { toast('Erst die Station davor schaffen.'); buzz(30); return; }
   if (st.type === 'shop') visitShop(st);
+  if (CUR === 'story' && SHEETS.length === 1 && topSheet().id === 'station') SHEETS.pop();   // breite Ansicht: Karte bleibt bedienbar, die neue Station ersetzt die alte
   openSheet({id: 'station', st: id});
   renderStory();
 }
@@ -2281,6 +2284,8 @@ function applyLayout() {
   app.classList.toggle('wide', wide);
   document.documentElement.classList.toggle('wide-game', !!mode);
   document.documentElement.classList.toggle('wide-any', wide);
+  document.documentElement.classList.toggle('wide-menu', wide && CUR !== 'game');
+  dockSheet();
   if (mode === LAYOUT) return;
   LAYOUT = mode; app.classList.toggle('lay-pc', mode === 'pc'); app.classList.toggle('lay-tab', mode === 'tab');
   if (S && CUR === 'game') render();
@@ -2339,3 +2344,35 @@ function hashEntry() {
 }
 window.addEventListener('load', () => setTimeout(hashEntry, 400));
 window.addEventListener('hashchange', hashEntry);
+
+/* ================= Breite Ansicht außerhalb der Partie ================= */
+// Storymodus am PC oder Tablet: Die Station steht rechts neben der Karte statt als Fenster darüber
+function dockSheet() {
+  const wrap = $('#sheetwrap'); if (!wrap) return;
+  const on = document.documentElement.classList.contains('wide-menu') && CUR === 'story' && SHEETS.length === 1 && topSheet().id === 'station';
+  wrap.classList.toggle('dock', on);
+  const side = $('#st-side'); if (side) side.classList.toggle('covered', on);
+}
+function renderStorySide() {
+  const side = $('#st-side'); if (!side) return;
+  const open = openWorlds(), cw = currentWorld();
+  let next = null;
+  open.forEach(w => { const n = w.stations.find(st => stationUnlocked(st) && !STORY.done[st.id]); if (n && (!next || w === cw)) next = n; });
+  const all = open.reduce((a, w) => a + w.stations.length, 0), done = open.reduce((a, w) => a + w.stations.filter(st => STORY.done[st.id]).length, 0);
+  const nextHTML = next ? `<button type="button" class="st-nextcard t-${next.type}" data-station="${next.id}"><span class="sn-medal">${medalIcon(next.type)}<i>${next.no}</i></span><span><small>Nächste Station</small><b>${esc(next.name)}</b><em>${ST_TYPES[next.type]} · ${esc(next.place)}</em></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>`
+    : `<p class="st-alldone">${starSvg(true)}<span>Alle offenen Stationen sind geschafft.</span></p>`;
+  patch(side, `<div class="panel st-sidein"><span class="st-world">${wLabel(cw)}</span><b class="st-name">${esc(cw.name)}</b>` +
+    `<div class="st-sstats"><span>${starSvg(true)}<b>${worldStars(cw)}</b> / ${worldMaxStars(cw)} Sterne</span><span><b>${done}</b> / ${all} Stationen</span><span>${coinImg}<b>${STORY.coins}</b> Münzen</span></div>` +
+    nextHTML + `<p class="hint">Klick auf der Karte auf eine Station, dann erscheint sie hier.</p>` +
+    `<button type="button" class="btn small" data-worldrules="${cw.id}">Sonderregeln dieser Welt</button></div>`);
+}
+// Regeln: Inhaltsverzeichnis für die breite Ansicht
+function buildRulesToc() {
+  const toc = $('#rules-toc'); if (!toc || toc.__built) return; toc.__built = true;
+  toc.innerHTML = '<h4 class="lbl">Inhalt</h4>' + $$('#scr-rules details.rule').map((d, i) => `<button type="button" data-rtoc="${i}">${esc(d.querySelector('summary').textContent)}</button>`).join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rtoc]'); if (!b) return;
+  const d = $$('#scr-rules details.rule')[+b.dataset.rtoc]; if (!d) return;
+  d.hidden = false; d.open = true; d.scrollIntoView({behavior: SET.reduce ? 'auto' : 'smooth', block: 'start'});
+});
