@@ -171,7 +171,7 @@ const WORLDS = [{
       // Feste Reihenfolge: eine Partie ohne großes Pech. Elfe und Zauberer mit passenden Gegenständen, schaffbare Monster,
       // ein Fluch (mit dem Glücksamulett abwehrbar). Berta und Kalle ziehen nur Rassen, Klassen, Flüche und Zusätze,
       // spielen fair und kommen nicht an Schätze: So bleibt auch die Reihenfolge deiner Schätze fest.
-      scn: {tut: 'w0s5', target: 5, bots: ['Berta', 'Kalle'], diff: 'gemuetlich', tips: true,
+      scn: {tut: 'w0s5', tutFree: true, target: 5, bots: ['Berta', 'Kalle'], diff: 'gemuetlich', tips: true,
         start: {lvl: 2, hand: ['Elf', 'Zauberer', 'Elfendolch', 'Spitzhut mit Sternchen', 'Trank der Tapferkeit'], deal: false},
         botStart: {Berta: {lvl: 1, eq: ['Hörnerhelm'], deal: false}, Kalle: {lvl: 1, eq: ['Gusseiserne Bratpfanne'], deal: false}},
         botStyles: {Berta: {help: 3, curse: 0, intf: 0, l: 'hilft dir gern'}, Kalle: {help: 0, curse: 0, intf: 0, l: 'spielt heute fair'}},

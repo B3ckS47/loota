@@ -1371,6 +1371,7 @@ async function winCombat(C){
     render(); return;
   }
   log(`${nm(f)} ${V(f,'besiegst','besiegt')} ${monNames(C)}${h?` mit Hilfe von ${nmD(h)}`:''} und ${V(f,'steigst','steigt')} ${lv} ${pl(lv,'Stufe','Stufen')} auf: Stufe ${Math.min(f.lvl,WINLVL())}.`,'good');
+  if(!f.human && SCN && SCN.tut && !SCN.tutFree && f.lvl>=WINLVL()) f.lvl=WINLVL()-1;   // Einführung: Bots gewinnen nie
   if(f.lvl>=WINLVL()){ f.lvl=WINLVL(); S.winner=f.id; log(f.human ? `Stufe ${WINLVL()}! Du hast gewonnen!` : `${f.name} erreicht Stufe ${WINLVL()} und gewinnt das Spiel.`, f.human?'good':'bad'); render(); return; }
   if(h && hasRace(h,'elf')){ const g=Math.min(C.mons.length,Math.max(0,WINLVL()-1-h.lvl)); if(g>0){ h.lvl+=g; log(`${nm(h)} ${V(h,'steigst','steigt')} als Elf-Helfer auf: Stufe ${h.lvl}.`,'good'); ruleOnce('elfhelp','Elfen steigen auf, wenn sie jemandem helfen, ein Monster zu besiegen.'); } }
   const loot=!h && hasCls(f,'pirat') ? 1 : 0, n=treasuresOf(C)+loot, drawn=[];
@@ -1645,7 +1646,7 @@ async function startSell(pre){
   if(p.lvl>=WINLVL()-1){ log(`Auf Stufe ${WINLVL()-1} bringt Verkaufen nichts mehr: Stufe ${WINLVL()} gibt es nur für einen Monstersieg.`,'sys'); return; }
   try{
     const sel=await selectCards({ctx:'sell', title:'Gegenstände verkaufen', text:'Wähle Gegenstände aus Hand, Ausrüstung oder Rucksack. Je 1.000 Gold gibt es 1 Stufe.', min:1, max:99, pre: Array.isArray(pre)?pre:(pre?[pre]:[]), cancel:true,
-      filter:(c,w)=> (c.k==='item'||c.k==='oneshot') && c.g>0 && ['hand','eq','pack'].includes(w),
+      filter:(c,w)=> (c.k==='item'||c.k==='oneshot') && c.g>0 && ['hand','eq','pack'].includes(w) && (typeof tutSellOk!=='function' || tutSellOk(c)),
       extra:cs=>{ const v=sellValue(p,cs), lv=Math.min(v.lv,WINLVL()-1-p.lvl), rest=v.sum-lv*1000; return `Summe: <b>${fmt(v.sum)} Gold</b>${v.dbl?` (Halbling: ${v.dbl.n} zählt doppelt)`:''} · ergibt <b>${lv} ${pl(lv,'Stufe','Stufen')}</b>${rest>0&&cs.length?` · ${fmt(rest)} Gold verfallen`:''}`; },
       validate:cs=>{ if(!cs.length) return null; return sellValue(p,cs).lv<1 ? 'Noch keine 1.000 Gold zusammen.' : null; },
       confirm:()=>'Verkaufen'});

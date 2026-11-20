@@ -940,7 +940,7 @@ function equipSub(p, c) {
 const SHEET_VIEWS = {
   info() {
     if (!UI.prompt) return null;
-    const q = UI.prompt.get();
+    const q = UI.prompt.get(); tutGate(q, UI.prompt.ctx);
     const hints = UI.coach && q.hint && q.hint.length ? `<ul class="hints">${q.hint.map(x => `<li>${linkify(x)}</li>`).join('')}</ul>` : '';
     return {head: h3(esc(q.title)), body: `${q.text ? `<p class="atxt">${linkify(q.text)}</p>` : ''}${adviceBox()}${hints}<div class="acts">${q.opts.map((o, i) => `<button type="button" class="btn ${o.kind === 'primary' ? 'primary' : o.kind === 'danger' ? 'danger' : ''}${UI.adv && UI.adv.opt !== undefined && UI.adv.opt === o.v ? ' rec' : ''}" data-opt="${i}" ${o.dis ? 'disabled' : ''}>${esc(o.l)}</button>`).join('')}</div>`};
   },
@@ -956,7 +956,7 @@ const SHEET_VIEWS = {
   },
   more() {
     if (!UI.prompt) return null;
-    const q = UI.prompt.get();
+    const q = UI.prompt.get(); tutGate(q, UI.prompt.ctx);
     return {head: h3(esc(q.title)), body: `<div class="acts">${q.opts.map((o, i) => `<button type="button" class="btn ${o.kind === 'primary' ? 'primary' : o.kind === 'danger' ? 'danger' : ''}" data-opt="${i}" ${o.dis ? 'disabled' : ''}>${esc(o.l)}</button>`).join('')}</div>`};
   },
   card(s) {
@@ -965,9 +965,9 @@ const SHEET_VIEWS = {
     if (!c) return null;
     const live = !s.cname && !s.human && s.where && ['hand', 'eq', 'pack', 'race', 'cls'].includes(s.where);
     const acts = live ? cardActions(c, s.where) : [];
-    const tutLock = live && s.where === 'hand' && !tutCardOk(c);
-    if (tutLock) acts.forEach(a => { if (a.fn) a.dis = true; });
-    if (tutLock && acts.some(a => a.fn)) acts.unshift({info: 'Hilde: „Die brauchst du gerade nicht. Mach erst mal, was ich dir zeige.“'});
+    let tutLock = false;   // Einführung: nur die Aktion, um die es gerade geht (auch nicht Ablegen, Verkaufen oder Rucksack)
+    if (live) acts.forEach(a => { if (a.fn && !tutActOk(c, a.l, s.where)) { a.dis = true; tutLock = true; } });
+    if (tutLock && acts.some(a => a.fn) && acts.every(a => !a.fn || a.dis)) acts.unshift({info: 'Hilde: „Die brauchst du gerade nicht. Mach erst mal, was ich dir zeige.“'});
     UI.cardActs = acts;
     const meaning = cardMeaning(c), wh = S && !s.human ? whereNow(c) : [];
     const actHTML = acts.map((a, i) => a.info ? `<p>${a.info}</p>` : `<button type="button" class="btn ${a.kind === 'primary' ? 'primary' : ''}${UI.adv && UI.adv.uid === c.uid && UI.adv.act && a.l.startsWith(UI.adv.act) ? ' rec' : ''}" data-cact="${i}" ${a.dis ? 'disabled' : ''}>${esc(a.l)}</button>${a.dis && a.dis !== true ? `<p class="err">${a.dis}</p>` : ''}`).join('');
@@ -1809,7 +1809,7 @@ function dragIntents(c) {
     if (o) I.push({zones: ['table'], label: `${c.n} herausfordern`, run: () => resolveOpt(o.v)});
   }
   if (!me().hand.includes(c)) return I;
-  const acts = cardActions(c, 'hand').filter(a => a.l && a.fn && !/^Verkaufen/.test(a.l));
+  const acts = cardActions(c, 'hand').filter(a => a.l && a.fn && !/^Verkaufen/.test(a.l) && tutActOk(c, a.l, 'hand'));
   const C = S.combat;
   switch (c.k) {
     case 'item': case 'race': case 'class': case 'levelup':
@@ -2028,7 +2028,7 @@ const TUT_LESSONS = [
     text: 'Ganz unten liegen deine Handkarten. Die hast du in Reserve und spielst sie aus, wenn du sie brauchst.'},
   {id: 't6', st: S1, ok: 'Alles klar', spot: '#scr-game .topbar', step: [10, 10], only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Und ganz oben: Links ist das Menü, falls du eine Pause brauchst. In der Mitte siehst du, in welchem Schritt deines Zuges du gerade bist. Rechts stehen die Notizen mit allem, was im Spiel passiert ist.'},
-  {id: 'karte', st: S1, sheet: 'card', when: () => tCtx() === 'kick' && S.turn === 1, done: () => TUT.sawCard && !SHEETS.length, only: () => false, hl: () => '#hand .mc', shl: () => $$('#sheet [data-cact]').find(b => /Ausrüsten/.test(b.textContent)),
+  {id: 'karte', st: S1, act: /^Ausrüsten/, sheet: 'card', when: () => tCtx() === 'kick' && S.turn === 1, done: () => TUT.sawCard && !SHEETS.length, only: () => false, hl: () => '#hand .mc', shl: () => $$('#sheet [data-cact]').find(b => /Ausrüsten/.test(b.textContent)),
     text: 'Tipp mal auf deine Karte. Dann siehst du groß, was sie kann. Mit „Ausrüsten“ setzt du den Helm auf und wirst stärker.'},
   {id: 'tuer', st: S1, when: () => tCtx() === 'kick' && S.turn === 1, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
     text: 'Jetzt geht es los. Jeder Zug beginnt damit, dass du eine Tür aufstößt. Dahinter kann ein Monster lauern. Tipp auf „Tür aufstoßen“.'},
@@ -2039,13 +2039,13 @@ const TUT_LESSONS = [
   /* ---- Station 2: Wer bin ich? ---- */
   {id: 'hallo2', st: S2, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Diesmal geht es um dich: Rasse, Klasse und was du mit Gegenständen machst, die du nicht brauchst. Ziel ist Stufe 4.'},
-  {id: 'rasse', st: S2, when: () => tCtx() === 'kick' && tHand('Elf') && !me().race, done: () => !!me().race, only: () => false, hl: () => tCard('Elf'),
+  {id: 'rasse', st: S2, act: /^Ausspielen/, when: () => tCtx() === 'kick' && tHand('Elf') && !me().race, done: () => !!me().race, only: () => false, hl: () => tCard('Elf'),
     text: 'Rassen geben dir besondere Fähigkeiten. Tipp die Elfe an, lies, was sie kann, und spiel sie dann aus.'},
-  {id: 'klasse', st: S2, when: () => tCtx() === 'kick' && me().race && !me().cls && tHand('Krieger'), done: () => !!me().cls, only: () => false, hl: () => [tCard('Krieger'), '#table'],
+  {id: 'klasse', st: S2, act: /^Ausspielen/, when: () => tCtx() === 'kick' && me().race && !me().cls && tHand('Krieger'), done: () => !!me().cls, only: () => false, hl: () => [tCard('Krieger'), '#table'],
     text: 'Jetzt die Klasse. Krieger können im Kampf Karten abwerfen und werden dafür stärker. Probier diesmal den schnellen Weg: Halt den Krieger fest und zieh ihn nach oben aufs Spielfeld. So spielst du jede Karte aus, ohne sie erst anzutippen.'},
-  {id: 'breitschwert', st: S2, when: () => tCtx() === 'kick' && me().cls && tHand('Breitschwert der Angeberei'), done: () => tEq('Breitschwert der Angeberei'), only: () => false, hl: () => tCard('Breitschwert der Angeberei'),
+  {id: 'breitschwert', st: S2, act: /^Ausrüsten/, when: () => tCtx() === 'kick' && me().cls && tHand('Breitschwert der Angeberei'), done: () => tEq('Breitschwert der Angeberei'), only: () => false, hl: () => tCard('Breitschwert der Angeberei'),
     text: 'Manche Gegenstände darf nur eine bestimmte Klasse oder Rasse benutzen. Das Breitschwert der Angeberei ist nur für Krieger, braucht beide Hände und gibt +4. Rüste es aus.'},
-  {id: 'verkaufen', st: S2, when: () => tCtx() === 'kick' && tEq('Breitschwert der Angeberei') && tHand('Protzige Goldkette') && me().lvl < 3, done: () => me().lvl >= 3, only: () => false, hl: () => [tCard('Protzige Goldkette'), tCard('Hörnerhelm')],
+  {id: 'verkaufen', st: S2, act: /^Verkaufen/, sell: ['Protzige Goldkette', 'Hörnerhelm'], when: () => tCtx() === 'kick' && tEq('Breitschwert der Angeberei') && tHand('Protzige Goldkette') && me().lvl < 3, done: () => me().lvl >= 3, only: () => false, hl: () => [tCard('Protzige Goldkette'), tCard('Hörnerhelm')],
     text: 'Goldkette und Hörnerhelm brauchst du gerade nicht. Gegenstände kannst du verkaufen: Je 1000 Gold bringen dir eine Stufe. Tipp die Goldkette an, wähle „Verkaufen“ und markiere auch den Hörnerhelm.'},
   {id: 'tuer3', st: S2, when: () => tCtx() === 'kick' && S.turn === 1 && me().lvl >= 3, done: () => tCtx() !== 'kick', hl: () => '#act .btn.primary',
     text: 'Stufe 3, und das ganz ohne Kampf! Jetzt stößt du die Tür auf.'},
@@ -2064,7 +2064,7 @@ const TUT_LESSONS = [
     text: 'Pech gehabt! Einen Fluch, den du beim Aufstoßen aufdeckst, bekommst du selbst ab: eine Stufe weniger. Jetzt durchsuchst du noch den Raum.'},
   {id: 'verdeckt', st: S3, ok: true, cards: ['Windböe'], when: () => tCtx() && tHand('Windböe'), done: () => !tHand('Windböe'), hl: () => '.oc[data-opp="1"]',
     text: 'Verdeckt gezogene Flüche wirken nicht auf dich. Die Windböe kannst du jederzeit auf einen Gegner spielen: Zieh sie oben auf Berta, dann ist ihr Hörnerhelm weg. Du kannst sie dir aber auch aufheben.'},
-  {id: 'trank', st: S3, when: () => tFight() && !evalCombat(S.combat).win && tHand('Trank der Tapferkeit'), done: () => !tHand('Trank der Tapferkeit') || !tFight(), only: () => false, hl: () => tCard('Trank der Tapferkeit'),
+  {id: 'trank', st: S3, act: /^Für unsere Seite/, when: () => tFight() && !evalCombat(S.combat).win && tHand('Trank der Tapferkeit'), done: () => !tHand('Trank der Tapferkeit') || !tFight(), only: () => false, hl: () => tCard('Trank der Tapferkeit'),
     text: 'Knapp daneben, und bei Gleichstand gewinnt immer das Monster. Einmal-Gegenstände wie der Trank wirken nur in diesem Kampf und können ihn drehen: Zieh den Trank auf deine Seite des Spielfelds.'},
   {id: 'golem', st: S3, when: () => tFight() && tMon('Bürokratie-Golem') && !evalCombat(S.combat).win, done: () => !tFight(), only: o => o.v === 'run', hl: tOpt(o => o.v === 'run'),
     text: 'Gegen den Bürokratie-Golem habt ihr auch zu zweit keine Chance. Wenn nicht mal Hilfe reicht, bleibt nur Weglaufen. Normalerweise würfelst du und brauchst eine 5 oder 6. Klappt es nicht, trifft dich, was unten auf dem Monster steht.'},
@@ -2072,9 +2072,9 @@ const TUT_LESSONS = [
     text: 'Zum Glück hast du Nebelpulver. Damit entkommst du sicher, ohne zu würfeln.'},
   {id: 'hilfe', st: S3, when: () => tFight() && tMon('Troll unter der Autobahnbrücke') && !evalCombat(S.combat).win && S.combat.h == null, done: () => !tFight() || S.combat.h != null, only: o => o.v === 'help', hl: tOpt(o => o.v === 'help'),
     text: 'Den Troll schaffst du allein nicht. Dann holst du dir Hilfe: Bitte Berta, mitzukämpfen. Ihre Kampfstärke zählt dann mit, dafür teilt ihr die Schätze.'},
-  {id: 'hilfewer', st: S3, when: () => tCtx() === 'helpWho', done: () => tCtx() !== 'helpWho', hl: tOpt(o => o.v === 1),
+  {id: 'hilfewer', st: S3, noCancel: true, only: o => o.v === 1, when: () => tCtx() === 'helpWho', done: () => tCtx() !== 'helpWho', hl: tOpt(o => o.v === 1),
     text: 'Tipp auf Berta.'},
-  {id: 'angebot', st: S3, when: () => tCtx() === 'helpOffer', done: () => tCtx() !== 'helpOffer',
+  {id: 'angebot', st: S3, noCancel: true, when: () => tCtx() === 'helpOffer', done: () => tCtx() !== 'helpOffer',
     text: 'Wie viele Schätze bietest du ihr an? Je mehr, desto eher sagt jemand ja. Berta hilft dir heute aber sowieso.'},
   {id: 'zusammen', st: S3, when: () => tFight() && S.combat.h != null && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Zusammen seid ihr stärker als der Troll. Tipp auf „Monster besiegen“ und hol dir Stufe 4!'},
@@ -2096,29 +2096,57 @@ const TUT_LESSONS = [
     text: 'Kein Monster hinter der Tür? Dann darfst du eins von deiner Hand herausfordern. Der Wütende Gartenzwerg ist schwach: Fordere ihn heraus.'},
   {id: 'kalle', st: S4, when: () => S.cur === 1 && !S.combat, done: () => S.cur === 0 || !!S.combat,
     text: 'Jetzt ist Kalle dran. Pass gut auf, gleich darfst du mitmischen.'},
-  {id: 'einmischen', st: S4, when: () => tAsk('interfere') && tHand('Stinksauer'), done: () => !tHand('Stinksauer') || !tAsk('interfere'), only: () => false, hl: () => tCard('Stinksauer'),
+  {id: 'einmischen', st: S4, act: /^Auf /, when: () => tAsk('interfere') && tHand('Stinksauer'), done: () => !tHand('Stinksauer') || !tAsk('interfere'), only: () => false, hl: () => tCard('Stinksauer'),
     text: 'Kalle gewinnt gerade gegen den Rentner-Ritter. Mit Monster-Zusätzen machst du fremde Monster stärker: Zieh „Stinksauer“ auf sein Monster, dann hat es +5.'},
   {id: 'weiter', st: S4, when: () => tAsk('interfere') && !tHand('Stinksauer'), done: () => !tAsk('interfere'), hl: () => '#act .btn.primary',
     text: 'Jetzt verliert Kalle! Tipp auf „Fertig, weiter“ und schau zu, was passiert.'},
-  {id: 'winzig', st: S4, when: () => tFight() && !evalCombat(S.combat).win && tHand('Winzig'), done: () => !tHand('Winzig') || !tFight(), only: () => false, hl: () => tCard('Winzig'),
+  {id: 'winzig', st: S4, act: /^Auf /, when: () => tFight() && !evalCombat(S.combat).win && tHand('Winzig'), done: () => !tHand('Winzig') || !tFight(), only: () => false, hl: () => tCard('Winzig'),
     text: 'Der Bürokratie-Golem ist zu stark für dich. Monster-Zusätze darfst du auch in deinem eigenen Kampf spielen: „Winzig“ macht das Monster um 5 schwächer. Zieh die Karte aufs Spielfeld.'},
   {id: 'sieg4', st: S4, when: () => tFight() && S.turn >= 2 && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Jetzt bist du stärker. Besiege den Golem und hol dir Stufe 5!'}
 ];
 const tutLesson = () => TUT && TUT.cur ? TUT_LESSONS.find(l => l.id === TUT.cur) : null;
+// Welche Aktion mit einer erlaubten Karte? Nur die, um die es in der Lektion geht (Ausrüsten statt Rucksack …)
+function tutActOk(c, label, where) {
+  if (!SCN || !SCN.tut || SCN.tutFree || !S || S.winner != null) return true;
+  if (!tutCardOk(c)) return false;
+  if ((where || 'hand') !== 'hand') return false;   // Ausrüstung, Rucksack, Rasse, Klasse bleiben in der Einführung, wie sie sind
+  const L = tutLesson(); if (!L) return false;
+  if (L.act) return L.act.test(label);
+  if (L.cards === true) return !/Verkaufen|Ablegen/.test(label);
+  return !/Rucksack|Ablegen|Verkaufen|für das Monster|Für das Monster/.test(label);
+}
+// Verkaufen in der Einführung: nur, was die Lektion vorsieht
+function tutSellOk(c) {
+  if (!SCN || !SCN.tut || SCN.tutFree) return true;
+  const L = tutLesson();
+  return !!(L && L.sell && L.sell.includes(c.n));
+}
 function tutGate(q, ctx) {
-  const L = SCN && SCN.tut && tutLesson();
+  if (!SCN || !SCN.tut) return;
+  const L = tutLesson(), strict = !SCN.tutFree;
+  // Einführung: Bots nicht helfen (sonst könnte Kalle die Station gewinnen)
+  if (strict && ctx === 'botHelp') { q.opts.forEach(o => { if (o.v === 'yes') o.dis = true; }); return; }
+  if (strict && L && L.noCancel) q.opts.forEach(o => { if (o.v === 'x') o.dis = true; });   // Abbrechen würde aus der Lektion führen
+  // Ohne eigene Vorgabe der Lektion: an den üblichen Stellen nur den Hauptknopf erlauben (Tür auf, Monster besiegen,
+  // Raum durchsuchen, Fertig, Zug beenden), damit niemand vom geplanten Weg abweicht
+  if (strict && (!L || !L.only) && ['kick', 'trouble', 'fight', 'interfere', 'charity', 'run'].includes(ctx)) {
+    if (q.opts.some(o => o.kind === 'primary' && !o.dis)) q.opts.forEach(o => { if (o.kind !== 'ghost' && o.kind !== 'primary') o.dis = true; });
+    return;
+  }
   if (!L || !L.only) return;
   const was = q.opts.map(o => o.dis);
   q.opts.forEach(o => { if (o.kind !== 'ghost' && !L.only(o)) o.dis = true; });
   // Sicherheitsnetz: Im Kampf darf eine Lektion nie alle Wege versperren (sonst steckt man fest)
-  if ((ctx === 'fight' || ctx === 'run') && !q.opts.some(o => o.kind !== 'ghost' && !o.dis)) q.opts.forEach((o, i) => { o.dis = was[i]; });
+  if ((ctx === 'fight' || ctx === 'run') && !q.opts.some(o => o.kind !== 'ghost' && !o.dis) &&
+      !me().hand.some(c => { try { return cardActions(c, 'hand').some(x => x.fn && !x.dis && tutActOk(c, x.l, 'hand')); } catch (e) { return false; } }))
+    q.opts.forEach((o, i) => { o.dis = was[i]; });   // nur wenn auch keine erlaubte Karte mehr hilft
 }
 // In den Lektionen der Einführung darf man nur die Karten spielen, auf die Hilde gerade zeigt
 // (oder die eine Lektion ausdrücklich freigibt). So kann niemand vom geplanten Weg abkommen.
 function tutCardOk(c) {
-  if (!SCN || !SCN.tut || !S || S.winner != null || !c || !TUT) return true;
-  const L = tutLesson(); if (!L) return true;
+  if (!SCN || !SCN.tut || !S || S.winner != null || !c) return true;
+  const L = tutLesson(); if (!L) return !!SCN.tutFree;   // zwischen den Lektionen: Hand gesperrt (außer in der freien Probepartie)
   if (L.cards) return L.cards === true || L.cards.includes(c.n);
   const el = $(tCard(c.n)); if (!el) return false;
   return (L.hl ? [].concat(L.hl()) : []).filter(Boolean).some(h => typeof h === 'string' ? el.matches(h) : h === el);
@@ -2132,6 +2160,8 @@ function tutUpdate() {
   const was = TUT.cur;
   let L = tutLesson();
   if (L && (TUT.fin.has(L.id) || (L.done && L.done()))) { TUT.fin.add(L.id); L = null; TUT.cur = null; }
+  // Passt eine Lektion nicht mehr (z. B. die Karte, um die es geht, ist weg), nicht daran hängen bleiben
+  if (L && !L.ok && L.done && !SHEETS.length && S.cur === 0 && UI.prompt && !L.when()) { TUT.fin.add(L.id); L = null; TUT.cur = null; }
   if (!L) { L = TUT_LESSONS.find(l => (!l.st || l.st.includes(SCN.tut)) && !TUT.fin.has(l.id) && l.when()); if (L) TUT.cur = L.id; }
   if (TUT.cur !== was) render();   // Knöpfe im Dock neu sperren oder freigeben
   const dim = $('#tutdim');
