@@ -231,7 +231,7 @@ const accInput = (id, type, val, ph, ac) => `<input id="${id}" class="pf-input a
 const accBtn = (act, label, cls = '') => `<button type="button" class="btn ${cls}" data-acct="${act}"${ACC.busy ? ' disabled' : ''}>${label}</button>`;
 SHEET_VIEWS.acct = () => {
   const msg = (ACC.err ? `<p class="acc-err">${esc(ACC.err)}</p>` : '') + (ACC.info ? `<p class="acc-info">${esc(ACC.info)}</p>` : '');
-  const small = '<p class="hint acc-small">Gesichert werden Profil, Story-Fortschritt, Münzen, Aufträge, Deck und Einstellungen. Eine laufende Partie bleibt auf dem Gerät. Mehr dazu in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>';
+  const small = '<p class="hint acc-small">Gesichert werden Profil, Story-Fortschritt, Münzen, Aufträge, Deck und Einstellungen. Eine laufende Partie bleibt auf dem Gerät. Mehr dazu in der <a href="../datenschutz.html">Datenschutzerklärung</a>.</p>';
   const u = ACC.user;
   if (u) {
     const via = u.providerData.some(p => p.providerId === 'google.com') ? 'mit Google' : 'mit E-Mail';

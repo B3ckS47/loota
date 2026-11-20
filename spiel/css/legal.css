@@ -1,0 +1,19 @@
+@font-face{font-family:'Grenze Gotisch';src:url(../fonts/grenze-gotisch-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Alegreya Sans';src:url(../fonts/alegreya-sans-latin-400-normal.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Alegreya Sans';src:url(../fonts/alegreya-sans-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#3a2617;font:17px/1.55 'Alegreya Sans',system-ui,sans-serif;color:#3b2a1a}
+main{max-width:760px;margin:0 auto;padding:16px}
+.paper{background:#fbf3e2;border:2px solid #6b4a2b;border-radius:16px;padding:22px 20px 26px;box-shadow:0 4px 0 #2a1a0e}
+h1,h2{font-family:'Grenze Gotisch',serif;font-weight:700;color:#4a2c14;line-height:1.15}
+h1{font-size:34px;margin:0 0 6px}
+h2{font-size:24px;margin:28px 0 8px}
+h3{font-size:18px;margin:18px 0 4px}
+p,li{margin:0 0 10px}
+ul{padding-left:22px}
+a{color:#9a3a14}
+.back{display:inline-block;margin:0 0 12px;color:#f6e7c8;text-decoration:none;font-weight:700}
+.stand{opacity:.7;font-size:15px}
+.ph{background:#fde7a6;border-radius:4px;padding:0 4px}
+address{font-style:normal;margin:0 0 10px}

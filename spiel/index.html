@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15100c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plundo">
+<meta name="description" content="Fantasy-Kartenspiel gegen Bots: Monster besiegen, Beute machen, Stufe 10 erreichen.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="app-icons/icon-192.png">
+<link rel="apple-touch-icon" href="app-icons/apple-touch-icon.png">
+<title>Plundo</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <div class="tide" aria-hidden="true"><i></i></div>
+
+  <!-- ============ Startbildschirm ============ -->
+  <section id="scr-title" class="screen" aria-label="Startbildschirm">
+    <div class="t-hero" aria-hidden="true"><img id="t-map" src="art/karte-welt1.webp" alt=""></div>
+    <canvas id="motes" aria-hidden="true"></canvas>
+    <header class="t-top">
+      <button class="t-me" type="button" data-go="profile" aria-label="Dein Charakter"><span class="t-pt" id="t-pt"><img src="icons/portrait-du.png" alt=""></span><span class="t-who"><b id="t-name">Abenteurer</b><small id="t-title">Dein Charakter</small></span></button>
+      <div class="t-right">
+        <button class="t-coins" type="button" data-go="shop" aria-label="Münzen, zum Krämerladen"><img src="icons/muenze-voll.png" alt=""><b id="shop-info">0</b><span class="t-plus" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg></span></button>
+        <button class="t-gear" type="button" data-go="settings" aria-label="Optionen"><img src="icons/nav-optionen.png" alt=""></button>
+      </div>
+    </header>
+    <h1 class="t-logo"><img src="art/logo-plundo.webp" alt="Plundo" width="960" height="397"></h1>
+    <div class="t-dots" id="t-dots" aria-hidden="true"></div>
+    <section class="t-story" aria-label="Storymodus">
+      <div class="t-chips"><span class="t-world" id="t-world">Welt 1</span><span class="t-stars"><img src="icons/stern-voll.png" alt=""><b id="t-stars">0 / 0</b></span></div>
+      <button class="t-wbtn" type="button" data-go="story"><span class="t-wname" id="t-wname">Rund um die Taverne</span><span class="t-next" id="story-info"></span></button>
+      <button class="t-cta" type="button" data-go="storygo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg><span id="t-cta">Weiterspielen</span></button>
+    </section>
+    <div class="t-modes" role="radiogroup" aria-label="Spielauswahl: mit dem Spielen-Knopf unten starten">
+      <button class="t-card" type="button" role="radio" data-mode="free" aria-checked="true">
+        <span class="tc-art tc-free" aria-hidden="true"><img src="art/kachel-frei.webp" alt=""></span>
+        <span class="tc-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+        <span class="tc-txt"><b>Freies Spiel</b><small id="free-info">Gegen 2 oder 3 Bots</small></span>
+      </button>
+      <button class="t-card" type="button" role="radio" data-mode="online" aria-checked="false">
+        <span class="tc-art tc-online" aria-hidden="true"><img src="art/kachel-online.webp" alt=""></span>
+        <span class="tc-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+        <span class="tc-badge">Bald</span>
+        <span class="tc-txt"><b>Online</b><small>Mit Freunden spielen</small></span>
+      </button>
+    </div>
+    <button class="t-daily" type="button" data-go="daily" id="t-daily"></button>
+    <nav class="t-nav" aria-label="Bereiche">
+      <button type="button" data-go="shop"><img src="icons/nav-laden.png" alt="">Laden</button>
+      <button type="button" data-go="cards"><img src="icons/nav-karten.png" alt="">Karten</button>
+      <button type="button" class="on" data-go="playnow" id="tn-play" aria-label="Spielen: Freies Spiel starten"><span class="tn-play"><img src="icons/phase-tuer.png" alt=""></span>Spielen</button>
+      <button type="button" data-go="daily"><span class="tn-dot" id="tn-daily" hidden></span><img src="icons/nav-auftraege.png" alt="">Aufträge</button>
+      <button type="button" data-go="online"><img src="icons/nav-freunde.png" alt="">Freunde</button>
+    </nav>
+  </section>
+
+  <!-- ============ Storymodus ============ -->
+  <section id="scr-story" class="screen" aria-label="Storymodus" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Storymodus</h2><span class="st-coins" id="st-coins"></span></header>
+    <div class="content st-content"><div class="panel st-head" id="st-head"></div><div class="smap" id="st-map"></div></div>
+  </section>
+
+  <!-- ============ Freies Spiel ============ -->
+  <section id="scr-setup" class="screen" aria-label="Freies Spiel" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Freies Spiel</h2></header>
+    <div class="content">
+      <div class="panel">
+        <h3 class="lbl">Mitspieler</h3>
+        <div class="seg big" data-set="bots">
+          <button type="button" data-v="2"><span class="pts"><img src="icons/portrait-berta.png" alt=""><img src="icons/portrait-kalle.png" alt=""></span>2 Bots</button>
+          <button type="button" data-v="3"><span class="pts"><img src="icons/portrait-berta.png" alt=""><img src="icons/portrait-kalle.png" alt=""><img src="icons/portrait-uschi.png" alt=""></span>3 Bots</button>
+        </div>
+        <div class="trow"><span>Gegner</span></div>
+        <div class="seg" data-set="foes">
+          <button type="button" data-v="zufall">Zufällig</button>
+          <button type="button" data-v="stammtisch">Der Stammtisch</button>
+        </div>
+        <div class="foes" id="setup-foes"></div>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Schwierigkeit</h3>
+        <div class="seg" data-set="diff">
+          <button type="button" data-v="gemuetlich">Gemütlich</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="gnadenlos">Gnadenlos</button>
+        </div>
+        <p class="hint" id="diff-hint"></p>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Länge der Partie</h3>
+        <label class="slider goal"><span>Gewonnen hat, wer zuerst <b id="goal-val">Stufe 10</b> erreicht</span><input type="range" min="2" max="10" step="1" data-range="goal" aria-label="Siegstufe"></label>
+        <p class="hint" id="goal-hint"></p>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Deck</h3>
+        <button type="button" class="btn deckbtn" data-go="cards" id="setup-deck">Empfohlen</button>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Tempo der Bots</h3>
+        <div class="seg" data-set="speed">
+          <button type="button" data-v="langsam">Langsam</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="schnell">Schnell</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Lernhilfen</h3>
+        <div class="trow"><span>Zug-Empfehlung<small>Schlägt dir bei jeder Entscheidung einen Zug vor.</small></span><button class="switch" type="button" role="switch" data-toggle="advice" aria-label="Zug-Empfehlung"></button></div>
+        <div class="trow"><span>Tipps und Regeln<small>Erklärt in den Notizen, welche Regel gerade greift.</small></span><button class="switch" type="button" role="switch" data-toggle="coach" aria-label="Tipps und Regeln"></button></div>
+      </div>
+    </div>
+    <div class="footbtn"><button class="btn primary" type="button" data-go="start">Los geht’s!</button></div>
+  </section>
+
+  <!-- ============ Spiel ============ -->
+  <section id="scr-game" class="screen" aria-label="Spiel" hidden>
+    <header class="topbar">
+      <button class="iconbtn" type="button" data-go="pause" aria-label="Menü"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+      <div class="tb-mid" id="tb-mid" role="status"><b class="tb-title" id="tb-title"></b><i class="tb-tide" id="tb-tide" aria-hidden="true" hidden></i><i class="tb-sep" aria-hidden="true"></i><div class="phasedots" id="phasedots"></div></div>
+      <button class="iconbtn" type="button" data-go="log" aria-label="Spielleiter-Notizen"><svg viewBox="0 0 24 24"><path d="M7 3h9l3 3v15H7z M10 9h6 M10 13h6 M10 17h4" /></svg><span class="badge" id="log-badge" hidden></span></button>
+      <button class="iconbtn" type="button" data-go="sound" aria-label="Ton an oder aus" id="btn-sound"></button>
+    </header>
+    <div class="opps" id="opps"></div>
+    <div class="table" id="table"></div>
+    <div class="act" id="act" aria-live="polite"></div>
+    <div class="mebar" id="mebar"></div>
+    <div class="hand" id="hand" aria-label="Deine Hand"></div>
+    <div class="wopps" id="wopps" aria-label="Gegner"></div>
+    <aside class="wlog" id="wlog" aria-label="Spielleiter-Notizen"></aside>
+    <aside class="wside" aria-label="Deine Figur"><div id="wfight"></div><div id="wme"></div></aside>
+    <div class="wpile" id="wpile"></div>
+    <div class="wprev" id="wprev" aria-hidden="true"></div>
+    <div class="tutdim" id="tutdim" hidden><i></i></div>
+    <div class="tutor" id="tutor" hidden aria-live="polite"></div>
+  </section>
+
+  <!-- ============ Einstellungen ============ -->
+  <section id="scr-settings" class="screen" aria-label="Einstellungen" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Optionen</h2></header>
+    <div class="content">
+      <div class="panel">
+        <h3 class="lbl">Klang</h3>
+        <div class="trow"><span>Musik</span><button class="switch" type="button" role="switch" data-toggle="music" aria-label="Musik"></button></div>
+        <label class="slider"><span>Lautstärke Musik</span><input type="range" min="0" max="1" step="0.05" data-range="mvol" aria-label="Lautstärke Musik"></label>
+        <div class="trow"><span>Soundeffekte</span><button class="switch" type="button" role="switch" data-toggle="sfx" aria-label="Soundeffekte"></button></div>
+        <label class="slider"><span>Lautstärke Effekte</span><input type="range" min="0" max="1" step="0.05" data-range="svol" aria-label="Lautstärke Effekte"></label>
+        <div class="trow" id="row-vibrate"><span>Vibration</span><button class="switch" type="button" role="switch" data-toggle="vibrate" aria-label="Vibration"></button></div>
+        <p class="hint">Am iPhone schaltet der Lautlos-Schalter auch die Musik der App stumm.</p>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Spiel</h3>
+        <div class="trow"><span>Tempo der Bots</span></div>
+        <div class="seg" data-set="speed">
+          <button type="button" data-v="langsam">Langsam</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="schnell">Schnell</button>
+        </div>
+        <div class="trow"><span>Zug-Empfehlung</span><button class="switch" type="button" role="switch" data-toggle="advice" aria-label="Zug-Empfehlung"></button></div>
+        <div class="trow"><span>Tipps und Regeln</span><button class="switch" type="button" role="switch" data-toggle="coach" aria-label="Tipps und Regeln"></button></div>
+        <div class="trow"><span>Handkarten der Bots zeigen<small>Zum Lernen, wie die Bots denken.</small></span><button class="switch" type="button" role="switch" data-toggle="open" aria-label="Handkarten der Bots zeigen"></button></div>
+        <div class="trow"><span>Effekte reduzieren<small>Weniger Bewegung und Animationen.</small></span><button class="switch" type="button" role="switch" data-toggle="reduce" aria-label="Effekte reduzieren"></button></div>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Spielstand</h3>
+        <p class="hint" id="save-info">Kein gespeichertes Spiel.</p>
+        <button class="btn small danger" type="button" data-go="delsave">Spielstand löschen</button>
+      </div>
+      <div class="panel">
+        <h3 class="lbl">Testphase</h3>
+        <div class="trow"><span>Stationen überspringen</span><button class="switch" type="button" role="switch" data-toggle="test" aria-label="Stationen überspringen"></button></div>
+        <p class="hint">Im Storymodus bekommt jede Station einen Knopf zum Überspringen, auch gesperrte. Übersprungene Stationen zählen mit allen Sternen.</p>
+        <button class="btn small danger" type="button" data-go="resetstory">Storymodus zurücksetzen</button>
+        <div class="trow"><span>Auftrags-Serie<small id="cheat-streak">Aktuell 0 Tage</small></span></div>
+        <div class="btnrow2"><button class="btn small" type="button" data-go="streakplus">Serie +1 Tag</button><button class="btn small" type="button" data-go="streakreset">Serie auf 0</button></div>
+        <p class="hint">Am 3. Tag gibt es eine Holztruhe, alle 7 Tage eine Goldtruhe. So kannst du die Truhen ausprobieren.</p>
+        <div class="trow"><span>Kaufwelten<small id="cheat-buy">Noch nichts freigeschaltet</small></span></div>
+        <div class="btnrow2"><button class="btn small" type="button" data-go="unlockall">Alles freischalten</button><button class="btn small" type="button" data-go="buyreset">Käufe zurücksetzen</button></div>
+        <div class="trow"><span>Krämerladen<small>Würfelt das heutige Angebot neu</small></span><button class="btn small" type="button" data-go="shopreroll">Neu bestücken</button></div>
+        <p class="hint">„Alles freischalten“ kauft alle Welten, schließt jede Station mit allen Sternen ab und schaltet Decks, Tische, Musik, Titel, Rahmen und Porträts frei. Zurück geht es mit „Storymodus zurücksetzen“ und „Käufe zurücksetzen“.</p>
+      </div>
+      <div class="panel about">
+        <h3 class="lbl">Über die App</h3>
+        <p>Plundo <span id="app-version"></span>. Ein Hobbyprojekt: Alle Karten, Texte, Grafiken und Klänge sind eigens für dieses Spiel entstanden.</p>
+        <p id="install-hint" class="hint"></p>
+        <button class="btn small" type="button" id="btn-install" hidden>Als App installieren</button>
+        <p class="legal-links"><a href="../datenschutz.html">Datenschutz</a> · <a href="../impressum.html">Impressum</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Regeln ============ -->
+  <section id="scr-rules" class="screen" aria-label="Spielregeln" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Spielregeln</h2></header>
+    <div class="content rules">
+      <div class="panel quizcta"><div><b>Probespiel mit Hilde</b><span>Eine kurze Übungspartie, in der Hilde jeden Schritt erklärt.</span></div><button class="btn" type="button" data-go="tutorial">Starten</button></div>
+      <div class="panel quizcta"><div><b>Regel-Quiz</b><span>Zehn Fragen: Wie sicher sitzen die Regeln?</span></div><button class="btn primary" type="button" data-go="quiz">Starten</button></div>
+<div class="rules-search panel"><label class="rs-label" for="rules-q">Regel nachschlagen</label><input id="rules-q" class="rs-input" type="search" placeholder="z. B. Rucksack, Gleichstand, Kobold" autocomplete="off" enterkeyhint="search"><p class="rs-none hint" hidden>Dazu steht hier nichts. Versuch ein anderes Wort.</p></div>
+<details class="rule panel" open data-k="schnellstart überblick ziel kurz"><summary>Schnellstart</summary><div class="rule-body">
+      <p>Wer zuerst <b>Stufe 10</b> erreicht, gewinnt. Die letzte Stufe gibt es nur für einen <b>Sieg über ein Monster</b>.</p>
+      <p>In jedem Zug öffnest du eine Tür. Dahinter wartet oft ein Monster. Ist deine <b>Kampfstärke höher</b> als das Monster, steigst du auf und bekommst Schätze. Sonst musst du weglaufen.</p>
+      <p>Mit Gegenständen wirst du stärker, mit Volk und Klasse bekommst du Fähigkeiten. Die anderen dürfen dir in jedem Kampf dazwischenfunken, und du ihnen.</p>
+      <p>Alle starten auf Stufe 1 als Mensch ohne Klasse, mit <b>4 Türkarten und 4 Schatzkarten</b>. Völker, Klassen und Gegenstände darfst du sofort auslegen.</p></div></details>
+<details class="rule panel" data-k="zug phase tür öffnen monster herausfordern raum durchsuchen trinkgeld handkarten limit"><summary>Dein Zug</summary><div class="rule-body"><ol class="phase-list">
+        <li><div><b>Tür öffnen.</b> Die oberste Türkarte wird offen aufgedeckt. Monster: sofort Kampf. Fluch: trifft dich sofort. Alles andere kommt auf die Hand.</div></li>
+        <li><div><b>Monster herausfordern.</b> Kein Kampf hinter der Tür? Dann darfst du ein Monster von deiner Hand bekämpfen.</div></li>
+        <li><div><b>Raum durchsuchen.</b> Wenn du nicht gekämpft hast: 1 Türkarte verdeckt auf die Hand.</div></li>
+        <li><div><b>Abgabe.</b> Mehr als 5 Handkarten? Den Überschuss bekommt, wer die niedrigste Stufe hat. Haben das mehrere, wird reihum verteilt. Bist du selbst (mit) am niedrigsten, legst du ihn ab.</div></li>
+      </ol>
+      <p class="hint">Gegenstände im Rucksack zählen nicht als Handkarten. Lege vor der Abgabe aus, was du behalten willst.</p></div></details>
+<details class="rule panel" data-k="kampf kampfstärke gleichstand sieg schätze stufe monsterstärke"><summary>Kampf</summary><div class="rule-body"><ul>
+        <li><b>Kampfstärke</b> = Stufe + Boni der ausgerüsteten Gegenstände + Einmal-Effekte. Der Rucksack zählt nicht.</li>
+        <li><b>Monsterstärke</b> = Stufe + Launen + Boni des Monsters (z. B. „+2 gegen Elfen“) + Einmal-Gegenstände für das Monster.</li>
+        <li>Höher als das Monster: Sieg. <b>Gleichstand ist eine Niederlage.</b></li>
+        <li>Sieg: meist 1 Stufe (große Monster 2) und so viele Schätze, wie auf der Karte stehen. Allein ziehst du sie verdeckt.</li>
+        <li>Mehrere Monster in einem Kampf: Stufen und Schätze zählen zusammen.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="hilfe helfer beute schätze teilen abwechselnd wählen angebot"><summary>Hilfe holen und Beute teilen</summary><div class="rule-body"><ul>
+        <li>Genau <b>1 Mitspieler</b> darf helfen, meist gegen ein Angebot an Schätzen. Seine Kampfstärke zählt dazu.</li>
+        <li>Aufsteigen tust nur du.</li>
+        <li>Mit Helfer werden die Schätze <b>offen</b> gezogen. Dann wählt ihr <b>abwechselnd, du zuerst</b>, bis der Helfer die abgemachte Zahl hat. Der Rest gehört dir.</li>
+        <li>Monster-Boni gelten auch, wenn nur der Helfer betroffen ist. Ein Elf als Helfer macht die Stechmücken also stärker.</li>
+        <li>Verliert ihr, muss auch der Helfer weglaufen.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="eingreifen launen stinksauer winzig riesenhaft einmal gegenstände trank hinterhalt monster fremder kampf"><summary>Eingreifen</summary><div class="rule-body"><ul>
+        <li>In jeden Kampf dürfen alle eingreifen, auch in fremde.</li>
+        <li><b>Launen</b> (z. B. „Stinksauer“, „Winzig“) spielt jeder auf ein Monster. Sie ändern seine Stärke und meist auch die Zahl der Schätze.</li>
+        <li><b>Einmal-Gegenstände</b> (Tränke & Co.) gehen direkt von der Hand, für eine Seite deiner Wahl. Manche nur für die kämpfende Seite.</li>
+        <li><b>Hinterhalt:</b> Zusammen mit einem Monster von deiner Hand in einen fremden Kampf spielen. Das Monster kämpft mit.</li>
+        <li>Flüche von der Hand gehen jederzeit, auf jeden.</li>
+        <li>Nach einem Eingriff darf die kämpfende Seite reagieren.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="weglaufen flucht würfel pech niederlage nebelpulver verfolgt niemanden"><summary>Weglaufen und Pech</summary><div class="rule-body"><ul>
+        <li>Verloren? Jeder Beteiligte würfelt <b>pro Monster</b> einen W6. <b>Ab 5</b> entkommst du.</li>
+        <li>Gegenstände, Monster und Weltregeln ändern den Wurf.</li>
+        <li>„Verfolgt niemanden bis Stufe X“: Bis zu dieser Stufe entkommst du ohne Würfeln.</li>
+        <li><b>Nebelpulver:</b> Du entkommst ohne Würfeln, vor allen Monstern des Kampfes.</li>
+        <li>Misslingt die Flucht, trifft dich das <b>Pech</b> auf der Monsterkarte.</li>
+        <li>Unter Stufe 1 kann niemand fallen.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="ausrüstung rucksack anlegen kopf rüstung schuhe hände sperrig sperrige gegenstände voll"><summary>Ausrüstung und Rucksack</summary><div class="rule-body"><ul>
+        <li>Gleichzeitig nutzbar: 1 Kopfbedeckung, 1 Rüstung, 1 Schuhwerk und 2 Hände (zwei Einhand- oder ein Zweihand-Gegenstand). Gegenstände ohne Platz: beliebig viele.</li>
+        <li><b>Sperrige Gegenstände:</b> nur einer, Zwerge dürfen beliebig viele haben. Das gilt für Ausrüstung und Rucksack zusammen.</li>
+        <li>Was du gerade nicht nutzt, kommt in den <b>Rucksack</b>: höchstens <b>3 Gegenstände</b>, beim Zwerg 5. Dort bringt es keinen Bonus.</li>
+        <li>Belegst du einen Platz neu, wandert der alte Gegenstand in den Rucksack. Ist der voll, kommt er auf die Hand.</li>
+        <li>Manche Gegenstände wirken nur mit dem passenden Volk oder der passenden Klasse.</li>
+        <li>Anlegen und Tauschen nur im eigenen Zug und nicht im Kampf.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="verkaufen gold goldbeutel 1000 stufe kaufen wechselgeld kobold hehler"><summary>Verkaufen und Goldbeutel</summary><div class="rule-body"><ul>
+        <li>Gegenstände und Einmal-Gegenstände kannst du verkaufen. Der Wert steht auf der Karte.</li>
+        <li>Je <b>1.000 Gold</b> gibt es <b>1 Stufe</b>.</li>
+        <li>Was übrig bleibt, kommt in deinen <b>Goldbeutel</b> und zählt beim nächsten Verkauf mit.</li>
+        <li>Nur im eigenen Zug, nicht im Kampf, und nie für die Siegstufe.</li>
+        <li>Kobolde bekommen einmal pro Zug 200 Gold extra. Hehler verkaufen auch Flüche und Launen, für je 200 Gold.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="stufenkarte stufenkarten siegstufe stufe 10 9"><summary>Stufenkarten und Siegstufe</summary><div class="rule-body"><ul>
+        <li>Eine Stufenkarte bringt 1 Stufe. Spielen darfst du sie im eigenen Zug, nicht im Kampf.</li>
+        <li>Verkaufen, Stufenkarten und die Pilzpfanne bringen dich höchstens auf Stufe 9.</li>
+        <li>Die letzte Stufe gibt es nur für einen Monstersieg. In Boss-Stationen gewinnt, wer den Boss besiegt.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="fluch flüche verdeckt offen glücksamulett"><summary>Flüche</summary><div class="rule-body"><ul>
+        <li>Beim Öffnen der Tür aufgedeckt: Der Fluch trifft dich.</li>
+        <li>Verdeckt gezogen (Raum durchsuchen, Schätze): Er kommt auf deine Hand. Du darfst ihn jederzeit auf irgendwen spielen.</li>
+        <li>Verlangt der Fluch etwas, das das Opfer nicht hat, passiert nichts.</li>
+        <li>Das <b>Glücksamulett</b> wehrt einen Fluch ab.</li>
+      </ul></div></details>
+<details class="rule panel" data-k="tod tot sterben"><summary>Tod</summary><div class="rule-body"><p>Du behältst Stufe, Volk und Klasse. Deine Handkarten werden abgelegt. Von deinen Gegenständen nimmt sich <b>jeder andere einen</b>, die höchste Stufe zuerst; der Rest wird abgelegt. Zu Beginn deines nächsten Zuges ziehst du 4 Tür- und 4 Schatzkarten.</p></div></details>
+<details class="rule panel" data-k="völker volk klassen klasse fähigkeit elf zwerg kobold mensch krieger zauberer hehler exorzist pirat gegenzauber"><summary>Völker und Klassen</summary><div class="rule-body"><p>Höchstens 1 Volk und 1 Klasse, jederzeit ablegbar. Eine neue Karte ersetzt die alte. Ohne Volkskarte bist du Mensch, ohne Fähigkeit.</p>
+      <table class="rc-table"><thead><tr><th>Karte</th><th>Was sie kann</th></tr></thead><tbody>
+        <tr><td>Elf</td><td>Scharfe Augen: Durchsuchst du den Raum, ziehst du 2 Karten und behältst 1.</td></tr>
+        <tr><td>Zwerg</td><td>Beliebig viele Sperrige Gegenstände. Rucksack 5 statt 3.</td></tr>
+        <tr><td>Kobold</td><td>Feilschen: Einmal pro Zug bringt ein Verkauf 200 Gold extra.</td></tr>
+        <tr><td>Krieger</td><td>Allein stark: Ohne Helfer +3 im Kampf.</td></tr>
+        <tr><td>Zauberer</td><td>Gegenzauber: Einmal pro Kampf 2 Karten abwerfen und eine Laune oder einen Einmal-Gegenstand gegen dich aufheben. Nach einem misslungenen Fluchtwurf bis zu 3 Karten abwerfen, je +1.</td></tr>
+        <tr><td>Hehler</td><td>Verkauft auch Flüche und Launen, für je 200 Gold.</td></tr>
+        <tr><td>Exorzist</td><td>Gegen Untote +3. Untote verfolgen ihn beim Weglaufen nie.</td></tr>
+        <tr><td>Pirat</td><td>Nur auf hoher See. Gewinnt er ohne Helfer, zieht er 1 Schatz mehr. Bei Seegang gibt er keine Karte ab.</td></tr>
+      </tbody></table></div></details>
+<details class="rule panel" data-k="tipps tipp strategie"><summary>Tipps</summary><div class="rule-body"><ul>
+        <li>Rüste alles aus, bevor du die Tür öffnest.</li>
+        <li>Fordere nur Monster heraus, die du mit Puffer schlägst. Die anderen greifen ein.</li>
+        <li>Hebe Launen und Tränke für den Moment auf, in dem jemand kurz vor Stufe 10 steht.</li>
+        <li>Lege vor der Abgabe Gegenstände aus oder in den Rucksack, sonst verschenkst du sie.</li>
+        <li>Wer vorne liegt, wird von allen gebremst. Biete Beute an, wenn du Hilfe brauchst.</li>
+      </ul></div></details>
+
+    </div>
+  </section>
+
+  <!-- ============ Charakter ============ -->
+  <section id="scr-profile" class="screen" aria-label="Dein Charakter" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Dein Charakter</h2></header>
+    <div class="content">
+      <div class="panel pf-hero" id="pf-hero"></div>
+      <div class="pf-stats" id="pf-stats"></div>
+      <button class="panel pf-acct" id="pf-acct" type="button" data-acct="open"></button>
+      <button class="panel pf-shoplink" type="button" data-go="shop"><img src="icons/nav-laden.png" alt=""><span><b>Krämerladen</b><span>Porträts, Rahmen, Titel und Hintergründe gegen Münzen. Jeden Tag ein neues Angebot.</span></span></button>
+      <div class="panel pf-sec">
+        <label class="lbl" for="pf-name">Profilname</label>
+        <input id="pf-name" class="pf-input" type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Wie sollen dich die anderen nennen?">
+        <p class="hint" id="pf-name-hint">2 bis 16 Zeichen. Später kann das dein Name für Partien gegen andere sein.</p>
+      </div>
+      <div class="panel pf-pager" id="pf-filter" role="group" aria-label="Optik nach Herkunft durchblättern"></div>
+      <div class="panel pf-sec">
+        <h4 class="lbl">Titel</h4>
+        <div class="pf-titles" id="pf-titles"></div>
+      </div>
+      <div class="panel pf-sec">
+        <h4 class="lbl">Porträt</h4>
+        <div class="pf-grid" id="pf-portraits"></div>
+        <p class="hint">Nur die Optik. Volk und Klasse bestimmen im Spiel weiter deine Karten.</p>
+      </div>
+      <div class="panel pf-sec">
+        <h4 class="lbl">Rahmen</h4>
+        <div class="pf-frames" id="pf-frames"></div>
+      </div>
+      <div class="panel pf-sec">
+        <h4 class="lbl">Hintergrund</h4>
+        <div class="pf-bgs" id="pf-bgs"></div>
+        <p class="hint">Liegt hinter deinem Porträt im Spiel, in deinem Profil und hier oben.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Karten ============ -->
+  <section id="scr-cards" class="screen" aria-label="Kartenübersicht" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Karten &amp; Deck</h2></header>
+    <div class="content"><div class="panel quizcta"><div><b>Regeln und Probespiel</b><span>Wie eine Runde abläuft, Hildes Übungspartie und das Regel-Quiz.</span></div><button class="btn" type="button" data-go="rules">Öffnen</button></div><div class="panel deckp" id="deck-panel"></div><div class="chips cfilter" id="card-filter"></div><div class="cgrid" id="card-grid"></div></div>
+  </section>
+
+  <!-- ============ Quiz ============ -->
+  <section id="scr-quiz" class="screen" aria-label="Regel-Quiz" hidden>
+    <header class="bar"><button class="iconbtn" type="button" data-back aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg></button><h2>Regel-Quiz</h2></header>
+    <div class="content" id="quiz"></div>
+  </section>
+</div>
+
+<div id="sheetwrap" aria-hidden="true"><div class="backdrop" data-sheetclose></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="diceov" class="diceov" hidden><img id="dice-img" src="icons/wuerfel-1.png" alt=""><div class="cap" id="dice-cap"></div></div>
+<canvas id="fxcanvas" aria-hidden="true"></canvas>
+
+<script src="js/engine.js"></script>
+<script src="js/story.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/billing.js"></script>
+</body>
+</html>

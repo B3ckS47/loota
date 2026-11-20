@@ -2329,3 +2329,13 @@ document.addEventListener('pointerover', e => {
   if (el && el.closest('#wprev')) return;
   if (uid !== W.hoverUid) { W.hoverUid = uid; render(); }
 });
+
+/* Einsprung von der Website: spiel/#konto öffnet die Anmeldung, spiel/#regeln die Regeln */
+function hashEntry() {
+  const h = location.hash; if (h !== '#regeln' && h !== '#konto') return;
+  if (h === '#regeln') show('rules');
+  else if (h === '#konto') { const b = document.querySelector('[data-acct="open"]'); if (b) b.click(); }
+  history.replaceState(null, '', location.pathname + location.search);
+}
+window.addEventListener('load', () => setTimeout(hashEntry, 400));
+window.addEventListener('hashchange', hashEntry);
