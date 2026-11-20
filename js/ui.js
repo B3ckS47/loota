@@ -1549,17 +1549,20 @@ SHEET_VIEWS.buyworld = s => {
   const w = worldById(s.w); if (!w) return null;
   const faces = [...new Set(w.stations.filter(st => st.scn && typeof st.scn === 'object' && st.scn.bots).flatMap(st => st.scn.bots))].filter(n => ICON.portrait[n]);
   const owned = worldOwned(w), rest = w.stations.filter(st => st.type !== 'shop').length;
-  const offers = OFFERS.filter(o => o.worlds.includes(w.id) && (o.worlds.length === 1 || o.worlds.some(x => x !== w.id && !worldOwned(worldById(x))))).map(o => `<button type="button" class="btn${o.worlds.length > 1 ? ' primary' : ''} bw-offer" data-offer="${o.id}"><b>${esc(o.n)}</b><span>${SET.test ? 'Gratis (Testphase)' : esc(o.price)}</span>${o.note ? `<small>${esc(o.note)}</small>` : ''}</button>`).join('');
+  const offers = OFFERS.filter(o => o.worlds.includes(w.id) && (o.worlds.length === 1 || o.worlds.some(x => x !== w.id && !worldOwned(worldById(x))))).map(o => `<button type="button" class="btn${o.worlds.length > 1 ? ' primary' : ''} bw-offer" data-offer="${o.id}"><b>${esc(o.n)}</b><span>${SET.test && !BILL.ready ? 'Gratis (Testphase)' : esc(offerPrice(o))}</span>${o.note ? `<small>${esc(o.note)}</small>` : ''}</button>`).join('');
   return {head: h3(`${wLabel(w)} · ${esc(w.name)}`), body: `<div class="bw-map" style="background-image:url(${w.map})"><span class="bw-faces">${faces.map(n => `<img src="${ICON.portrait[n]}" alt="${esc(n)}">`).join('')}</span></div>` +
     `<p class="bw-lead">${esc(w.intro.split('. ').slice(0, 3).join('. '))}.</p>` +
     `<ul class="bw-list"><li><b>${rest} Stationen</b> mit Rätseln, Duellen und ${esc(w.sell.boss)} als Boss</li><li><b>${esc(w.sell.rule.split(':')[0])}:</b>${esc(w.sell.rule.split(':').slice(1).join(':'))}</li><li><b>${w.sell.cards} neue Karten</b> und neue Optik: ${esc(w.sell.loot)} zum Sammeln</li><li><b>Danach fürs freie Spiel:</b> ${esc(w.unlocks.join(', '))}</li></ul>` +
     (owned ? `<p class="bw-own">Gehört dir. Viel Spaß!</p><div class="acts"><button type="button" class="btn primary" data-storyclose>Los geht’s</button></div>`
-      : `<div class="bw-offers">${offers}</div><p class="hint">${SET.test ? 'Testphase: Du kannst die Welt hier gratis freischalten. Echte Käufe kommen mit der Play-Store-Version.' : 'Einmal kaufen, für immer spielen. Kaufen geht bald in der Play-Store-Version.'}</p>`)};
+      : `<div class="bw-offers">${offers}</div><p class="hint">${BILL.ready ? 'Einmal kaufen, für immer spielen. Bezahlt wird über Google Play.' : SET.test ? 'Testphase: Du kannst die Welt hier gratis freischalten. Echte Käufe gibt es in der Plundo-App aus dem Play Store.' : 'Einmal kaufen, für immer spielen. Kaufen kannst du in der Plundo-App aus dem Play Store. Bist du dort angemeldet, hast du deine Welten auch hier.'}</p>` +
+        (BILL.ready ? `<button type="button" class="acc-link" data-billrestore>Schon gekauft? Käufe wiederherstellen</button>` : ''))};
 };
 async function buyOffer(id) {
   const o = OFFERS.find(x => x.id === id); if (!o) return;
-  if (!SET.test) { toast('Kaufen geht bald in der Play-Store-Version. In der Testphase (Optionen) kannst du schon gratis freischalten.'); buzz(30); return; }
-  unlockOffer(id); Snd.sfx('victory'); buzz([40, 60, 40]);
+  if (BILL.ready) { if (!(await billBuy(id))) return; }
+  else if (SET.test) unlockOffer(id);
+  else { toast('Kaufen kannst du in der Plundo-App aus dem Play Store. Bist du dort angemeldet, hast du deine Welten auch hier.'); buzz(30); return; }
+  Snd.sfx('victory'); buzz([40, 60, 40]);
   closeAllSheets(); toast(`${o.n} freigeschaltet!`);
   burstAt('#st-map', 30);
   renderStory(); renderTitle();
@@ -1723,6 +1726,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-title]'))) { if (el.classList.contains('locked')) { toast('Schaltest du im Storymodus frei.'); return; } PROFILE.title = el.dataset.title; saveProfile(); renderProfile(); return; }
   if ((el = t.closest('[data-worldrules]'))) { openSheet({id: 'worldrules', w: el.dataset.worldrules}); return; }
   if ((el = t.closest('[data-buyworld]'))) { openSheet({id: 'buyworld', w: el.dataset.buyworld}); return; }
+  if ((el = t.closest('[data-billrestore]'))) { billRestore(false).then(n => { if (n) { closeAllSheets(); } }); return; }
   if ((el = t.closest('[data-offer]'))) { buyOffer(el.dataset.offer); return; }
   if ((el = t.closest('[data-station]'))) { openStation(el.dataset.station); return; }
   if ((el = t.closest('[data-story-start]'))) { askStartStation(el.dataset.storyStart); return; }
