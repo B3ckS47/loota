@@ -114,7 +114,7 @@ async function cloudConflict(c, u) {
   const local = packLocal();
   const ok = await confirmDialog('Zwei Spielstände',
     `<b>Auf diesem Gerät:</b><br>${summaryText(local)}<br><br><b>In deinem Konto</b> (${esc(c.dev || 'anderes Gerät')}, ${agoText(c.client)}):<br>${summaryText(c.data)}<br><br>Welchen willst du behalten? Der andere wird überschrieben.`,
-    'Konto laden', 'Diesen behalten', 'Später entscheiden');
+    'Konto laden', 'Diesen behalten', null, {modal: true});
   if (ok === null) { ACC.state = 'hold'; acctRefresh(); return; }
   Object.assign(CLOUD, {uid: u.uid, email: u.email}); saveCloudMeta();
   if (ok) applyCloud(c);

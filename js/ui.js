@@ -1202,7 +1202,7 @@ function confirmDialog(title, text, yes, no, cancel, opt = {}) {
       ? `<div class="panel dlg-rib"><span class="ribbon"><span>${title}</span></span>${opt.img ? `<img class="dlg-scene" src="${opt.img}" alt="">` : ''}${opt.stat ? `<p class="dlg-stat">${opt.stat}</p>` : ''}<p>${text}</p>${btns}</div>`
       : `<div class="panel"><h3>${title}</h3><p>${text}</p>${btns}</div>`;
     d.addEventListener('click', e => {
-      if (e.target === d) { d.remove(); res(null); return; }
+      if (e.target === d) { if (opt.modal) return; d.remove(); res(null); return; }   // modal: nur über die Knöpfe zu schließen
       const b = e.target.closest('[data-dlg]'); if (!b) return;
       d.remove(); res(b.dataset.dlg === 'x' ? null : b.dataset.dlg === '1');
     });
