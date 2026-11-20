@@ -1583,3 +1583,5 @@ html.pf-art .pf-bigw{filter:drop-shadow(0 5px 7px rgba(0,0,0,.35))}   /* Schatte
 .acc-link,.acc-del{display:block;margin:10px auto 0;background:none;border:0;font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;color:#7a5a30}
 .acc-del{color:#a3301c;margin-top:16px}
 .acc-link[disabled],.acc-del[disabled]{opacity:.5}
+.legal-links{margin:12px 0 0;font-size:15px}
+.legal-links a,.acc-small a{color:#9a3a14}
