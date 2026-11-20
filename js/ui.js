@@ -965,9 +965,12 @@ const SHEET_VIEWS = {
     if (!c) return null;
     const live = !s.cname && !s.human && s.where && ['hand', 'eq', 'pack', 'race', 'cls'].includes(s.where);
     const acts = live ? cardActions(c, s.where) : [];
+    const tutLock = live && s.where === 'hand' && !tutCardOk(c);
+    if (tutLock) acts.forEach(a => { if (a.fn) a.dis = true; });
+    if (tutLock && acts.some(a => a.fn)) acts.unshift({info: 'Hilde: „Die brauchst du gerade nicht. Mach erst mal, was ich dir zeige.“'});
     UI.cardActs = acts;
     const meaning = cardMeaning(c), wh = S && !s.human ? whereNow(c) : [];
-    const actHTML = acts.map((a, i) => a.info ? `<p>${a.info}</p>` : `<button type="button" class="btn ${a.kind === 'primary' ? 'primary' : ''}${UI.adv && UI.adv.uid === c.uid && UI.adv.act && a.l.startsWith(UI.adv.act) ? ' rec' : ''}" data-cact="${i}" ${a.dis ? 'disabled' : ''}>${esc(a.l)}</button>${a.dis ? `<p class="err">${a.dis}</p>` : ''}`).join('');
+    const actHTML = acts.map((a, i) => a.info ? `<p>${a.info}</p>` : `<button type="button" class="btn ${a.kind === 'primary' ? 'primary' : ''}${UI.adv && UI.adv.uid === c.uid && UI.adv.act && a.l.startsWith(UI.adv.act) ? ' rec' : ''}" data-cact="${i}" ${a.dis ? 'disabled' : ''}>${esc(a.l)}</button>${a.dis && a.dis !== true ? `<p class="err">${a.dis}</p>` : ''}`).join('');
     const swap = live && (s.where === 'hand' || s.where === 'pack') ? equipInfoHTML(me(), c) : '';
     const info = (meaning ? `<p class="meaning">${meaning}</p>` : '') + (wh.length ? `<ul class="wherenow">${wh.map(x => `<li>${x}</li>`).join('')}</ul>` : ''), actBox = actHTML ? `<div class="acts">${actHTML}</div>` : '';
     /* Beim Ausrüsten stehen Slot-Info und Knopf direkt unter der Karte, die Erklärung danach */
@@ -1800,7 +1803,7 @@ const ABIL={
 function resolveOpt(v) { closeAllSheets(); UI.advOpen = false; if (UI.resolve) UI.resolve(v); }
 function dragIntents(c) {
   const I = [];
-  if (!S || S.winner != null || !UI.prompt || UI.sel || !c) return I;
+  if (!S || S.winner != null || !UI.prompt || UI.sel || !c || !tutCardOk(c)) return I;
   if (UI.prompt.ctx === 'trouble' && c.k === 'monster') {
     const o = UI.prompt.get().opts.find(o => o.v === 'm' + c.uid);
     if (o) I.push({zones: ['table'], label: `${c.n} herausfordern`, run: () => resolveOpt(o.v)});
@@ -2048,7 +2051,7 @@ const TUT_LESSONS = [
     text: 'Stufe 3, und das ganz ohne Kampf! Jetzt stößt du die Tür auf.'},
   {id: 'raum', st: S2, when: () => tCtx() === 'trouble' && S.turn === 1, done: () => tCtx() !== 'trouble', only: o => o.v === 'loot', hl: tOpt(o => o.v === 'loot'),
     text: 'Kein Monster hinter der Tür. Dann durchsuchst du den Raum: Du ziehst eine Türkarte verdeckt auf die Hand.'},
-  {id: 'almosen', st: S2, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
+  {id: 'almosen', st: S2, cards: true, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
     text: 'Am Ende deines Zuges darfst du höchstens 5 Karten behalten. Was zu viel ist, bekommt der Spieler mit der niedrigsten Stufe, also Berta. Vorher kannst du noch etwas ausspielen oder in den Rucksack legen. Sonst gib 1 Karte ab.'},
   {id: 'ende2', st: S2, when: () => tCtx() === 'charity' && S.turn === 1, done: () => tCtx() !== 'charity', hl: () => '#act .btn.primary',
     text: 'Jetzt passt alles. Beende deinen Zug.'},
@@ -2059,7 +2062,7 @@ const TUT_LESSONS = [
     text: 'Heute wird es ungemütlich. Ich zeige dir, was du tust, wenn ein Monster zu stark ist. Ziel ist Stufe 5.'},
   {id: 'fluch', st: S3, when: () => tCtx() === 'trouble' && S.log.some(e => /Pechsträhne/.test(e.t)), done: () => tCtx() !== 'trouble', only: o => o.v === 'loot', hl: tOpt(o => o.v === 'loot'),
     text: 'Pech gehabt! Einen Fluch, den du beim Aufstoßen aufdeckst, bekommst du selbst ab: eine Stufe weniger. Jetzt durchsuchst du noch den Raum.'},
-  {id: 'verdeckt', st: S3, ok: true, when: () => tCtx() && tHand('Windböe'), done: () => !tHand('Windböe'), hl: () => '.oc[data-opp="1"]',
+  {id: 'verdeckt', st: S3, ok: true, cards: ['Windböe'], when: () => tCtx() && tHand('Windböe'), done: () => !tHand('Windböe'), hl: () => '.oc[data-opp="1"]',
     text: 'Verdeckt gezogene Flüche wirken nicht auf dich. Die Windböe kannst du jederzeit auf einen Gegner spielen: Zieh sie oben auf Berta, dann ist ihr Hörnerhelm weg. Du kannst sie dir aber auch aufheben.'},
   {id: 'trank', st: S3, when: () => tFight() && !evalCombat(S.combat).win && tHand('Trank der Tapferkeit'), done: () => !tHand('Trank der Tapferkeit') || !tFight(), only: () => false, hl: () => tCard('Trank der Tapferkeit'),
     text: 'Knapp daneben, und bei Gleichstand gewinnt immer das Monster. Einmal-Gegenstände wie der Trank wirken nur in diesem Kampf und können ihn drehen: Zieh den Trank auf deine Seite des Spielfelds.'},
@@ -2075,7 +2078,7 @@ const TUT_LESSONS = [
     text: 'Wie viele Schätze bietest du ihr an? Je mehr, desto eher sagt jemand ja. Berta hilft dir heute aber sowieso.'},
   {id: 'zusammen', st: S3, when: () => tFight() && S.combat.h != null && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Zusammen seid ihr stärker als der Troll. Tipp auf „Monster besiegen“ und hol dir Stufe 4!'},
-  {id: 'almosen3', st: S3, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()) && tHand('Nebelpulver'), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
+  {id: 'almosen3', st: S3, cards: true, when: () => tCtx() === 'charity' && me().hand.length > handLimit(me()) && tHand('Nebelpulver'), done: () => tCtx() !== 'charity' || me().hand.length <= handLimit(me()), hl: () => '#act .btn.primary',
     text: 'Du hast mehr als 5 Karten. Den Rest bekommt Berta, das kennst du schon. Das Nebelpulver behältst du aber, das brauchst du gleich noch.'},
   {id: 'sieg3', st: S3, when: () => tFight() && tMon('Schleimige Socke') && evalCombat(S.combat).win, done: () => !tFight(), hl: () => '#act .btn.primary',
     text: 'Weggelaufen ist nicht verloren: Du hast nur keine Stufe bekommen. Die Schleimige Socke schaffst du locker. Besiege sie und hol dir Stufe 5!'},
@@ -2089,7 +2092,7 @@ const TUT_LESSONS = [
   /* ---- Station 4: Alle gegen dich ---- */
   {id: 'hallo4', st: S4, ok: true, only: () => false, when: () => tCtx() === 'kick' && S.turn === 1,
     text: 'Kalle spielt mit, und der will gewinnen. Heute lernst du, wie man sich in Kämpfe einmischt. Ziel ist Stufe 5.'},
-  {id: 'herausfordern', st: S4, when: () => tCtx() === 'trouble' && tHand('Wütender Gartenzwerg'), done: () => tCtx() !== 'trouble', only: o => /^m\d+$/.test(String(o.v)), hl: () => '#act [data-dpick]',
+  {id: 'herausfordern', st: S4, cards: ['Wütender Gartenzwerg'], when: () => tCtx() === 'trouble' && tHand('Wütender Gartenzwerg'), done: () => tCtx() !== 'trouble', only: o => /^m\d+$/.test(String(o.v)), hl: () => '#act [data-dpick]',
     text: 'Kein Monster hinter der Tür? Dann darfst du eins von deiner Hand herausfordern. Der Wütende Gartenzwerg ist schwach: Fordere ihn heraus.'},
   {id: 'kalle', st: S4, when: () => S.cur === 1 && !S.combat, done: () => S.cur === 0 || !!S.combat,
     text: 'Jetzt ist Kalle dran. Pass gut auf, gleich darfst du mitmischen.'},
@@ -2106,7 +2109,19 @@ const tutLesson = () => TUT && TUT.cur ? TUT_LESSONS.find(l => l.id === TUT.cur)
 function tutGate(q, ctx) {
   const L = SCN && SCN.tut && tutLesson();
   if (!L || !L.only) return;
+  const was = q.opts.map(o => o.dis);
   q.opts.forEach(o => { if (o.kind !== 'ghost' && !L.only(o)) o.dis = true; });
+  // Sicherheitsnetz: Im Kampf darf eine Lektion nie alle Wege versperren (sonst steckt man fest)
+  if ((ctx === 'fight' || ctx === 'run') && !q.opts.some(o => o.kind !== 'ghost' && !o.dis)) q.opts.forEach((o, i) => { o.dis = was[i]; });
+}
+// In den Lektionen der Einführung darf man nur die Karten spielen, auf die Hilde gerade zeigt
+// (oder die eine Lektion ausdrücklich freigibt). So kann niemand vom geplanten Weg abkommen.
+function tutCardOk(c) {
+  if (!SCN || !SCN.tut || !S || S.winner != null || !c || !TUT) return true;
+  const L = tutLesson(); if (!L) return true;
+  if (L.cards) return L.cards === true || L.cards.includes(c.n);
+  const el = $(tCard(c.n)); if (!el) return false;
+  return (L.hl ? [].concat(L.hl()) : []).filter(Boolean).some(h => typeof h === 'string' ? el.matches(h) : h === el);
 }
 function tutUpdate() {
   const box = $('#tutor'); if (!box) return;
