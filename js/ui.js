@@ -94,6 +94,7 @@ function cosmeticSource(id) {
 // Herkunft einer Optik für den Filter im Charakter-Bildschirm: start, w1…, laden, truhe
 function cosmeticGroup(id) {
   if (!id) return 'start';
+  if (EGG_IDS.includes(id)) return 'w0';
   for (const w of WORLDS) {
     if (w.starReward && w.starReward.id === id) return w.id;
     for (const st of w.stations) if (st.reward === id || (st.shop || []).some(x => x.id === id) || (st.choices || []).some(c => (c.rewards || []).includes(id) || c.reward === id)) return w.id;
@@ -131,7 +132,7 @@ function renderProfile() {
     `<div class="panel pf-stat soon"><span class="pf-lvl" aria-hidden="true"></span><span><small>Spielerstufe</small><b>Bald</b><em>Kommt mit dem Online-Modus</em></span></div>`);
   const inp = $('#pf-name'); if (document.activeElement !== inp) inp.value = PROFILE.name;
   const lockI = '<b class="pf-lock" aria-hidden="true"><svg viewBox="0 0 24 24">' + LOCK_PATH + '</svg></b>';
-  const G = PF_GROUPS(), pi = pfPage(), [fg, gl, gs] = G[pi], inG = id => cosmeticGroup(id) === fg, none = '<p class="hint pf-empty">Hier gibt es nichts auf dieser Seite.</p>';
+  const G = PF_GROUPS(), pi = pfPage(), [fg, gl, gs] = G[pi], inG = id => cosmeticGroup(id) === fg && (!EGG_IDS.includes(id) || owns(id)), none = '<p class="hint pf-empty">Hier gibt es nichts auf dieser Seite.</p>';
   const items = [...ALL_PORTRAITS.map(x => x[3]), ...ALL_FRAMES.map(x => x[3]), ...ALL_BGS.map(x => x[3]), ...Object.keys(COSMETICS.title).map(k => 'title:' + k)].filter(inG), got = items.filter(id => !id || owns(id)).length;
   const arrow = (d, dis) => `<button type="button" class="pf-arr" data-pfpage="${d}" aria-label="${d < 0 ? 'Vorherige' : 'Nächste'} Seite"${dis ? ' disabled' : ''}><svg viewBox="0 0 24 24"><path d="${d < 0 ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}"/></svg></button>`;
   patch($('#pf-filter'), arrow(-1, pi === 0) + `<div class="pf-pg"><b>${esc(gl)}</b><small>${esc(gs)} · ${got} von ${items.length}</small><span class="pf-dots">${G.map((g, i) => `<i class="${i === pi ? 'on' : ''}"></i>`).join('')}</span></div>` + arrow(1, pi === G.length - 1));
@@ -1616,6 +1617,18 @@ function showStoryEnd(res) {
   Snd.sfx(w ? 'victory' : 'defeat'); buzz(w ? [40, 60, 40, 60, 120] : 200);
   const goals = [['Station geschafft', res.stars[0]], ...(st.extras || []).map((e, i) => [e.t, res.stars[i + 1]])];
   const el = document.createElement('div'); el.className = 'endov story';
+  if (res.egg) {   // Easter Egg: verlorene Probepartie
+    Snd.sfx('victory'); buzz([30, 50, 30]);
+    const el = document.createElement('div'); el.className = 'endov story egg';
+    el.innerHTML = `<div class="panel"><div class="egg-pic"><img src="${COSMETICS.portrait.hoppel.src}" alt=""></div>` +
+      `<h2>Nicht geschafft …</h2><p>„Na, das war wohl nix“, sagt Hilde. „Aber schau mal, wer dich trösten will.“ Unter dem Tisch hoppelt ein kleiner Hase hervor und stupst dich an.</p>` +
+      res.rewards.map(r => `<p class="se-reward">Geheim freigeschaltet: ${esc(cosmeticName(r))}</p>`).join('') +
+      `<p class="hint">Das bekommt nur, wer die Probepartie verliert. Verrat es nicht weiter!</p>` +
+      `<div class="acts"><button type="button" class="btn primary" data-go="again">Nochmal versuchen</button><button type="button" class="btn" data-go="storymap">Zur Karte</button></div></div>`;
+    document.body.appendChild(el);
+    setTimeout(() => Particles.burst(innerWidth / 2, innerHeight * 0.3, 24, 1.2), 300);
+    return;
+  }
   const lose = st.type === 'puzzle' ? 'Das reicht noch nicht. Schau dir deine Karten noch einmal an.' : S && S.winner > 0 ? `${esc(P(S.winner).name)} war schneller. Gleich noch einmal?` : 'Gleich noch einmal?';
   el.innerHTML = `<div class="panel"><div class="se-stars">${res.stars.map((v, i) => `<span class="se-star${v ? ' on' : ''}" style="--d:${0.15 + i * 0.25}s">${starSvg(v)}</span>`).join('')}</div>` +
     `<h2>${w ? (st.final ? esc(worldById(st.world).finalTitle || 'Welt geschafft!') : 'Geschafft!') : 'Nicht geschafft'}</h2><p>${w ? (st.winText ? esc(st.winText) : esc(st.name) + ' liegt hinter dir.') : lose}</p>` +

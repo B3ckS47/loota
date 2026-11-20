@@ -8,6 +8,7 @@ const K_STORY = 'loota.story';
 const COSMETICS = {
   title: {
     neuling: 'Neuling',
+    hasenfuss: 'Hasenfuß',   // Easter Egg: nur wer die Probepartie der Einführung verliert
     stammgast: 'Stammgast',
     brueckenbezwinger: 'Brückenbezwinger',
     montagsheld: 'Montagsheld',
@@ -69,6 +70,7 @@ const COSMETICS = {
     edelsteine: {n: 'Edelsteinkranz', c: '#b03a7a'}
   },
   portrait: {
+    hoppel: {n: 'Hoppel', src: 'icons/portrait-hoppel.png'},   // Easter Egg (siehe hasenfuss)
     gartenzwerg: {n: 'Gartenzwerg', src: 'icons/portrait-gartenzwerg.png'},
     rentner: {n: 'Rentner-Ritter', src: 'icons/portrait-rentner.png'},
     rosi: {n: 'Ratte Rosi', src: 'icons/portrait-rosi.png'},
@@ -580,6 +582,8 @@ function scenarioFor(st) {
 }
 
 // Ergebnis einer gespielten Station auswerten und speichern
+// Versteckte Belohnungen: im Charakter unsichtbar, bis man sie hat
+const EGG_IDS = ['portrait:hoppel', 'title:hasenfuss'];
 function finishStation(st, S) {
   const w = storyWon(S), mul = st.coinMul || 1;
   const stars = [w, ...(st.extras || []).map(e => { try { return w && !!e.ok(S.stats || {}, S); } catch (err) { return false; } })];
@@ -598,10 +602,13 @@ function finishStation(st, S) {
   STORY.fails = STORY.fails || {};
   if (!w && !STORY.done[st.id]) STORY.fails[st.id] = (STORY.fails[st.id] || 0) + 1;
   if (w && st.final && !STORY.worlds[st.world]) { STORY.worlds[st.world] = true; worldDone = true; }
+  // Easter Egg: Wer die Probepartie der Einführung verliert, bekommt Trost von Hoppel
+  let egg = false;
+  if (!w && st.id === 'w0s5' && S.winner > 0) EGG_IDS.forEach(id => { if (grant(id)) { rewards.push(id); egg = true; } });
   STORY.stars[st.id] = merged;
   STORY.coins += coins;
   saveStory();
-  return {won: w, stars, fresh, coins, rewards, worldDone};
+  return {won: w, stars, fresh, coins, rewards, worldDone, egg};
 }
 function chooseEvent(st, v) {
   const c = st.choices.find(x => x.v === v); if (!c || STORY.done[st.id]) return null;
