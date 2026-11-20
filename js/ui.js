@@ -1315,7 +1315,7 @@ function worldMapHTML(w, next) {
     const stars = mx ? `<span class="sn-stars">${Array.from({length: mx}, (_, i) => starSvg(!!s[i])).join('')}</span>` : '';
     const run = SAVED_ST === st.id;
     return `<button type="button" class="snode t-${st.type}${un ? '' : ' locked'}${dn ? ' done' : ''}${next === st ? ' next' : ''}${run ? ' paused' : ''}" data-station="${st.id}" style="left:${X(st)}%;top:${Y(st)}${art ? '%' : 'px'}" aria-label="${esc(st.no + ' ' + st.name)}${un ? '' : ', gesperrt'}">` +
-      `<span class="sn-medal">${medalIcon(un ? st.type : 'lock')}<i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${run ? '<span class="sn-run">angefangen</span>' : stars}</button>`;
+      `<span class="sn-medal">${medalIcon(un ? st.type : 'lock')}<i>${st.no}</i></span><span class="sn-name">${esc(st.name)}</span>${run ? (dn ? `${stars}<span class="sn-run">Neuer Versuch läuft</span>` : '<span class="sn-run">angefangen</span>') : stars}</button>`;   // schon geschafft bleibt geschafft, auch beim Wiederholen
   }).join('');
   const last = w.stations[w.stations.length - 1];
   if (!art) segs.push(`<path class="${done ? 'on' : ''}" d="M${last.x} ${last.y} L${last.x} ${w.mapH}" vector-effect="non-scaling-stroke" />`);
@@ -1602,7 +1602,7 @@ SHEET_VIEWS.station = s => {
     body += `<ul class="st-goals">${goals.map(([t, ok]) => `<li class="${ok ? 'ok' : ''}">${starSvg(ok)}<span>${esc(t)}</span></li>`).join('')}</ul>`;
     if (st.reward) body += `<p class="st-reward">Belohnung: ${esc(cosmeticName(st.reward))}${owns(st.reward) ? ' · hast du schon' : ''}</p>`;
     const sv = storySave(), mine = sv && sv.st === st.id;
-    body += mine ? `<p class="st-saved">Angefangen: Runde ${sv.S.turn}, du bist auf Stufe ${sv.S.players[0].lvl}.</p><div class="acts"><button type="button" class="btn primary" data-story-resume>Fortsetzen</button><button type="button" class="btn" data-story-start="${st.id}">Neu starten</button>${testBtn}</div>`
+    body += mine ? `<p class="st-saved">${done ? 'Schon geschafft, neuer Versuch läuft' : 'Angefangen'}: Runde ${sv.S.turn}, du bist auf Stufe ${sv.S.players[0].lvl}.</p><div class="acts"><button type="button" class="btn primary" data-story-resume>Fortsetzen</button><button type="button" class="btn" data-story-start="${st.id}">Neu starten</button>${testBtn}</div>`
       : `<div class="acts"><button type="button" class="btn primary" data-story-start="${st.id}">${done ? 'Nochmal spielen' : 'Los geht’s'}</button>${testBtn}</div>`;
   }
   return {head: h3(`${esc(st.no)} · ${esc(st.name)}`), body};
