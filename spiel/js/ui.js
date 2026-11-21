@@ -2418,12 +2418,15 @@ function renderHub() {
   const ay = nx && nx.ay != null ? nx.ay : 50;
   const fg = freeGame();
   if (hub.__tip == null) hub.__tip = Math.floor(Math.random() * plunkTips().length);
-  const menu = (go, icon, b, small) => `<button type="button" class="hub-btn" data-go="${go}"><img src="${icon}" alt=""><span><b>${b}</b><small>${small}</small></span></button>`;
+  // Kachel mit Bild: rechts das Motiv, links Text auf dunklem Verlauf. Ohne Bild: nur das Symbol.
+  const menu = (go, art, icon, b, small, cls = '') => `<button type="button" class="hub-btn${art ? ' hasart' : ''}${cls}" data-go="${go}"${art ? ` style="--art:url('${new URL(art, document.baseURI).href}')"` : ''}>${art ? '' : `<img src="${icon}" alt="">`}<span><b>${b}</b><small>${small}</small></span></button>`;
+  const bx = myBg();
   patch(hub,
     `<aside class="hub-l">` +
-      `<button type="button" class="hub-me" data-go="profile"><span class="t-pt hub-pt" style="--fr:${myFrame()}"><img src="${myPortrait()}" alt=""></span><span class="hub-who"><b>${esc(PROFILE.name || 'Abenteurer')}</b><small>${esc(myTitle() || 'Dein Charakter')}</small><em>${coinImg}${STORY.coins} Münzen</em></span></button>` +
-      `<section class="hub-daily"><header><h3>Hildes Aufträge</h3><span>${dn} von 3</span></header><div class="notes">${dailyNotes(st)}</div>` +
-      `<button type="button" class="t-daily hub-streak${sk ? '' : ' dark'}" data-go="${wait ? 'chest' : 'daily'}">${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span></button></section>` +
+      `<button type="button" class="hub-me${bx[2] ? ' hasbg' : ''}" data-go="profile"${bx[2] ? ` style="--bg:url('${new URL(bgSrc(bx), document.baseURI).href}');--bgp:${bx[4] || '50% 50%'}"` : ''}>` +
+        `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><span class="hub-who"><b>${esc(PROFILE.name || 'Abenteurer')}</b><small>${esc(myTitle() || 'Dein Charakter')}</small><em>${coinImg}${STORY.coins} Münzen</em></span></button>` +
+      `<section class="hub-daily"><header><img src="icons/portrait-hilde.png" alt=""><div><h3>Hildes Aufträge</h3><span>${dn} von 3 erledigt · neue in ${untilMidnight()}</span></div></header><div class="notes">${dailyNotes(st)}</div></section>` +
+      `<button type="button" class="t-daily hub-streak${sk ? '' : ' dark'}" data-go="${wait ? 'chest' : 'daily'}">${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span></button>` +
     `</aside>` +
     `<main class="hub-c">` +
       `<h1 class="hub-logo"><img src="art/logo-plundo.webp" alt="Plundo" width="1158" height="530"></h1>` +
@@ -2438,10 +2441,10 @@ function renderHub() {
     `</main>` +
     `<aside class="hub-r">` +
       `<nav class="hub-menu" aria-label="Bereiche">` +
-        menu('shop', 'icons/nav-laden.png', 'Krämerladen', `${STORY.coins} Münzen · neue Ware jeden Tag`) +
-        menu('cards', 'icons/nav-karten.png', 'Karten und Deck', 'Alle Karten ansehen, Deck wählen') +
-        menu('online', 'icons/nav-freunde.png', 'Freunde', 'Bald: zusammen spielen') +
-        `<div class="hub-two">` + menu('rules', 'icons/portrait-hilde.png', 'Regeln', 'FAQ, Quiz') + menu('settings', 'icons/nav-optionen.png', 'Optionen', 'Klang, Spiel') + `</div>` +
+        menu('cards', 'art/szene-offene-partie.webp', '', 'Karten und Deck', 'Alle Karten, Deck wählen') +
+        menu('shop', 'art/szene-kraemerladen.webp', '', 'Krämerladen', `${STORY.coins} Münzen · jeden Tag neu`) +
+        menu('online', 'art/kachel-online.webp', '', 'Freunde', 'Bald: zusammen spielen', ' soon') +
+        `<div class="hub-two">` + menu('rules', 'art/hub-regeln.webp', '', 'Regeln', 'FAQ und Quiz') + menu('settings', '', 'icons/nav-optionen.png', 'Optionen', 'Klang, Spiel') + `</div>` +
       `</nav>` +
       `<button type="button" class="hub-plunk" data-plunk><span class="hp-say">${esc(plunkTips()[hub.__tip])}</span><img src="art/plunk.webp" alt="Plunk, der Gartenzwerg"></button>` +
     `</aside>`);
