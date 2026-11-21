@@ -2465,16 +2465,30 @@ function hubNotes(st) {
 /* ================= PC und Tablet: Leiste oben auf allen Unterseiten ================= */
 function renderWnav() {
   const nav = $('#wnav'); if (!nav) return;
-  const on = document.documentElement.classList.contains('wide-menu') && CUR !== 'title' && CUR !== 'game';
+  const on = document.documentElement.classList.contains('wide-menu') && CUR !== 'game';
   nav.hidden = !on; document.documentElement.classList.toggle('has-wnav', on); if (!on) return;
   const act = CUR === 'quiz' ? 'rules' : CUR;
   const tab = (go, scr, label) => `<button type="button" class="wn-tab${act === scr ? ' on' : ''}" data-go="${go}"${act === scr ? ' aria-current="page"' : ''}>${label}</button>`;
   patch(nav, `<button type="button" class="wn-logo" data-wnhome aria-label="Zur Startseite"><img src="art/logo-klein.webp" alt="Plundo"></button>` +
     `<div class="wn-tabs">` + tab('story', 'story', 'Story') + tab('setup', 'setup', 'Freies Spiel') + tab('cards', 'cards', 'Karten und Deck') +
       `<button type="button" class="wn-tab" data-go="shop">Krämerladen</button>` + tab('rules', 'rules', 'Regeln') + tab('settings', 'settings', 'Optionen') + `</div>` +
-    `<div class="wn-right"><button type="button" class="wn-coins" data-go="shop" aria-label="${STORY.coins} Münzen, zum Krämerladen">${coinImg}<b>${STORY.coins}</b></button>` +
-    `<button type="button" class="wn-me${act === 'profile' ? ' on' : ''}" data-go="profile" aria-label="Dein Charakter"><span class="t-pt" style="--fr:${myFrame()}"><img src="${myPortrait()}" alt=""></span><b>${esc(PROFILE.name || 'Abenteurer')}</b></button></div>`);
+    `<div class="wn-right">` + (CUR === 'title' ? '' : `<button type="button" class="wn-coins" data-go="shop" aria-label="${STORY.coins} Münzen, zum Krämerladen">${coinImg}<b>${STORY.coins}</b></button>` +
+    `<button type="button" class="wn-me${act === 'profile' ? ' on' : ''}" data-go="profile" aria-label="Dein Charakter"><span class="t-pt" style="--fr:${myFrame()}"><img src="${myPortrait()}" alt=""></span><b>${esc(PROFILE.name || 'Abenteurer')}</b></button>`) +
+    `<button type="button" class="wn-exit" data-wnexit title="Spiel verlassen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span>Verlassen</span></button></div>`);
 }
+// Verlassen: zurück zur Website, auf Wunsch vorher abmelden
+async function exitGame() {
+  const signed = typeof CLOUD !== 'undefined' && CLOUD.uid;
+  const r = signed
+    ? await confirmDialog('Plundo verlassen?', 'Du kehrst zur Startseite von plundo.eu zurück. Dein Fortschritt ist im Konto gesichert.', 'Zur Website', 'Abmelden und zur Website', 'Abbrechen')
+    : await confirmDialog('Plundo verlassen?', 'Du kehrst zur Startseite von plundo.eu zurück. Ohne Konto bleibt dein Fortschritt nur auf diesem Gerät.', 'Zur Website', 'Abbrechen');
+  if (r === null || (!signed && !r)) return;
+  if (signed && r === false) {
+    try { if (CLOUD.dirty) await cloudUpload(); const {F, auth} = await fbLoad(); await F.signOut(auth); Object.assign(CLOUD, {uid: null, email: null, rev: 0, at: 0}); saveCloudMeta(); } catch (_) {}
+  }
+  location.href = '../';
+}
+document.addEventListener('click', e => { if (e.target.closest('[data-wnexit]')) exitGame(); });
 document.addEventListener('click', e => {
   if (!e.target.closest('[data-wnhome]')) return;
   closeAllSheets(); STACK.length = 0; setScreen('title');

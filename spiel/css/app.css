@@ -1941,3 +1941,11 @@ html.has-wnav .screen .bar [data-back]{display:none}
 html.has-wnav .st-side,html.has-wnav #sheetwrap.dock{top:calc(var(--sat) + 64px + 78px)}
 @media (max-width:1180px){.wn-tab{padding:10px 10px;font-size:15px}.wn-me b{display:none}.wnav{gap:14px}}
 html.has-wnav #st-coins{display:none}
+
+.wn-exit{appearance:none;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1.5px solid rgba(243,200,115,.25);background:none;color:#e9d7b2;font:800 14px var(--body);cursor:pointer}
+.wn-exit:hover{border-color:#f3c873;color:#fff3d6;background:rgba(243,200,115,.1)}
+.wn-exit svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:1180px){.wn-exit span{display:none}}
+/* Startseite mit Leiste: Raster rutscht unter die Leiste */
+html.has-wnav .hub{padding-top:calc(var(--sat) + 64px + 18px)}
+@media (min-width:1400px){html.has-wnav.wide-menu .hub{grid-template-columns:minmax(280px,22vw) minmax(0,1fr) calc((100dvh - var(--sat) - 64px - 78px) / 4)}}
