@@ -2441,10 +2441,11 @@ function renderHub() {
     `</main>` +
     `<aside class="hub-r">` +
       `<nav class="hub-menu" aria-label="Bereiche">` +
-        menu('cards', 'art/szene-offene-partie.webp', '', 'Karten und Deck', 'Alle Karten, Deck wählen') +
-        menu('shop', 'art/szene-kraemerladen.webp', '', 'Krämerladen', `${STORY.coins} Münzen · jeden Tag neu`) +
-        menu('online', 'art/kachel-online.webp', '', 'Freunde', 'Bald: zusammen spielen', ' soon') +
-        `<div class="hub-two">` + menu('rules', 'art/hub-regeln.webp', '', 'Regeln', 'FAQ und Quiz') + menu('settings', '', 'icons/nav-optionen.png', 'Optionen', 'Klang, Spiel') + `</div>` +
+        // Freunde kommt als fünfte Kachel dazu, sobald es den Online-Modus gibt
+        menu('cards', 'art/szene-offene-partie.webp', '', 'Karten und Deck', 'Deck wählen') +
+        menu('shop', 'art/szene-kraemerladen.webp', '', 'Krämerladen', `${STORY.coins} Münzen`) +
+        menu('rules', 'art/hub-regeln.webp', '', 'Regeln', 'FAQ und Quiz') +
+        menu('settings', '', 'icons/nav-optionen.png', 'Optionen', 'Klang, Spiel') +
       `</nav>` +
       `<button type="button" class="hub-plunk" data-plunk><span class="hp-say">${esc(plunkTips()[hub.__tip])}</span><img src="art/plunk.webp" alt="Plunk, der Gartenzwerg"></button>` +
     `</aside>`);

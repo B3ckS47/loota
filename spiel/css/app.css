@@ -1737,7 +1737,7 @@ html.wide-menu .footbtn .btn{width:auto;min-width:340px}
 .hub{display:none}
 html.wide-menu #scr-title{background:linear-gradient(rgba(18,10,5,.55),rgba(18,10,5,.72)),url(../art/hub-taverne.webp) center/cover no-repeat,#1a100a}
 html.wide-menu #scr-title>:not(.hub):not(#motes){display:none!important}
-html.wide-menu .hub{display:grid;grid-template-columns:minmax(280px,22vw) minmax(0,1fr) minmax(280px,22vw);gap:clamp(18px,2vw,32px);height:100%;padding:calc(var(--sat) + 20px) clamp(20px,2.4vw,40px) 22px;overflow:hidden;position:relative;z-index:1}
+html.wide-menu .hub{display:grid;grid-template-columns:minmax(280px,22vw) minmax(0,1fr) clamp(150px,12.5vw,220px);gap:clamp(18px,2vw,32px);height:100%;padding:calc(var(--sat) + 20px) clamp(20px,2.4vw,40px) 22px;overflow:hidden;position:relative;z-index:1}
 .hub-l,.hub-r,.hub-c{display:flex;flex-direction:column;gap:16px;min-height:0}
 /* Charakter: mit gewähltem Hintergrund, Rahmen und Titel */
 .hub-me{position:relative;display:flex;align-items:center;gap:18px;min-height:150px;padding:18px 18px 18px 30px;border-radius:20px;border:2px solid rgba(255,214,160,.32);background:rgba(28,16,8,.82);color:var(--on-wood);text-align:left;cursor:pointer;box-shadow:0 14px 26px -12px rgba(0,0,0,.85);overflow:hidden;flex:0 0 auto}
@@ -1782,31 +1782,25 @@ html.pf-art .hub-me .pf-big{border-color:transparent}
 .hub-mode b{font:700 26px/1 var(--display);color:#fbefd6}
 .hub-mode small{font-size:14px;color:#ead6b0}
 .hub-mode .tc-badge{z-index:1}
-/* Rechts: Kacheln mit eigenem Bild */
+/* Rechts: schmale Spalte mit gleich großen Kacheln untereinander, darunter Plunk */
 .hub-menu{display:flex;flex-direction:column;gap:12px}
-.hub-btn{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:96px;padding:12px 16px;border-radius:18px;border:2px solid rgba(255,214,160,.28);background:rgba(28,16,8,.82);color:var(--on-wood);text-align:left;cursor:pointer;box-shadow:0 12px 22px -12px rgba(0,0,0,.85);overflow:hidden}
-.hub-btn.hasart{background:linear-gradient(90deg,rgba(20,12,6,.95) 0%,rgba(20,12,6,.75) 38%,rgba(20,12,6,.1) 75%),var(--art) right center/cover no-repeat,#2a1a0e}
-.hub-btn:hover{border-color:#f3c873}
-.hub-btn.hasart:hover{background:linear-gradient(90deg,rgba(20,12,6,.9) 0%,rgba(20,12,6,.6) 38%,rgba(20,12,6,0) 75%),var(--art) right center/cover no-repeat,#2a1a0e}
-.hub-btn.soon{filter:saturate(.6)}
-.hub-btn img{width:44px;height:44px;object-fit:contain;flex:0 0 auto}
-.hub-btn span{position:relative;display:flex;flex-direction:column;min-width:0;max-width:62%}
-.hub-btn b{font:700 23px/1.05 var(--display);color:#fbefd6;text-shadow:0 2px 0 rgba(0,0,0,.6)}
-.hub-btn small{font-size:13px;color:#ead6b0;text-shadow:0 1px 2px rgba(0,0,0,.8)}
-.hub-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hub-two .hub-btn{flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:6px;min-height:120px}
-.hub-two .hub-btn.hasart{background:linear-gradient(transparent 20%,rgba(20,12,6,.94) 80%),var(--art) center/cover no-repeat,#2a1a0e}
-.hub-two .hub-btn span{max-width:none}
-.hub-plunk{position:relative;margin-top:auto;align-self:flex-end;display:flex;align-items:flex-end;gap:0;appearance:none;border:0;background:none;padding:0;cursor:pointer}
-.hub-plunk img{width:clamp(110px,9vw,150px);height:auto;filter:drop-shadow(0 10px 12px rgba(0,0,0,.6));transform-origin:50% 100%;animation:plunkIdle 3.6s ease-in-out infinite}
+.hub-btn{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;width:100%;aspect-ratio:1/1;max-height:calc((100dvh - var(--sat) - 110px) / 5.5);padding:10px 12px;border-radius:18px;border:2px solid rgba(255,214,160,.28);background:rgba(28,16,8,.82);color:var(--on-wood);text-align:left;cursor:pointer;box-shadow:0 12px 22px -12px rgba(0,0,0,.85);overflow:hidden;transition:transform .12s}
+.hub-btn.hasart{background:linear-gradient(transparent 35%,rgba(20,12,6,.94) 88%),var(--art) center/cover no-repeat,#2a1a0e}
+.hub-btn:hover{border-color:#f3c873;transform:translateY(-2px)}
+.hub-btn img{position:absolute;left:50%;top:40%;width:44%;height:auto;max-height:50%;object-fit:contain;transform:translate(-50%,-50%);opacity:.9}
+.hub-btn span{position:relative;display:flex;flex-direction:column;min-width:0;max-width:100%}
+.hub-btn b{font:700 clamp(18px,1.5vw,23px)/1.05 var(--display);color:#fbefd6;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.hub-btn small{font-size:13px;color:#ead6b0;text-shadow:0 1px 2px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-plunk{position:relative;margin-top:auto;align-self:stretch;display:flex;flex-direction:column;align-items:center;gap:6px;appearance:none;border:0;background:none;padding:0;cursor:pointer}
+.hub-plunk img{width:clamp(88px,7vw,124px);height:auto;filter:drop-shadow(0 10px 12px rgba(0,0,0,.6));transform-origin:50% 100%;animation:plunkIdle 3.6s ease-in-out infinite}
 .hub-plunk img.hop{animation:plunkHop .45s cubic-bezier(.3,1.6,.5,1)}
-.hp-say{position:relative;max-width:230px;margin:0 -6px 70px 0;padding:10px 12px;border-radius:14px;background:#fbf3df;color:#3b2a1c;font:400 15px/1.3 var(--hand);text-align:left;box-shadow:0 8px 18px -8px rgba(0,0,0,.8)}
-.hp-say::after{content:"";position:absolute;right:-8px;bottom:14px;border:8px solid transparent;border-left-color:#fbf3df;border-right:0}
+.hp-say{position:relative;width:100%;padding:9px 11px;border-radius:14px;background:#fbf3df;color:#3b2a1c;font:400 14px/1.3 var(--hand);text-align:left;box-shadow:0 8px 18px -8px rgba(0,0,0,.8)}
+.hp-say::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-top-color:#fbf3df;border-bottom:0}
 @keyframes plunkIdle{0%,100%{transform:none}50%{transform:scaleY(1.025) translateY(-2px)}}
 @keyframes plunkHop{0%{transform:none}40%{transform:translateY(-16px) rotate(-4deg)}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){.hub-plunk img{animation:none}}
 /* Tablet: weniger Platz, Spalten schmaler */
-@media (max-width:1399px){html.wide-menu .hub{grid-template-columns:minmax(250px,26vw) minmax(0,1fr) minmax(230px,24vw)}}
+@media (max-width:1399px){html.wide-menu .hub{grid-template-columns:minmax(250px,27vw) minmax(0,1fr) clamp(140px,14vw,180px)}}
 
 /* Storymodus: Karte links, Station rechts */
 html.wide-menu #scr-story .bar{padding:16px 28px 12px}
