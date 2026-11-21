@@ -2509,8 +2509,9 @@ function coinTier(n) {
 function pcNavHTML() {
   const act = ['title', 'story', 'setup'].includes(CUR) ? 'play' : CUR === 'quiz' ? 'rules' : CUR;
   const st = dailyState(), shopN = st.shop.filter(id => shopItem(id) && !owns(id)).length;
-  const item = (key, go, label, art, info) => `<div class="pn-item${act === key ? ' on' : ''}"><button type="button" class="pn-tab" data-go="${go}"${act === key ? ' aria-current="page"' : ''}>${label}</button>` +
-    `<button type="button" class="pn-drop" data-go="${go}" tabindex="-1" aria-hidden="true" style="--art:url('${new URL(art, document.baseURI).href}')"><b>${label}</b><small>${info}</small></button></div>`;
+  // Jeder Menüpunkt hat sein eigenes Bild. In Ruhe ist nur ein Streifen davon zu sehen, beim Drüberfahren rollt es von oben aus.
+  const item = (key, go, label, art, info) => `<button type="button" class="pn-item${act === key ? ' on' : ''}" data-go="${go}"${act === key ? ' aria-current="page"' : ''} style="--art:url('${new URL(art, document.baseURI).href}')">` +
+    `<span class="pn-bg" aria-hidden="true"></span><span class="pn-lbl"><b>${label}</b><small>${info}</small></span></button>`;
   const ct = coinTier(STORY.coins), bx = myBg(), signed = typeof CLOUD !== 'undefined' && CLOUD.uid;
   return `<button type="button" class="wn-logo" data-go="home" aria-label="Spielen"><img src="art/logo-klein.webp" alt="Plundo"></button>` +
     `<div class="pn-items">` +
