@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-f34ef15661';
+const CACHE = 'loota-429485fa61';
 const FILES = [
 "./",
 "index.html",
@@ -102,6 +102,7 @@ const FILES = [
 "art/hintergrund-strand.webp",
 "art/hintergrund-tisch.webp",
 "art/hintergrund-wald.webp",
+"art/hub-taverne.webp",
 "art/kachel-frei.webp",
 "art/kachel-online.webp",
 "art/karte-welt0.webp",
@@ -195,6 +196,7 @@ const FILES = [
 "art/monster-wuetender-gartenzwerg.webp",
 "art/monster-zitteraal.webp",
 "art/monster-zombie-hausmeister.webp",
+"art/plunk.webp",
 "art/rasse-elf.webp",
 "art/rasse-halbling.webp",
 "art/rasse-kobold.webp",

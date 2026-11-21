@@ -401,6 +401,7 @@ function renderTitle() {
   const wait = chestsWaiting().length;
   $('#t-daily').dataset.go = wait ? 'chest' : 'daily';
   $('#tn-daily').hidden = dn > 0 && !wait;
+  renderHub();
 }
 // Weiter im Storymodus: angefangene Station fortsetzen, sonst die nächste Station auf der Karte öffnen
 function storyGo() {
@@ -1455,14 +1456,17 @@ function showChest() {
     }, UI.reduce ? 50 : 1050);
   });
 }
-SHEET_VIEWS.daily = () => {
-  const st = dailyState(), sk = streakNow();
-  const notes = st.list.map((e, i) => {
+function dailyNotes(st) {
+  return st.list.map((e, i) => {
     const m = missionById(e.id); if (!m) return '';
     const done = e.p >= m.n, pct = Math.round(e.p / m.n * 100), prog = m.k === 'gold' ? `${fmt(e.p)} / ${fmt(m.n)} Gold` : `${e.p} / ${m.n}`;
     return `<div class="note d${m.d}${done ? ' done' : ''}"><span class="nl">${MISSION_LEVEL[m.d]}<span class="nc">${coinImg}+${MISSION_COINS[m.d]}</span></span><b>${esc(m.t)}</b>` +
       `<span class="nbar"><i style="width:${pct}%"></i></span><span class="np"><span class="npv">${prog}</span>${done ? '<em class="nstamp" role="img" aria-label="Erledigt"></em>' : ''}${!done && !st.rer ? `<button type="button" class="btn small" data-reroll="${i}">Tauschen</button>` : ''}</span></div>`;
   }).join('');
+}
+SHEET_VIEWS.daily = () => {
+  const st = dailyState(), sk = streakNow();
+  const notes = dailyNotes(st);
   const streak = streakBox(sk);
   return {head: h3('Hildes Auftragsbrett'),
     body: `<img class="scene" src="art/szene-auftragsbrett.webp" alt=""><div class="say"><img src="icons/portrait-hilde.png" alt=""><p>„Ich hab da ein paar Aufträge für dich. Jeden Tag neue, versprochen.“</p></div><div class="notes">${notes}</div>${streak}` +
@@ -2302,7 +2306,9 @@ function applyLayout() {
   app.classList.toggle('wide', wide);
   document.documentElement.classList.toggle('wide-game', !!mode);
   document.documentElement.classList.toggle('wide-any', wide);
+  const wasMenu = document.documentElement.classList.contains('wide-menu');
   document.documentElement.classList.toggle('wide-menu', wide && CUR !== 'game');
+  if (wasMenu !== document.documentElement.classList.contains('wide-menu') && CUR === 'title' && typeof renderTitle === 'function') renderTitle();
   dockSheet();
   if (mode === LAYOUT) return;
   LAYOUT = mode; app.classList.toggle('lay-pc', mode === 'pc'); app.classList.toggle('lay-tab', mode === 'tab');
@@ -2393,4 +2399,55 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-rtoc]'); if (!b) return;
   const d = $$('#scr-rules details.rule')[+b.dataset.rtoc]; if (!d) return;
   d.hidden = false; d.open = true; d.scrollIntoView({behavior: SET.reduce ? 'auto' : 'smooth', block: 'start'});
+});
+
+/* ================= Startseite am PC und Tablet: alles auf einen Blick ================= */
+function plunkTips() { return [
+  'Psst! Wer zuerst Stufe 10 erreicht, gewinnt. Wer zuletzt lacht, meistens auch.',
+  'Hilde hat neue Aufträge ans Brett gehängt. Die bringen Münzen!',
+  'Im Krämerladen gibt es jeden Tag andere Sachen. Ich sag ja nur.',
+  'Ein Helfer im Kampf wählt seine Beute zuerst. Also gut verhandeln!',
+  'Flüche spielt man am liebsten auf den, der gerade vorne liegt. Hehe.',
+]; }
+function renderHub() {
+  const hub = $('#t-hub'); if (!hub) return;
+  const on = document.documentElement.classList.contains('wide-menu');
+  hub.hidden = !on; if (!on) return;
+  const cw = currentWorld(), nx = nextStation(cw), st = dailyState(), sk = streakNow();
+  const dn = st.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, wait = chestsWaiting().length;
+  const ay = nx && nx.ay != null ? nx.ay : 50;
+  const fg = freeGame();
+  if (hub.__tip == null) hub.__tip = Math.floor(Math.random() * plunkTips().length);
+  const menu = (go, icon, b, small) => `<button type="button" class="hub-btn" data-go="${go}"><img src="${icon}" alt=""><span><b>${b}</b><small>${small}</small></span></button>`;
+  patch(hub,
+    `<aside class="hub-l">` +
+      `<button type="button" class="hub-me" data-go="profile"><span class="t-pt hub-pt" style="--fr:${myFrame()}"><img src="${myPortrait()}" alt=""></span><span class="hub-who"><b>${esc(PROFILE.name || 'Abenteurer')}</b><small>${esc(myTitle() || 'Dein Charakter')}</small><em>${coinImg}${STORY.coins} Münzen</em></span></button>` +
+      `<section class="hub-daily"><header><h3>Hildes Aufträge</h3><span>${dn} von 3</span></header><div class="notes">${dailyNotes(st)}</div>` +
+      `<button type="button" class="t-daily hub-streak${sk ? '' : ' dark'}" data-go="${wait ? 'chest' : 'daily'}">${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span></button></section>` +
+    `</aside>` +
+    `<main class="hub-c">` +
+      `<h1 class="hub-logo"><img src="art/logo-plundo.webp" alt="Plundo" width="1158" height="530"></h1>` +
+      `<section class="hub-story"><img src="art/karte-welt${cw.id.replace('w', '')}.webp" alt="" style="object-position:50% ${ay}%" onerror="this.style.visibility='hidden'">` +
+        `<div class="hs-txt"><div class="t-chips"><span class="t-world">${wLabel(cw)}</span><span class="t-stars"><img src="icons/stern-voll.png" alt=""><b>${worldStars(cw)} / ${worldMaxStars(cw)}</b></span></div>` +
+        `<button type="button" class="hs-name" data-go="story">${esc(cw.name)}</button><span class="hs-next">${esc($('#story-info').textContent)}</span>` +
+        `<button type="button" class="t-cta" data-go="storygo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg><span>${esc($('#t-cta').textContent)}</span></button></div></section>` +
+      `<div class="hub-modes">` +
+        `<button type="button" class="hub-mode" data-go="setup"><img src="art/kachel-frei.webp" alt=""><span><b>Freies Spiel</b><small>${fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2 oder 3 Bots'}</small></span></button>` +
+        `<button type="button" class="hub-mode" data-go="online"><img src="art/kachel-online.webp" alt=""><span class="tc-badge">Bald</span><span><b>Online</b><small>Mit Freunden spielen</small></span></button>` +
+      `</div>` +
+    `</main>` +
+    `<aside class="hub-r">` +
+      `<nav class="hub-menu" aria-label="Bereiche">` +
+        menu('shop', 'icons/nav-laden.png', 'Krämerladen', `${STORY.coins} Münzen · neue Ware jeden Tag`) +
+        menu('cards', 'icons/nav-karten.png', 'Karten und Deck', 'Alle Karten ansehen, Deck wählen') +
+        menu('online', 'icons/nav-freunde.png', 'Freunde', 'Bald: zusammen spielen') +
+        `<div class="hub-two">` + menu('rules', 'icons/portrait-hilde.png', 'Regeln', 'FAQ, Quiz') + menu('settings', 'icons/nav-optionen.png', 'Optionen', 'Klang, Spiel') + `</div>` +
+      `</nav>` +
+      `<button type="button" class="hub-plunk" data-plunk><span class="hp-say">${esc(plunkTips()[hub.__tip])}</span><img src="art/plunk.webp" alt="Plunk, der Gartenzwerg"></button>` +
+    `</aside>`);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-plunk]'); if (!b) return;
+  const hub = $('#t-hub'); hub.__tip = (hub.__tip + 1) % plunkTips().length; Snd.sfx('page'); renderHub();
+  const img = $('.hub-plunk img'); if (img) { img.classList.remove('hop'); void img.offsetWidth; img.classList.add('hop'); }
 });
