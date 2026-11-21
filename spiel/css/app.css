@@ -1803,7 +1803,9 @@ html.pf-art .hub-me .pf-big{border-color:transparent}
 @media (prefers-reduced-motion:reduce){.hub-plunk img{animation:none}}
 /* PC: großzügiger Abstand, Storykarte und Spielarten füllen die ganze Mitte */
 @media (min-width:1400px){
-  html.wide-menu .hub{column-gap:clamp(40px,5.5vw,110px)}
+  /* Rechte Spalte so breit, dass vier quadratische Kacheln genau die ganze Höhe füllen */
+  html.wide-menu .hub{column-gap:clamp(40px,5.5vw,110px);grid-template-columns:minmax(280px,22vw) minmax(0,1fr) calc((100dvh - var(--sat) - 78px) / 4)}
+  .hub-btn{max-height:none}
   .hub-story,.hub-modes{width:100%}
   .hub-story{max-height:none}
 }
