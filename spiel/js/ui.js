@@ -2413,6 +2413,8 @@ function renderHub() {
   const hub = $('#t-hub'); if (!hub) return;
   const on = document.documentElement.classList.contains('wide-menu');
   hub.hidden = !on; if (!on) return;
+  // Zum Vergleich: ?mitte=bildschirm richtet Logo, Karte und Spielarten an der Bildschirmmitte aus statt zwischen den Spalten
+  hub.classList.toggle('mid-screen', new URLSearchParams(location.search).get('mitte') === 'bildschirm');
   const cw = currentWorld(), nx = nextStation(cw), st = dailyState(), sk = streakNow();
   const dn = st.list.filter(e => { const m = missionById(e.id); return m && e.p >= m.n; }).length, wait = chestsWaiting().length;
   const ay = nx && nx.ay != null ? nx.ay : 50;

@@ -1799,6 +1799,10 @@ html.pf-art .hub-me .pf-big{border-color:transparent}
 @keyframes plunkIdle{0%,100%{transform:none}50%{transform:scaleY(1.025) translateY(-2px)}}
 @keyframes plunkHop{0%{transform:none}40%{transform:translateY(-16px) rotate(-4deg)}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){.hub-plunk img{animation:none}}
+/* Variante zum Vergleich: Mitte an der Bildschirmmitte, die rechte Spalte bleibt schmal und rückt an den Rand */
+html.wide-menu .hub.mid-screen{grid-template-columns:minmax(280px,22vw) minmax(0,1fr) minmax(280px,22vw)}
+.hub.mid-screen .hub-r{width:clamp(150px,12.5vw,220px);justify-self:end}
+@media (max-width:1399px){html.wide-menu .hub.mid-screen{grid-template-columns:minmax(250px,27vw) minmax(0,1fr) minmax(250px,27vw)}.hub.mid-screen .hub-r{width:clamp(140px,14vw,180px)}}
 /* Tablet: weniger Platz, Spalten schmaler */
 @media (max-width:1399px){html.wide-menu .hub{grid-template-columns:minmax(250px,27vw) minmax(0,1fr) clamp(140px,14vw,180px)}}
 
