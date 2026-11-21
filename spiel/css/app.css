@@ -1918,3 +1918,26 @@ html.wide-menu .rules-side,html.wide-menu .pf-side,html.wide-menu .cd-side{max-h
 /* Quiz: eine ruhige Spalte */
 html.wide-menu #scr-quiz .content{padding-left:max(28px,calc((100% - 780px) / 2));padding-right:max(28px,calc((100% - 780px) / 2))}
 
+
+/* ================= PC und Tablet: Leiste oben auf allen Unterseiten ================= */
+.wnav{display:none}
+html.has-wnav .wnav{position:absolute;z-index:15;top:0;left:0;right:0;height:calc(var(--sat) + 64px);padding:var(--sat) max(20px,calc((100% - 1300px) / 2)) 0;display:flex;align-items:center;gap:24px;background:linear-gradient(rgba(24,13,6,.97),rgba(24,13,6,.9));border-bottom:2px solid #5e3f23;box-shadow:inset 0 -1px 0 rgba(243,200,115,.25),0 8px 20px -8px rgba(0,0,0,.8)}
+.wn-logo{appearance:none;border:0;background:none;padding:0;cursor:pointer;flex:0 0 auto}
+.wn-logo img{height:40px;width:auto;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+.wn-tabs{display:flex;gap:4px;flex:1;min-width:0}
+.wn-tab{appearance:none;border:0;background:none;padding:10px 14px;border-radius:12px;font:800 16px var(--body);color:#e9d7b2;cursor:pointer;white-space:nowrap;position:relative}
+.wn-tab:hover{background:rgba(243,200,115,.12);color:#fff3d6}
+.wn-tab.on{color:#fbefd6;background:rgba(243,200,115,.16)}
+.wn-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:3px;border-radius:3px;background:#f07e1e}
+.wn-right{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.wn-coins{appearance:none;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1.5px solid rgba(243,200,115,.35);background:rgba(0,0,0,.3);color:#f3d38a;font:800 16px var(--body);cursor:pointer}
+.wn-coins img{width:22px;height:22px}
+.wn-me{appearance:none;display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;border:1.5px solid rgba(243,200,115,.35);background:rgba(0,0,0,.3);color:#fbefd6;font:700 18px var(--display);cursor:pointer}
+.wn-me.on,.wn-me:hover,.wn-coins:hover{border-color:#f3c873}
+.wn-me .t-pt{width:40px;height:40px}
+/* Platz für die Leiste, der Zurück-Pfeil ist am PC überflüssig */
+html.has-wnav .screen:not(#scr-title):not(#scr-game){padding-top:calc(var(--sat) + 64px)}
+html.has-wnav .screen .bar [data-back]{display:none}
+html.has-wnav .st-side,html.has-wnav #sheetwrap.dock{top:calc(var(--sat) + 64px + 78px)}
+@media (max-width:1180px){.wn-tab{padding:10px 10px;font-size:15px}.wn-me b{display:none}.wnav{gap:14px}}
+html.has-wnav #st-coins{display:none}

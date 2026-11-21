@@ -2309,6 +2309,7 @@ function applyLayout() {
   const wasMenu = document.documentElement.classList.contains('wide-menu');
   document.documentElement.classList.toggle('wide-menu', wide && CUR !== 'game');
   if (wasMenu !== document.documentElement.classList.contains('wide-menu') && CUR === 'title' && typeof renderTitle === 'function') renderTitle();
+  if (typeof renderWnav === 'function') renderWnav();
   dockSheet();
   if (mode === LAYOUT) return;
   LAYOUT = mode; app.classList.toggle('lay-pc', mode === 'pc'); app.classList.toggle('lay-tab', mode === 'tab');
@@ -2460,3 +2461,21 @@ function hubNotes(st) {
   return dailyNotes(st).replace(/<button type="button" class="btn small" data-reroll="(\d+)">Tauschen<\/button>/g,
     '<button type="button" class="nreroll" data-reroll="$1" aria-label="Auftrag tauschen" title="Auftrag tauschen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5M20 20v-4h-4"/></svg></button>');
 }
+
+/* ================= PC und Tablet: Leiste oben auf allen Unterseiten ================= */
+function renderWnav() {
+  const nav = $('#wnav'); if (!nav) return;
+  const on = document.documentElement.classList.contains('wide-menu') && CUR !== 'title' && CUR !== 'game';
+  nav.hidden = !on; document.documentElement.classList.toggle('has-wnav', on); if (!on) return;
+  const act = CUR === 'quiz' ? 'rules' : CUR;
+  const tab = (go, scr, label) => `<button type="button" class="wn-tab${act === scr ? ' on' : ''}" data-go="${go}"${act === scr ? ' aria-current="page"' : ''}>${label}</button>`;
+  patch(nav, `<button type="button" class="wn-logo" data-wnhome aria-label="Zur Startseite"><img src="art/logo-klein.webp" alt="Plundo"></button>` +
+    `<div class="wn-tabs">` + tab('story', 'story', 'Story') + tab('setup', 'setup', 'Freies Spiel') + tab('cards', 'cards', 'Karten und Deck') +
+      `<button type="button" class="wn-tab" data-go="shop">Krämerladen</button>` + tab('rules', 'rules', 'Regeln') + tab('settings', 'settings', 'Optionen') + `</div>` +
+    `<div class="wn-right"><button type="button" class="wn-coins" data-go="shop" aria-label="${STORY.coins} Münzen, zum Krämerladen">${coinImg}<b>${STORY.coins}</b></button>` +
+    `<button type="button" class="wn-me${act === 'profile' ? ' on' : ''}" data-go="profile" aria-label="Dein Charakter"><span class="t-pt" style="--fr:${myFrame()}"><img src="${myPortrait()}" alt=""></span><b>${esc(PROFILE.name || 'Abenteurer')}</b></button></div>`);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('[data-wnhome]')) return;
+  closeAllSheets(); STACK.length = 0; setScreen('title');
+});
