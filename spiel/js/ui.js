@@ -310,7 +310,7 @@ async function setDeckCount(i, delta) {
   DECK.custom[DECK.deck][p.tpl.n] = n; DECK.counts = currentCounts(DECK); saveDeck(); renderCards();
 }
 
-const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile', 'story'];
+const SCREENS = ['title', 'setup', 'game', 'settings', 'rules', 'cards', 'quiz', 'profile', 'story', 'shop'];
 let CUR = 'title';
 const STACK = [];
 function show(name) { if (name !== CUR) STACK.push(CUR); setScreen(name); }
@@ -331,6 +331,7 @@ function setScreen(name) {
   if (name === 'profile') renderProfile();
   if (name === 'story') renderStory();
   if (name === 'rules') buildRulesToc();
+  if (name === 'shop') renderShopPage();
   if (name === 'game') { W.renderedOnce = false; render(); }
   Motes.toggle(name === 'title');
 }
@@ -1683,6 +1684,7 @@ function go(a) {
     case 'tutorial': closeAllSheets(); startStation('w0s1'); break;
     case 'resetstory': confirmDialog('Storymodus zurücksetzen?', 'Alle Stationen, Sterne, Münzen und Belohnungen aus dem Storymodus gehen verloren.', 'Zurücksetzen', 'Abbrechen').then(ok => { if (ok) { resetStory(); clearStorySave(); toast('Storymodus zurückgesetzt'); } }); break;
     case 'reroll': ROSTER = rollRoster(); renderFoes(); Snd.sfx('deal'); break;
+    case 'home': closeAllSheets(); STACK.length = 0; setScreen('title'); break;
     case 'story': show('story'); break;
     case 'storymap': $$('.endov').forEach(x => x.remove()); closeAllSheets(); if (GAME_ON && S && S.scn && S.winner == null) { TOKEN++; } if (S && S.scn) GAME_ON = false; STACK.length = 0; STACK.push('title'); setScreen('story'); break;
     case 'start': startNewGame(); break;
@@ -1691,7 +1693,7 @@ function go(a) {
     case 'quiz': UI.q = null; show('quiz'); break;
     case 'profile': closeAllSheets(); show('profile'); break;
     case 'daily': closeAllSheets(); openSheet({id: 'daily'}); break;
-    case 'shop': closeAllSheets(); openSheet({id: 'shop'}); break;
+    case 'shop': closeAllSheets(); if (mq().pc.matches) show('shop'); else openSheet({id: 'shop'}); break;
     case 'settings': closeAllSheets(); show('settings'); break;
     case 'pause': openSheet({id: 'pause'}); break;
     case 'resume': closeAllSheets(); break;
@@ -1780,7 +1782,7 @@ document.addEventListener('click', e => {
   if ((el = t.closest('[data-reroll]'))) { if (rerollMission(+el.dataset.reroll)) { Snd.sfx('deal'); renderSheet(false); renderTitle(); } return; }
   if ((el = t.closest('[data-shopbuy]'))) { const id = el.dataset.shopbuy, r = buyShopItem(id);
     if (r === 'poor') { buzz(40); return; }
-    if (r === 'ok') { Snd.sfx('coin'); missionToast(`${cosmeticName(id)} gehört dir`, 0); renderSheet(false); renderTitle(); if (CUR === 'profile') renderProfile(); }
+    if (r === 'ok') { Snd.sfx('coin'); missionToast(`${cosmeticName(id)} gehört dir`, 0); renderSheet(false); renderTitle(); if (CUR === 'profile') renderProfile(); if (CUR === 'shop') renderShopPage(); renderWnav(); }
     return; }
   if ((el = t.closest('[data-story-choice]'))) { pickChoice(el.dataset.storyChoice); return; }
   if ((el = t.closest('[data-buy]'))) { buyItem(el.dataset.buy); return; }
@@ -2420,6 +2422,8 @@ function renderHub() {
   const fg = freeGame();
   if (hub.__tip == null) hub.__tip = Math.floor(Math.random() * plunkTips().length);
   // Kachel mit Bild: rechts das Motiv, links Text auf dunklem Verlauf. Ohne Bild: nur das Symbol.
+  if (mq().pc.matches) { hub.classList.add('pc'); patch(hub, pcPlayHTML(cw, nx, st, sk, dn, wait, ay, fg)); return; }
+  hub.classList.remove('pc');
   const menu = (go, art, icon, b, small, cls = '') => `<button type="button" class="hub-btn${art ? ' hasart' : ''}${cls}" data-go="${go}"${art ? ` style="--art:url('${new URL(art, document.baseURI).href}')"` : ''}>${art ? '' : `<img src="${icon}" alt="">`}<span><b>${b}</b><small>${small}</small></span></button>`;
   const bx = myBg();
   patch(hub,
@@ -2467,6 +2471,8 @@ function renderWnav() {
   const nav = $('#wnav'); if (!nav) return;
   const on = document.documentElement.classList.contains('wide-menu') && CUR !== 'game';
   nav.hidden = !on; document.documentElement.classList.toggle('has-wnav', on); if (!on) return;
+  document.documentElement.classList.toggle('pcnav', on && mq().pc.matches);
+  if (mq().pc.matches) { patch(nav, pcNavHTML()); return; }
   const act = CUR === 'quiz' ? 'rules' : CUR;
   const tab = (go, scr, label) => `<button type="button" class="wn-tab${act === scr ? ' on' : ''}" data-go="${go}"${act === scr ? ' aria-current="page"' : ''}>${label}</button>`;
   patch(nav, `<button type="button" class="wn-logo" data-wnhome aria-label="Zur Startseite"><img src="art/logo-klein.webp" alt="Plundo"></button>` +
@@ -2493,3 +2499,54 @@ document.addEventListener('click', e => {
   if (!e.target.closest('[data-wnhome]')) return;
   closeAllSheets(); STACK.length = 0; setScreen('title');
 });
+
+/* ================= PC: Menüleiste mit ausrollenden Kacheln, Seite „Spielen“, Krämerladen als Seite ================= */
+// Münzen-Bereich: Bild und Hintergrund wachsen mit dem Münzstand
+function coinTier(n) {
+  return n >= 700 ? {t: 4, img: 'icons/truhe-gold-auf.png', l: 'Schatztruhe'} : n >= 300 ? {t: 3, img: 'icons/truhe-holz-auf.png', l: 'Volle Truhe'}
+    : n >= 100 ? {t: 2, img: 'icons/truhe-holz-klein.png', l: 'Kleine Truhe'} : {t: 1, img: 'icons/muenze-voll.png', l: 'Ein paar Münzen'};
+}
+function pcNavHTML() {
+  const act = ['title', 'story', 'setup'].includes(CUR) ? 'play' : CUR === 'quiz' ? 'rules' : CUR;
+  const st = dailyState(), shopN = st.shop.filter(id => shopItem(id) && !owns(id)).length;
+  const item = (key, go, label, art, info) => `<div class="pn-item${act === key ? ' on' : ''}"><button type="button" class="pn-tab" data-go="${go}"${act === key ? ' aria-current="page"' : ''}>${label}</button>` +
+    `<button type="button" class="pn-drop" data-go="${go}" tabindex="-1" aria-hidden="true" style="--art:url('${new URL(art, document.baseURI).href}')"><b>${label}</b><small>${info}</small></button></div>`;
+  const ct = coinTier(STORY.coins), bx = myBg(), signed = typeof CLOUD !== 'undefined' && CLOUD.uid;
+  return `<button type="button" class="wn-logo" data-go="home" aria-label="Spielen"><img src="art/logo-klein.webp" alt="Plundo"></button>` +
+    `<div class="pn-items">` +
+      item('play', 'home', 'Spielen', 'art/kachel-frei.webp', 'Story, Freies Spiel, bald Online') +
+      item('cards', 'cards', 'Karten und Deck', 'art/hub-karten.webp', 'Alle Karten ansehen, Deck wählen') +
+      item('shop', 'shop', 'Krämerladen', 'art/hub-laden.webp', shopN ? `Heute ${shopN} ${shopN === 1 ? 'Angebot' : 'Angebote'}` : 'Alles ausverkauft') +
+      item('rules', 'rules', 'Regeln', 'art/hub-regeln.webp', 'FAQ, Probespiel und Quiz') +
+      item('settings', 'settings', 'Optionen', 'art/hub-optionen.webp', 'Klang, Spiel, Konto') +
+    `</div>` +
+    `<div class="pn-right">` +
+      `<button type="button" class="pn-coins t${ct.t}" data-go="shop" title="${ct.l}"><img src="${ct.img}" alt=""><span><b>${STORY.coins}</b><small>Münzen</small></span></button>` +
+      `<button type="button" class="pn-me${act === 'profile' ? ' on' : ''}${bx[2] ? ' hasbg' : ''}" data-go="profile"${bx[2] ? ` style="--bg:url('${new URL(bgSrc(bx), document.baseURI).href}');--bgp:${bx[4] || '50% 50%'}"` : ''}>` +
+        `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><span class="pn-who"><b>${esc(PROFILE.name || 'Abenteurer')}</b><small>${esc(myTitle() || 'Dein Charakter')}</small></span></button>` +
+      (signed ? `<button type="button" class="pn-out" data-wnexit><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span>Ausloggen</span></button>`
+              : `<button type="button" class="pn-out" data-acct="open"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M14 16l4-4-4-4M18 12H8"/></svg><span>Anmelden</span></button>`) +
+    `</div>`;
+}
+// Seite „Spielen“ am PC: links die Spielarten, rechts Hildes Aufträge und die Serie
+function pcPlayHTML(cw, nx, st, sk, dn, wait, ay, fg) {
+  return `<main class="pp-modes">` +
+      `<header class="pp-head"><h1>Spielen</h1><p>Wähle, wie du heute spielen willst.</p></header>` +
+      `<section class="hub-story pp-story"><img src="art/karte-welt${cw.id.replace('w', '')}.webp" alt="" style="object-position:50% ${ay}%" onerror="this.style.visibility='hidden'">` +
+        `<div class="hs-txt"><span class="pp-mode">Storymodus</span><div class="t-chips"><span class="t-world">${wLabel(cw)}</span><span class="t-stars"><img src="icons/stern-voll.png" alt=""><b>${worldStars(cw)} / ${worldMaxStars(cw)}</b></span></div>` +
+        `<button type="button" class="hs-name" data-go="story">${esc(cw.name)}</button><span class="hs-next">${esc($('#story-info').textContent)}</span>` +
+        `<div class="pp-acts"><button type="button" class="t-cta" data-go="storygo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" /></svg><span>${esc($('#t-cta').textContent)}</span></button><button type="button" class="btn pp-map" data-go="story">Zur Weltkarte</button></div></div></section>` +
+      `<div class="hub-modes pp-row">` +
+        `<button type="button" class="hub-mode" data-go="setup"><img src="art/kachel-frei.webp" alt=""><span><b>Freies Spiel</b><small>${fg ? `${fg.live ? 'Läuft' : 'Gespeichert'} · Runde ${fg.turn}` : 'Gegen 2 oder 3 Bots, deine Regeln'}</small></span></button>` +
+        `<button type="button" class="hub-mode" data-go="online"><img src="art/kachel-online.webp" alt=""><span class="tc-badge">Bald</span><span><b>Online</b><small>Mit Freunden und gegen andere</small></span></button>` +
+      `</div>` +
+    `</main>` +
+    `<aside class="pp-side">` +
+      `<section class="hub-daily"><header><img src="icons/portrait-hilde.png" alt=""><div><h3>Hildes Aufträge</h3><span>${dn} von 3 erledigt · neue in ${untilMidnight()}</span></div></header><div class="notes">${hubNotes(st)}</div></section>` +
+      `<button type="button" class="t-daily hub-streak${sk ? '' : ' dark'}" data-go="${wait ? 'chest' : 'daily'}">${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span></button>` +
+    `</aside>`;
+}
+function renderShopPage() {
+  const el = $('#shop-page'); if (!el) return;
+  patch(el, `<div class="panel shop-panel">${SHEET_VIEWS.shop().body}</div>`); watchBoards(el); fitNames(el);
+}

@@ -1949,3 +1949,65 @@ html.has-wnav #st-coins{display:none}
 /* Startseite mit Leiste: Raster rutscht unter die Leiste */
 html.has-wnav .hub{padding-top:calc(var(--sat) + 64px + 18px)}
 @media (min-width:1400px){html.has-wnav.wide-menu .hub{grid-template-columns:minmax(280px,22vw) minmax(0,1fr) calc((100dvh - var(--sat) - 64px - 78px) / 4)}}
+
+/* ================= PC: Menüleiste mit ausrollenden Kacheln ================= */
+html.pcnav{--nav:68px}
+html.pcnav .wnav{height:calc(var(--sat) + var(--nav));padding:var(--sat) 28px 0;gap:28px;overflow:visible}
+html.pcnav .wn-logo img{height:44px}
+.pn-items{display:flex;align-items:stretch;gap:6px;flex:1;height:100%}
+.pn-item{position:relative;display:flex;align-items:center}
+.pn-tab{appearance:none;border:0;background:none;height:46px;padding:0 18px;border-radius:12px;font:800 17px var(--body);color:#e9d7b2;cursor:pointer;white-space:nowrap;position:relative}
+.pn-item:hover .pn-tab{background:rgba(243,200,115,.12);color:#fff3d6}
+.pn-item.on .pn-tab{color:#fbefd6;background:rgba(243,200,115,.16)}
+.pn-item.on .pn-tab::after{content:"";position:absolute;left:18px;right:18px;bottom:4px;height:3px;border-radius:3px;background:#f07e1e}
+/* Kachel, die sich beim Drüberfahren unter dem Menüpunkt ausrollt */
+.pn-drop{position:absolute;left:50%;top:calc(100% - 4px);width:240px;height:180px;margin-left:-120px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:2px;padding:12px 14px;border-radius:0 0 18px 18px;border:2px solid #5e3f23;border-top:0;
+  background:linear-gradient(transparent 35%,rgba(20,12,6,.95) 88%),var(--art) center/cover no-repeat,#2a1a0e;box-shadow:inset 0 0 0 1px rgba(243,200,115,.3),0 22px 34px -14px #000;text-align:left;cursor:pointer;
+  clip-path:inset(0 0 100% 0);opacity:0;pointer-events:none;transition:clip-path .28s cubic-bezier(.2,.8,.2,1) 0s,opacity .15s 0s;z-index:30}
+.pn-item:hover .pn-drop{clip-path:inset(0 0 0 0);opacity:1;pointer-events:auto;transition-delay:.18s,.18s}
+.pn-drop b{font:700 24px/1.05 var(--display);color:#fbefd6;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.pn-drop small{font-size:14px;color:#ead6b0}
+@media (prefers-reduced-motion:reduce){.pn-drop{transition:none}}
+/* Rechts: Münzen, Profil (überragt die Leiste), Aus- oder Anmelden */
+.pn-right{display:flex;align-items:flex-start;gap:14px;height:100%;padding-top:10px}
+.pn-coins{appearance:none;display:flex;align-items:center;gap:10px;height:48px;padding:0 16px 0 8px;border-radius:14px;border:2px solid #5e3f23;box-shadow:inset 0 0 0 1px rgba(243,200,115,.3);cursor:pointer;color:#fbefd6}
+.pn-coins img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
+.pn-coins span{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.pn-coins b{font:800 20px var(--body);color:#f9dd8f}
+.pn-coins small{font-size:12px;color:#d9c39c}
+.pn-coins.t1{background:linear-gradient(#3a2716,#24160b)}
+.pn-coins.t2{background:radial-gradient(circle at 25% 50%,rgba(243,200,115,.25),transparent 60%),linear-gradient(#45301a,#2a190c)}
+.pn-coins.t3{background:radial-gradient(circle at 25% 50%,rgba(255,210,110,.45),transparent 65%),linear-gradient(#5a3d1c,#2e1c0c)}
+.pn-coins.t4{background:radial-gradient(circle at 25% 50%,rgba(255,220,120,.7),transparent 70%),linear-gradient(#7a5420,#3a240c);border-color:#a8781f}
+.pn-coins:hover{border-color:#b98a3e}
+.pn-me{position:relative;appearance:none;display:flex;align-items:center;gap:12px;width:290px;height:96px;padding:10px 14px 10px 12px;border-radius:0 0 18px 18px;margin-top:-10px;border:2px solid #5e3f23;border-top:0;background:#2a1a0e;box-shadow:inset 0 0 0 1px rgba(243,200,115,.3),0 16px 26px -10px #000;cursor:pointer;text-align:left;z-index:31}
+.pn-me.hasbg{background:var(--bg) var(--bgp,50% 50%)/cover no-repeat,#2a1a0e}
+.pn-me:hover,.pn-me.on{border-color:#b98a3e}
+.pn-me .pf-big{width:70px;height:70px;border-radius:50%;object-fit:cover;object-position:50% 18%;border:3px solid var(--pf,#e9cf9a);background:#2a1a0e}
+html.pf-art .pn-me .pf-big{border-color:transparent}
+.pn-who{display:flex;flex-direction:column;min-width:0;flex:1;padding:6px 10px;border-radius:10px;background:rgba(255,248,230,.9);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.pn-who b{font:700 21px/1.05 var(--display);color:#3b2a1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pn-who small{font-size:13px;font-style:italic;color:#6b5236;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pn-out{appearance:none;display:flex;align-items:center;gap:6px;height:48px;padding:0 14px;border-radius:14px;border:1.5px solid rgba(243,200,115,.3);background:none;color:#e9d7b2;font:800 15px var(--body);cursor:pointer}
+.pn-out:hover{border-color:#f3c873;color:#fff3d6;background:rgba(243,200,115,.1)}
+.pn-out svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* Platz unter der Leiste (das Profil ragt etwa 40 px hinein) */
+html.pcnav .screen:not(#scr-title):not(#scr-game){padding-top:calc(var(--sat) + var(--nav) + 32px)}
+html.pcnav .st-side,html.pcnav #sheetwrap.dock{top:calc(var(--sat) + var(--nav) + 32px + 78px)}
+/* ================= PC: Seite „Spielen“ ================= */
+html.pcnav .hub.pc{grid-template-columns:minmax(0,1fr) 380px;column-gap:28px;padding:calc(var(--sat) + var(--nav) + 40px) max(28px,calc((100% - 1500px) / 2)) 24px}
+.hub.pc .pp-modes{display:flex;flex-direction:column;gap:18px;min-height:0}
+.pp-head h1{margin:0;font:700 44px/1 var(--display);color:#fbefd6;text-shadow:0 3px 0 rgba(0,0,0,.6)}
+.pp-head p{margin:4px 0 0;font-size:17px;color:#e3cfa6;text-shadow:0 1px 2px #000}
+.hub.pc .pp-story{flex:1;width:100%;max-height:none;min-height:0}
+.pp-mode{font:800 13px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#f3c873}
+.pp-acts{display:flex;gap:12px;align-items:center}
+.pp-acts .t-cta{min-width:300px}
+.pp-map{background:rgba(20,12,6,.7);color:#fbefd6;border-color:rgba(243,200,115,.5)}
+.hub.pc .pp-row{width:100%;gap:18px}
+.hub.pc .hub-mode{height:clamp(130px,17vh,180px)}
+.hub.pc .pp-side{display:flex;flex-direction:column;gap:18px;min-height:0}
+/* Krämerladen als Seite am PC */
+html.pcnav .shoppage{max-width:1200px;margin:0 auto;width:100%}
+html.pcnav .shoppage .sitems{grid-template-columns:repeat(4,minmax(0,1fr))}
+html.pcnav .shoppage .scene{max-height:220px;object-fit:cover}
