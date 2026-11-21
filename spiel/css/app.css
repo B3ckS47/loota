@@ -1829,6 +1829,15 @@ html.pf-art .hub-me .pf-big{border-color:transparent}
 #app.wide:not(.tbl-keller):not(.tbl-wald):not(.tbl-strand):not(.tbl-schiff){background:linear-gradient(rgba(20,10,4,.10),rgba(20,10,4,.10)),url(../art/tisch-breit.webp) center/cover no-repeat,var(--wood-dark)}
 /* Tablet: weniger Platz, Spalten schmaler */
 @media (max-width:1399px){html.wide-menu .hub{grid-template-columns:minmax(250px,27vw) minmax(0,1fr) clamp(140px,14vw,180px)}}
+/* Tablet: Story so hoch wie möglich, Logo etwas kleiner, Kacheln rechts mittig in der Höhe */
+@media (max-width:1399px){
+  html.wide-menu .hub-c{justify-content:flex-start;gap:12px}
+  html.wide-menu .hub-logo img{max-height:17vh}
+  html.wide-menu .hub-story{flex:1;max-height:none;width:100%}
+  html.wide-menu .hub-modes{width:100%}
+  html.wide-menu .hub-mode{height:clamp(110px,15vh,150px)}
+  html.wide-menu .hub-r{justify-content:center}
+}
 
 /* Storymodus: Karte links, Station rechts */
 html.wide-menu #scr-story .bar{padding:16px 28px 12px}
