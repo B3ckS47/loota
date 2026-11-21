@@ -1,5 +1,5 @@
 /* Service Worker: macht die App offline spielbar. Wird von build_mobile.py erzeugt. */
-const CACHE = 'loota-8a209b1dd6';
+const CACHE = 'loota-59cef662f5';
 const FILES = [
 "./",
 "index.html",
@@ -23,6 +23,7 @@ const FILES = [
 "art/besonders-schatzkarte-links.webp",
 "art/besonders-schatzkarte-rechts.webp",
 "art/brett-auftraege.webp",
+"art/brett-hub.webp",
 "art/einmal-champignon.webp",
 "art/einmal-fischbroetchen.webp",
 "art/einmal-flasche-drachenschnaps.webp",
@@ -102,6 +103,10 @@ const FILES = [
 "art/hintergrund-strand.webp",
 "art/hintergrund-tisch.webp",
 "art/hintergrund-wald.webp",
+"art/hub-freunde.webp",
+"art/hub-karten.webp",
+"art/hub-laden.webp",
+"art/hub-optionen.webp",
 "art/hub-regeln.webp",
 "art/hub-taverne.webp",
 "art/kachel-frei.webp",
@@ -234,6 +239,7 @@ const FILES = [
 "art/szene-auftragsbrett.webp",
 "art/szene-kraemerladen.webp",
 "art/szene-offene-partie.webp",
+"art/tisch-breit.webp",
 "art/titelschild.webp",
 "art/verstaerker-riesenhaft.webp",
 "art/verstaerker-stinksauer.webp",

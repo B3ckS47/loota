@@ -2442,10 +2442,10 @@ function renderHub() {
     `<aside class="hub-r">` +
       `<nav class="hub-menu" aria-label="Bereiche">` +
         // Freunde kommt als fünfte Kachel dazu, sobald es den Online-Modus gibt
-        menu('cards', 'art/szene-offene-partie.webp', '', 'Karten und Deck', 'Deck wählen') +
-        menu('shop', 'art/szene-kraemerladen.webp', '', 'Krämerladen', `${STORY.coins} Münzen`) +
+        menu('cards', 'art/hub-karten.webp', '', 'Karten und Deck', 'Deck wählen') +
+        menu('shop', 'art/hub-laden.webp', '', 'Krämerladen', `${STORY.coins} Münzen`) +
         menu('rules', 'art/hub-regeln.webp', '', 'Regeln', 'FAQ und Quiz') +
-        menu('settings', '', 'icons/nav-optionen.png', 'Optionen', 'Klang, Spiel') +
+        menu('settings', 'art/hub-optionen.webp', '', 'Optionen', 'Klang, Spiel') +
       `</nav>` +
     `</aside>`);
 }
