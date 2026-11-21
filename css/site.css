@@ -25,7 +25,7 @@ h2{font-size:clamp(36px,4.2vw,52px)}
 /* Kopfleiste */
 .top{position:sticky;top:0;z-index:20;background:rgba(24,13,6,.94);border-bottom:2px solid var(--edge);backdrop-filter:blur(6px)}
 .top .wrap{display:flex;align-items:center;gap:28px;padding-top:12px;padding-bottom:12px}
-.logo img{height:46px;width:auto}
+.logo img{height:54px;width:auto}
 .nav{display:flex;gap:26px;flex:1;font-weight:800;font-size:17px}
 .nav a{color:var(--text)}.nav a:hover{color:#ffd99c}
 .top-acts{display:flex;gap:12px;align-items:center}
