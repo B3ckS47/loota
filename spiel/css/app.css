@@ -2037,3 +2037,5 @@ html.pf-art .pn-me .pf-bigw{margin:0 4px}
 html.pf-art .pn-me .pf-big{width:50px;height:50px}
 .pn-me .pf-bigw{width:auto;height:auto}
 .pn-me .pf-bigw::after{inset:-21.5%}
+/* Menüleiste: Holzbalken mit Schnitzkante als Hintergrund, quer gekachelt */
+html.pcnav .wnav{background:url(../art/leiste-balken.webp) left bottom/auto 100% repeat-x,#1d1209;border-bottom:0;box-shadow:0 10px 22px -8px rgba(0,0,0,.85)}
