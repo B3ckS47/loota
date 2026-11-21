@@ -1783,8 +1783,8 @@ html.pf-art .hub-me .pf-big{border-color:transparent}
 .hub-mode small{font-size:14px;color:#ead6b0}
 .hub-mode .tc-badge{z-index:1}
 /* Rechts: schmale Spalte mit gleich großen Kacheln untereinander, darunter Plunk */
-.hub-menu{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
-.hub-btn{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;width:100%;flex:1;min-height:0;padding:10px 12px;border-radius:18px;border:2px solid rgba(255,214,160,.28);background:rgba(28,16,8,.82);color:var(--on-wood);text-align:left;cursor:pointer;box-shadow:0 12px 22px -12px rgba(0,0,0,.85);overflow:hidden;transition:transform .12s}
+.hub-menu{display:flex;flex-direction:column;gap:12px}
+.hub-btn{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;width:100%;aspect-ratio:1/1;max-height:calc((100dvh - var(--sat) - 78px) / 4 - 9px);padding:10px 12px;border-radius:18px;border:2px solid rgba(255,214,160,.28);background:rgba(28,16,8,.82);color:var(--on-wood);text-align:left;cursor:pointer;box-shadow:0 12px 22px -12px rgba(0,0,0,.85);overflow:hidden;transition:transform .12s}
 .hub-btn.hasart{background:linear-gradient(transparent 35%,rgba(20,12,6,.94) 88%),var(--art) center/cover no-repeat,#2a1a0e}
 .hub-btn:hover{border-color:#f3c873;transform:translateY(-2px)}
 .hub-btn img{position:absolute;left:50%;top:40%;width:44%;height:auto;max-height:50%;object-fit:contain;transform:translate(-50%,-50%);opacity:.9}
