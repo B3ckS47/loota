@@ -1735,7 +1735,9 @@ html.wide-menu .footbtn .btn{width:auto;min-width:340px}
 
 /* Startseite des Spiels am PC und Tablet: Taverne im Hintergrund, alles auf einen Blick */
 .hub{display:none}
-html.wide-menu #scr-title{background:linear-gradient(rgba(18,10,5,.55),rgba(18,10,5,.72)),url(../art/hub-taverne.webp) center/cover no-repeat,#1a100a}
+html.wide-menu #scr-title{background:#1a100a}
+html.wide-menu #scr-title::before{content:"";position:absolute;inset:-12px;background:linear-gradient(rgba(18,10,5,.5),rgba(18,10,5,.66)),url(../art/hub-taverne.webp) center/cover no-repeat;filter:blur(3px) saturate(.75);pointer-events:none}
+html.wide-menu #scr-title::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 40%,rgba(10,5,2,.55) 100%);pointer-events:none}
 html.wide-menu #scr-title>:not(.hub):not(#motes){display:none!important}
 html.wide-menu .hub{display:grid;grid-template-columns:minmax(280px,22vw) minmax(0,1fr) clamp(150px,12.5vw,220px);gap:clamp(18px,2vw,32px);height:100%;padding:calc(var(--sat) + 20px) clamp(20px,2.4vw,40px) 22px;overflow:hidden;position:relative;z-index:1}
 .hub-l,.hub-r,.hub-c{display:flex;flex-direction:column;gap:16px;min-height:0}
@@ -1805,6 +1807,22 @@ html.pf-art .hub-me .pf-big{border-color:transparent}
   .hub-story,.hub-modes{width:100%}
   .hub-story{max-height:none}
 }
+/* Einheitlicher Rahmen für alle Bereiche: gleiche Rundung, dunkler Holzrand, feine Goldkante */
+.hub-me,.hub-daily,.hub-streak,.hub-mode,.hub-btn{border-radius:18px!important;border:2px solid #5e3f23!important;box-shadow:inset 0 0 0 1px rgba(243,200,115,.30),0 14px 26px -12px rgba(0,0,0,.9)!important}
+.hub-me:hover,.hub-mode:hover,.hub-btn:hover,.hub-streak:hover{border-color:#b98a3e!important;box-shadow:inset 0 0 0 1px rgba(243,200,115,.6),0 16px 28px -12px rgba(0,0,0,.95)!important}
+/* Storykarte: kräftiger Holzrahmen, damit sie der Mittelpunkt ist */
+.hub-story{border:6px solid #7a5530;border-radius:22px;box-shadow:inset 0 0 0 2px rgba(243,200,115,.55),0 0 0 2px #1a0f07,0 0 0 5px rgba(243,200,115,.18),0 28px 44px -16px #000}
+.hub-story::after{background:linear-gradient(transparent 25%,rgba(20,12,6,.95) 90%),radial-gradient(ellipse at 50% 40%,transparent 55%,rgba(10,5,2,.45))}
+/* Aufträge: kompakter und gedämpfter, damit sie nicht heller sind als die Story */
+.hub-daily .notes{gap:16px;padding:22px 12px 10px}
+.hub-daily .note{filter:drop-shadow(0 5px 4px rgba(0,0,0,.5)) brightness(.84) saturate(.8)}
+.hub-daily .note b{font-size:14px;line-height:1.25}
+.hub-daily .note .nl{font-size:10px}
+.hub-daily .note .np{min-height:20px;display:flex;justify-content:space-between}
+.hub-daily .nstamp{width:48px;height:48px;margin-top:-30px}
+.nreroll{appearance:none;display:grid;place-items:center;width:26px;height:26px;padding:0;border-radius:50%;border:1.5px solid rgba(110,76,44,.55);background:rgba(255,248,230,.6);color:#6b4a2b;cursor:pointer}
+.nreroll:hover{background:#fff6e0;border-color:#8a5a12}
+.nreroll svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 /* Tablet: weniger Platz, Spalten schmaler */
 @media (max-width:1399px){html.wide-menu .hub{grid-template-columns:minmax(250px,27vw) minmax(0,1fr) clamp(140px,14vw,180px)}}
 

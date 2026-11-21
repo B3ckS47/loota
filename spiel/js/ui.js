@@ -2425,7 +2425,7 @@ function renderHub() {
     `<aside class="hub-l">` +
       `<button type="button" class="hub-me${bx[2] ? ' hasbg' : ''}" data-go="profile"${bx[2] ? ` style="--bg:url('${new URL(bgSrc(bx), document.baseURI).href}');--bgp:${bx[4] || '50% 50%'}"` : ''}>` +
         `<span class="pf-bigw"><img class="pf-big" src="${myPortrait()}" alt=""></span><span class="hub-who"><b>${esc(PROFILE.name || 'Abenteurer')}</b><small>${esc(myTitle() || 'Dein Charakter')}</small><em>${coinImg}${STORY.coins} Münzen</em></span></button>` +
-      `<section class="hub-daily"><header><img src="icons/portrait-hilde.png" alt=""><div><h3>Hildes Aufträge</h3><span>${dn} von 3 erledigt · neue in ${untilMidnight()}</span></div></header><div class="notes">${dailyNotes(st)}</div></section>` +
+      `<section class="hub-daily"><header><img src="icons/portrait-hilde.png" alt=""><div><h3>Hildes Aufträge</h3><span>${dn} von 3 erledigt · neue in ${untilMidnight()}</span></div></header><div class="notes">${hubNotes(st)}</div></section>` +
       `<button type="button" class="t-daily hub-streak${sk ? '' : ' dark'}" data-go="${wait ? 'chest' : 'daily'}">${candleHtml(sk > 0)}<span class="td-main">${streakTrack(sk).track}</span></button>` +
     `</aside>` +
     `<main class="hub-c">` +
@@ -2454,3 +2454,9 @@ document.addEventListener('click', e => {
   const hub = $('#t-hub'); hub.__tip = (hub.__tip + 1) % plunkTips().length; Snd.sfx('page'); renderHub();
   const img = $('.hub-plunk img'); if (img) { img.classList.remove('hop'); void img.offsetWidth; img.classList.add('hop'); }
 });
+
+// Aufträge auf der Startseite: kompakter, „Tauschen“ nur als kleines Symbol
+function hubNotes(st) {
+  return dailyNotes(st).replace(/<button type="button" class="btn small" data-reroll="(\d+)">Tauschen<\/button>/g,
+    '<button type="button" class="nreroll" data-reroll="$1" aria-label="Auftrag tauschen" title="Auftrag tauschen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5M20 20v-4h-4"/></svg></button>');
+}
